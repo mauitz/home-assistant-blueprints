@@ -2,7 +2,7 @@ blueprint:
   name: Sync Two Switches Bidirectional (Tuya ↔ Sonoff, anti-loop)
   description: >
     Sincroniza ON/OFF en ambas direcciones entre dos entidades switch (por ejemplo Tuya y Sonoff),
-    evitando bucles. Incluye debounce opcional para evitar rebotes cloud.
+    evitando bucles. Incluye debounce opcional para filtrar rebotes cloud.
   domain: automation
   input:
     tuya_switch:
@@ -29,51 +29,120 @@ blueprint:
 mode: queued
 max_exceeded: silent
 
+# ──────────────── TRIGGERS con IDs (no templates) ─────────────────
 trigger:
+  # TUYA
   - platform: state
-    id: tuya
+    id: tuya_on
     entity_id: !input tuya_switch
-    to: ["on", "off"]
-    for:
-      seconds: !input debounce
+    to: "on"
+    for: { seconds: !input debounce }
 
   - platform: state
-    id: sonoff
+    id: tuya_off
+    entity_id: !input tuya_switch
+    to: "off"
+    for: { seconds: !input debounce }
+
+  # SONOFF
+  - platform: state
+    id: sonoff_on
     entity_id: !input sonoff_switch
-    to: ["on", "off"]
-    for:
-      seconds: !input debounce
+    to: "on"
+    for: { seconds: !input debounce }
+
+  - platform: state
+    id: sonoff_off
+    entity_id: !input sonoff_switch
+    to: "off"
+    for: { seconds: !input debounce }
 
 condition: []
 
+# ──────────────── ACCIONES (sin templates) ─────────────────
 action:
   - choose:
-      # --- A) TUYA → SONOFF ---
-      - conditions:
-          - condition: template
-            value_template: "{{ trigger.id == 'tuya' }}"
-          - condition: template
-            value_template: "{{ trigger.to_state.state in ['on','off'] }}"
-          - condition: template
-            value_template: "{{ states((!input sonoff_switch)) in ['on','off'] }}"
-          - condition: template
-            value_template: "{{ states((!input sonoff_switch)) != trigger.to_state.state }}"
-        sequence:
-          - service: "switch.turn_{{ trigger.to_state.state }}"
-            target:
-              entity_id: !input sonoff_switch
 
-      # --- B) SONOFF → TUYA ---
+      # ===== A) TUYA → SONOFF =====
       - conditions:
-          - condition: template
-            value_template: "{{ trigger.id == 'sonoff' }}"
-          - condition: template
-            value_template: "{{ trigger.to_state.state in ['on','off'] }}"
-          - condition: template
-            value_template: "{{ states((!input tuya_switch)) in ['on','off'] }}"
-          - condition: template
-            value_template: "{{ states((!input tuya_switch)) != trigger.to_state.state }}"
+          - condition: trigger
+            id: tuya_on
+          # Validar que Sonoff está en 'on' o 'off'
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input sonoff_switch
+                state: "on"
+              - condition: state
+                entity_id: !input sonoff_switch
+                state: "off"
+          # Evitar bucle: actuar solo si Sonoff NO está ya 'on'
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: !input sonoff_switch
+                state: "on"
         sequence:
-          - service: "switch.turn_{{ trigger.to_state.state }}"
-            target:
-              entity_id: !input tuya_switch
+          - service: switch.turn_on
+            target: { entity_id: !input sonoff_switch }
+
+      - conditions:
+          - condition: trigger
+            id: tuya_off
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input sonoff_switch
+                state: "on"
+              - condition: state
+                entity_id: !input sonoff_switch
+                state: "off"
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: !input sonoff_switch
+                state: "off"
+        sequence:
+          - service: switch.turn_off
+            target: { entity_id: !input sonoff_switch }
+
+      # ===== B) SONOFF → TUYA =====
+      - conditions:
+          - condition: trigger
+            id: sonoff_on
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input tuya_switch
+                state: "on"
+              - condition: state
+                entity_id: !input tuya_switch
+                state: "off"
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: !input tuya_switch
+                state: "on"
+        sequence:
+          - service: switch.turn_on
+            target: { entity_id: !input tuya_switch }
+
+      - conditions:
+          - condition: trigger
+            id: sonoff_off
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input tuya_switch
+                state: "on"
+              - condition: state
+                entity_id: !input tuya_switch
+                state: "off"
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: !input tuya_switch
+                state: "off"
+        sequence:
+          - service: switch.turn_off
+            target: { entity_id: !input tuya_switch }
