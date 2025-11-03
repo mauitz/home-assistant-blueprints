@@ -1,0 +1,79 @@
+blueprint:
+  name: Sync Two Switches Bidirectional (Tuya ↔ Sonoff, anti-loop)
+  description: >
+    Sincroniza ON/OFF en ambas direcciones entre dos entidades switch (por ejemplo Tuya y Sonoff),
+    evitando bucles. Incluye debounce opcional para evitar rebotes cloud.
+  domain: automation
+  input:
+    tuya_switch:
+      name: Switch A (ej. Tuya)
+      selector:
+        entity:
+          domain: switch
+    sonoff_switch:
+      name: Switch B (ej. Sonoff)
+      selector:
+        entity:
+          domain: switch
+    debounce:
+      name: Debounce (segundos)
+      description: Retraso opcional para filtrar rebotes rápidos. 0–2s recomendado.
+      default: 0.2
+      selector:
+        number:
+          min: 0
+          max: 2
+          step: 0.1
+          unit_of_measurement: s
+
+mode: queued
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    id: tuya
+    entity_id: !input tuya_switch
+    to: ["on", "off"]
+    for:
+      seconds: !input debounce
+
+  - platform: state
+    id: sonoff
+    entity_id: !input sonoff_switch
+    to: ["on", "off"]
+    for:
+      seconds: !input debounce
+
+condition: []
+
+action:
+  - choose:
+      # --- A) TUYA → SONOFF ---
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'tuya' }}"
+          - condition: template
+            value_template: "{{ trigger.to_state.state in ['on','off'] }}"
+          - condition: template
+            value_template: "{{ states((!input sonoff_switch)) in ['on','off'] }}"
+          - condition: template
+            value_template: "{{ states((!input sonoff_switch)) != trigger.to_state.state }}"
+        sequence:
+          - service: "switch.turn_{{ trigger.to_state.state }}"
+            target:
+              entity_id: !input sonoff_switch
+
+      # --- B) SONOFF → TUYA ---
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'sonoff' }}"
+          - condition: template
+            value_template: "{{ trigger.to_state.state in ['on','off'] }}"
+          - condition: template
+            value_template: "{{ states((!input tuya_switch)) in ['on','off'] }}"
+          - condition: template
+            value_template: "{{ states((!input tuya_switch)) != trigger.to_state.state }}"
+        sequence:
+          - service: "switch.turn_{{ trigger.to_state.state }}"
+            target:
+              entity_id: !input tuya_switch
