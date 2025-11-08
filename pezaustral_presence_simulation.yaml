@@ -1,0 +1,765 @@
+blueprint:
+  name: PezAustral Presence Simulation
+  description: >
+    # 🏠 PezAustral Presence Simulation
+    **Version: 1.0**
+
+    Simulación avanzada de presencia con control de lámparas simultáneas, loops y escena de salida.
+    
+    **Basado en:** [Holiday & Away Lighting by Blackshome](https://gist.github.com/Blackshome/0a34870755762bcb9fab159d5b94fd25)
+    
+    <details>
+    <summary><b>Características principales:</b> 👈</summary>
+    
+    - **Control de lámparas simultáneas:** Limita cuántas lámparas pueden estar encendidas al mismo tiempo
+    - **Apagado inteligente en paralelo:** El sistema apaga automáticamente lámparas cuando alcanza el límite
+    - **Modo loop:** Repite la secuencia de simulación múltiples veces
+    - **Escena de salida:** Configura una escena específica al finalizar todas las repeticiones
+    - **Múltiples triggers:** Tiempo, elevación solar, nivel de luz ambiental, estados de entidades
+    - **Control por zona:** Activa solo cuando no hay personas en la zona
+    - **Control por fechas:** Define períodos específicos de activación
+    
+    </details>
+    
+    Documentación completa: Ver PEZAUSTRAL_PRESENCE_SIMULATION.md
+    
+    Required = *
+    
+  domain: automation
+  input:
+    automation_control:
+      name: "Control de Automatización"
+      icon: mdi:auto-mode
+      collapsed: true
+      input:
+        automation_control_entity:
+          name: Entidad de Control (Opcional)
+          description: >
+            Selecciona una entidad (input_boolean, switch, etc.) para activar/desactivar la automatización.
+            Cuando está ON, la automatización se activa. Cuando está OFF, se desactiva.
+          default: []
+          selector:
+            entity:
+              multiple: false
+        
+        start_date:
+          name: Fecha de Inicio (Opcional)
+          description: Fecha desde la cual la automatización estará activa
+          default: ""
+          selector:
+            date:
+        
+        end_date:
+          name: Fecha de Fin (Opcional)
+          description: Fecha hasta la cual la automatización estará activa
+          default: ""
+          selector:
+            date:
+        
+        zone_control:
+          name: Control por Zona (Opcional)
+          description: >
+            Selecciona una zona. La automatización solo se activará cuando no haya 
+            dispositivos rastreados en esta zona.
+          default: []
+          selector:
+            entity:
+              domain: zone
+              multiple: false
+        
+        people_control:
+          name: Personas a Rastrear (Opcional)
+          description: >
+            Selecciona personas específicas. La automatización solo se activará cuando 
+            ninguna de estas personas esté en la zona seleccionada.
+          default: []
+          selector:
+            entity:
+              domain: person
+              multiple: true
+    
+    trigger_settings:
+      name: "⚡ Configuración de Triggers"
+      icon: mdi:lightning-bolt
+      collapsed: true
+      input:
+        trigger_type:
+          name: Tipo de Trigger *
+          description: Define cuándo se encenderán las luces
+          selector:
+            select:
+              options:
+                - label: "Tiempo específico"
+                  value: "time"
+                - label: "Elevación Solar"
+                  value: "sun_elevation"
+                - label: "Nivel de luz ambiental"
+                  value: "ambient_light"
+                - label: "Estado de entidad (ON)"
+                  value: "entity_on"
+                - label: "Estado de entidad (OFF)"
+                  value: "entity_off"
+              multiple: false
+        
+        trigger_time:
+          name: Hora de Activación
+          description: Hora específica para encender las luces (solo si seleccionaste "Tiempo específico")
+          default: "18:00:00"
+          selector:
+            time:
+        
+        sun_elevation:
+          name: Elevación Solar
+          description: Ángulo del sol para activar (solo si seleccionaste "Elevación Solar")
+          default: -5
+          selector:
+            number:
+              min: -90
+              max: 90
+              step: 1
+              unit_of_measurement: "°"
+        
+        ambient_light_sensor:
+          name: Sensor de Luz Ambiental
+          description: Sensor de luz a monitorear (solo si seleccionaste "Nivel de luz ambiental")
+          default: []
+          selector:
+            entity:
+              domain: sensor
+              multiple: false
+        
+        ambient_light_threshold:
+          name: Umbral de Luz Ambiental
+          description: Nivel de luz por debajo del cual se activará (lux)
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 1000
+              step: 10
+              unit_of_measurement: "lx"
+        
+        trigger_entity:
+          name: Entidad Trigger
+          description: Entidad a monitorear (solo si seleccionaste trigger por entidad)
+          default: []
+          selector:
+            entity:
+              multiple: false
+    
+    lights_settings:
+      name: "💡 Configuración de Luces"
+      icon: mdi:lightbulb-group
+      collapsed: false
+      input:
+        lights_on:
+          name: Luces y Entidades para Encender *
+          description: >
+            Selecciona las luces y entidades que deseas controlar en la simulación.
+            Puedes incluir luces, switches, enchufes, etc.
+          selector:
+            entity:
+              multiple: true
+        
+        max_lights_on:
+          name: Máximo de Lámparas Encendidas *
+          description: >
+            Define cuántas lámparas pueden estar encendidas simultáneamente.
+            El sistema apagará automáticamente lámparas viejas cuando se alcance este límite.
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 20
+              step: 1
+              mode: slider
+        
+        entity_order_on:
+          name: Orden de Encendido *
+          description: Define cómo se encenderán las luces
+          default: "entities_on_shuffled"
+          selector:
+            select:
+              options:
+                - label: "Secuencial (orden de selección)"
+                  value: "entities_on_sequence"
+                - label: "Reversa (orden inverso)"
+                  value: "entities_on_reverse"
+                - label: "Aleatorio (shuffled)"
+                  value: "entities_on_shuffled"
+                - label: "Todas al mismo tiempo"
+                  value: "entities_on_same_time"
+              multiple: false
+        
+        random_on_delay_min:
+          name: Delay Mínimo entre Encendidos
+          description: Tiempo mínimo de espera entre encender cada luz (segundos)
+          default: 5
+          selector:
+            number:
+              min: 0
+              max: 300
+              step: 1
+              unit_of_measurement: "s"
+        
+        random_on_delay_max:
+          name: Delay Máximo entre Encendidos
+          description: Tiempo máximo de espera entre encender cada luz (segundos)
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 600
+              step: 1
+              unit_of_measurement: "s"
+        
+        brightness:
+          name: Brillo (Opcional)
+          description: Nivel de brillo para las luces (solo aplica a luces)
+          default: 100
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+        
+        color_temp:
+          name: Temperatura de Color (Opcional)
+          description: Temperatura de color en Kelvin (solo para luces compatibles)
+          default: 3000
+          selector:
+            number:
+              min: 2000
+              max: 6500
+              step: 100
+              unit_of_measurement: "K"
+        
+        transition_on:
+          name: Tiempo de Transición ON
+          description: Duración de la transición al encender (segundos)
+          default: 1
+          selector:
+            number:
+              min: 0
+              max: 60
+              step: 0.5
+              unit_of_measurement: "s"
+    
+    duration_settings:
+      name: "⏱️ Configuración de Duración"
+      icon: mdi:timer
+      collapsed: true
+      input:
+        duration_method:
+          name: Método de Duración *
+          description: Define cuánto tiempo permanecerán encendidas las luces
+          default: "min_max_time"
+          selector:
+            select:
+              options:
+                - label: "Tiempo ON Mínimo/Máximo"
+                  value: "min_max_time"
+                - label: "Rango de tiempo de apagado (Earliest/Latest)"
+                  value: "time_range"
+              multiple: false
+        
+        min_on_time:
+          name: Tiempo Mínimo ON
+          description: Tiempo mínimo que cada luz permanecerá encendida (minutos)
+          default: 15
+          selector:
+            number:
+              min: 1
+              max: 240
+              step: 1
+              unit_of_measurement: "min"
+        
+        max_on_time:
+          name: Tiempo Máximo ON
+          description: Tiempo máximo que cada luz permanecerá encendida (minutos)
+          default: 60
+          selector:
+            number:
+              min: 1
+              max: 480
+              step: 1
+              unit_of_measurement: "min"
+        
+        earliest_off_time:
+          name: Hora Más Temprana de Apagado
+          description: Hora más temprana para apagar luces (solo si usas "time_range")
+          default: "22:00:00"
+          selector:
+            time:
+        
+        latest_off_time:
+          name: Hora Más Tardía de Apagado
+          description: Hora más tardía para apagar luces (solo si usas "time_range")
+          default: "23:59:00"
+          selector:
+            time:
+        
+        transition_off:
+          name: Tiempo de Transición OFF
+          description: Duración de la transición al apagar (segundos)
+          default: 2
+          selector:
+            number:
+              min: 0
+              max: 60
+              step: 0.5
+              unit_of_measurement: "s"
+    
+    loop_settings:
+      name: "🔄 Configuración de Loop"
+      icon: mdi:repeat
+      collapsed: true
+      input:
+        enable_loop:
+          name: Habilitar Loop
+          description: >
+            Cuando está habilitado, la simulación se repetirá múltiples veces.
+            Útil para simular presencia durante toda la noche.
+          default: false
+          selector:
+            boolean:
+        
+        loop_count:
+          name: Cantidad de Repeticiones
+          description: >
+            Número de veces que se repetirá la secuencia completa.
+            0 = infinito (se repetirá hasta que se desactive la automatización)
+          default: 3
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 1
+        
+        loop_delay_min:
+          name: Delay Mínimo entre Loops
+          description: Tiempo mínimo de espera entre cada repetición (minutos)
+          default: 1
+          selector:
+            number:
+              min: 0
+              max: 60
+              step: 1
+              unit_of_measurement: "min"
+        
+        loop_delay_max:
+          name: Delay Máximo entre Loops
+          description: Tiempo máximo de espera entre cada repetición (minutos)
+          default: 5
+          selector:
+            number:
+              min: 0
+              max: 120
+              step: 1
+              unit_of_measurement: "min"
+    
+    exit_scene_settings:
+      name: "🎬 Escena de Salida"
+      icon: mdi:exit-to-app
+      collapsed: true
+      input:
+        enable_exit_scene:
+          name: Habilitar Escena de Salida
+          description: >
+            Cuando está habilitado, se activará una escena específica al finalizar 
+            todas las repeticiones del loop.
+          default: false
+          selector:
+            boolean:
+        
+        exit_scene:
+          name: Escena de Salida
+          description: >
+            Escena que se activará al terminar la simulación completa.
+            Por ejemplo, puedes crear una escena que apague todas las luces.
+          default: []
+          selector:
+            entity:
+              domain: scene
+              multiple: false
+    
+    weekday_settings:
+      name: "📅 Días de la Semana (Opcional)"
+      icon: mdi:calendar-week
+      collapsed: true
+      input:
+        weekdays:
+          name: Días de la Semana
+          description: Selecciona los días en los que la automatización estará activa
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              options:
+                - label: "Lunes"
+                  value: "mon"
+                - label: "Martes"
+                  value: "tue"
+                - label: "Miércoles"
+                  value: "wed"
+                - label: "Jueves"
+                  value: "thu"
+                - label: "Viernes"
+                  value: "fri"
+                - label: "Sábado"
+                  value: "sat"
+                - label: "Domingo"
+                  value: "sun"
+              multiple: true
+    
+    global_conditions:
+      name: "🌍 Condiciones Globales (Opcional)"
+      icon: mdi:earth
+      collapsed: true
+      input:
+        global_conditions:
+          name: Condiciones Adicionales
+          description: >
+            Condiciones adicionales que deben cumplirse para que la automatización se ejecute.
+            Puedes agregar condiciones personalizadas en formato YAML.
+          default: []
+          selector:
+            condition:
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  automation_control_entity: !input automation_control_entity
+  start_date: !input start_date
+  end_date: !input end_date
+  zone_control: !input zone_control
+  people_control: !input people_control
+  
+  trigger_type: !input trigger_type
+  lights_on: !input lights_on
+  max_lights_on: !input max_lights_on
+  entity_order_on: !input entity_order_on
+  random_on_delay_min: !input random_on_delay_min
+  random_on_delay_max: !input random_on_delay_max
+  brightness: !input brightness
+  color_temp: !input color_temp
+  transition_on: !input transition_on
+  
+  duration_method: !input duration_method
+  min_on_time: !input min_on_time
+  max_on_time: !input max_on_time
+  transition_off: !input transition_off
+  
+  enable_loop: !input enable_loop
+  loop_count: !input loop_count
+  loop_delay_min: !input loop_delay_min
+  loop_delay_max: !input loop_delay_max
+  
+  enable_exit_scene: !input enable_exit_scene
+  exit_scene: !input exit_scene
+  
+  weekdays: !input weekdays
+  
+  # Preparar lista de luces con datos
+  entities_turn_on: >
+    {% set ns = namespace(list=[]) %}
+    {% for entity in lights_on %}
+      {% set entity_domain = entity.split('.')[0] %}
+      {% set data = {} %}
+      {% if entity_domain == 'light' %}
+        {% set data = {
+          'brightness_pct': brightness,
+          'kelvin': color_temp,
+          'transition': transition_on
+        } %}
+      {% endif %}
+      {% set ns.list = ns.list + [{'id': entity, 'data': data}] %}
+    {% endfor %}
+    {{ ns.list }}
+
+trigger:
+  # Trigger por tiempo
+  - platform: time
+    at: !input trigger_time
+    id: trigger_time
+  
+  # Trigger por elevación solar
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: !input sun_elevation
+    id: trigger_sun
+  
+  # Trigger por luz ambiental
+  - platform: numeric_state
+    entity_id: !input ambient_light_sensor
+    below: !input ambient_light_threshold
+    id: trigger_ambient
+  
+  # Trigger por entidad ON
+  - platform: state
+    entity_id: !input trigger_entity
+    to: "on"
+    id: trigger_entity_on
+  
+  # Trigger por entidad OFF
+  - platform: state
+    entity_id: !input trigger_entity
+    to: "off"
+    id: trigger_entity_off
+
+condition:
+  - condition: and
+    conditions:
+      # Verificar día de la semana
+      - condition: template
+        value_template: >
+          {% set current_weekday = now().strftime('%a').lower() %}
+          {{ current_weekday in weekdays }}
+      
+      # Verificar entidad de control
+      - condition: template
+        value_template: >
+          {% if automation_control_entity | length > 0 %}
+            {{ is_state(automation_control_entity[0], 'on') }}
+          {% else %}
+            true
+          {% endif %}
+      
+      # Verificar fecha de inicio
+      - condition: template
+        value_template: >
+          {% if start_date != '' %}
+            {{ now().date() >= strptime(start_date, '%Y-%m-%d').date() }}
+          {% else %}
+            true
+          {% endif %}
+      
+      # Verificar fecha de fin
+      - condition: template
+        value_template: >
+          {% if end_date != '' %}
+            {{ now().date() <= strptime(end_date, '%Y-%m-%d').date() }}
+          {% else %}
+            true
+          {% endif %}
+      
+      # Verificar zona y personas
+      - condition: template
+        value_template: >
+          {% if zone_control | length > 0 and people_control | length > 0 %}
+            {% set ns = namespace(in_zone=false) %}
+            {% for person in people_control %}
+              {% if is_state(person, zone_control[0].split('.')[1]) %}
+                {% set ns.in_zone = true %}
+              {% endif %}
+            {% endfor %}
+            {{ not ns.in_zone }}
+          {% elif zone_control | length > 0 %}
+            {{ state_attr(zone_control[0], 'persons') | length == 0 }}
+          {% else %}
+            true
+          {% endif %}
+      
+      # Verificar tipo de trigger
+      - condition: template
+        value_template: >
+          {% if trigger_type == 'time' %}
+            {{ trigger.id == 'trigger_time' }}
+          {% elif trigger_type == 'sun_elevation' %}
+            {{ trigger.id == 'trigger_sun' }}
+          {% elif trigger_type == 'ambient_light' %}
+            {{ trigger.id == 'trigger_ambient' }}
+          {% elif trigger_type == 'entity_on' %}
+            {{ trigger.id == 'trigger_entity_on' }}
+          {% elif trigger_type == 'entity_off' %}
+            {{ trigger.id == 'trigger_entity_off' }}
+          {% else %}
+            false
+          {% endif %}
+
+action:
+  - repeat:
+      count: >
+        {% if enable_loop %}
+          {% if loop_count == 0 %}
+            999
+          {% else %}
+            {{ loop_count }}
+          {% endif %}
+        {% else %}
+          1
+        {% endif %}
+      sequence:
+        # Variables para tracking de luces encendidas
+        - variables:
+            lights_currently_on: []
+            lights_order: >
+              {% if entity_order_on == 'entities_on_sequence' %}
+                {{ entities_turn_on }}
+              {% elif entity_order_on == 'entities_on_reverse' %}
+                {{ entities_turn_on | reverse | list }}
+              {% elif entity_order_on == 'entities_on_shuffled' %}
+                {{ entities_turn_on | shuffle }}
+              {% else %}
+                {{ entities_turn_on }}
+              {% endif %}
+        
+        # Secuencia principal de encendido con control de límite
+        - repeat:
+            count: "{{ lights_on | length }}"
+            sequence:
+              - variables:
+                  current_light: "{{ lights_order[repeat.index - 1] }}"
+                  current_entity_id: "{{ current_light.id }}"
+                  current_domain: "{{ current_light.id.split('.')[0] }}"
+                  needs_turn_off: >
+                    {{ lights_currently_on | length >= max_lights_on }}
+                  light_to_turn_off: >
+                    {% if lights_currently_on | length >= max_lights_on %}
+                      {{ lights_currently_on[0] }}
+                    {% else %}
+                      null
+                    {% endif %}
+              
+              # Si alcanzamos el límite, apagar la luz más antigua
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ needs_turn_off and light_to_turn_off != 'null' }}"
+                    sequence:
+                      - parallel:
+                          # Apagar luz antigua
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ light_to_turn_off.split('.')[0] == 'light' }}"
+                                sequence:
+                                  - action: light.turn_off
+                                    target:
+                                      entity_id: "{{ light_to_turn_off }}"
+                                    data:
+                                      transition: "{{ transition_off }}"
+                            default:
+                              - action: homeassistant.turn_off
+                                target:
+                                  entity_id: "{{ light_to_turn_off }}"
+                          
+                          # Actualizar lista
+                          - variables:
+                              lights_currently_on: >
+                                {{ lights_currently_on[1:] }}
+              
+              # Delay aleatorio antes de encender (si no es "todas al mismo tiempo")
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ entity_order_on != 'entities_on_same_time' and repeat.index > 1 }}"
+                    sequence:
+                      - delay:
+                          seconds: >
+                            {{ range(random_on_delay_min, random_on_delay_max + 1) | random }}
+              
+              # Encender la luz actual
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ current_domain == 'light' }}"
+                    sequence:
+                      - action: light.turn_on
+                        target:
+                          entity_id: "{{ current_entity_id }}"
+                        data: >
+                          {{ current_light.data }}
+                default:
+                  - action: homeassistant.turn_on
+                    target:
+                      entity_id: "{{ current_entity_id }}"
+              
+              # Agregar a lista de luces encendidas
+              - variables:
+                  lights_currently_on: >
+                    {{ lights_currently_on + [current_entity_id] }}
+              
+              # Esperar tiempo aleatorio antes de apagar esta luz
+              - delay:
+                  minutes: >
+                    {% if duration_method == 'min_max_time' %}
+                      {{ range(min_on_time, max_on_time + 1) | random }}
+                    {% else %}
+                      {{ range(min_on_time, max_on_time + 1) | random }}
+                    {% endif %}
+              
+              # Apagar esta luz después del delay
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ current_domain == 'light' }}"
+                    sequence:
+                      - action: light.turn_off
+                        target:
+                          entity_id: "{{ current_entity_id }}"
+                        data:
+                          transition: "{{ transition_off }}"
+                default:
+                  - action: homeassistant.turn_off
+                    target:
+                      entity_id: "{{ current_entity_id }}"
+              
+              # Remover de lista de luces encendidas
+              - variables:
+                  lights_currently_on: >
+                    {{ lights_currently_on | reject('eq', current_entity_id) | list }}
+        
+        # Apagar cualquier luz que aún esté encendida
+        - repeat:
+            count: "{{ lights_currently_on | length }}"
+            sequence:
+              - variables:
+                  light_to_cleanup: "{{ lights_currently_on[repeat.index - 1] }}"
+                  cleanup_domain: "{{ light_to_cleanup.split('.')[0] }}"
+              
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ cleanup_domain == 'light' }}"
+                    sequence:
+                      - action: light.turn_off
+                        target:
+                          entity_id: "{{ light_to_cleanup }}"
+                        data:
+                          transition: "{{ transition_off }}"
+                default:
+                  - action: homeassistant.turn_off
+                    target:
+                      entity_id: "{{ light_to_cleanup }}"
+        
+        # Delay entre loops (si está habilitado el loop y no es la última iteración)
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: >
+                    {{ enable_loop and (loop_count == 0 or repeat.index < loop_count) }}
+              sequence:
+                - delay:
+                    minutes: >
+                      {{ range(loop_delay_min, loop_delay_max + 1) | random }}
+  
+  # Activar escena de salida si está habilitada
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_exit_scene and exit_scene | length > 0 }}"
+        sequence:
+          - action: scene.turn_on
+            target:
+              entity_id: "{{ exit_scene[0] }}"
+
