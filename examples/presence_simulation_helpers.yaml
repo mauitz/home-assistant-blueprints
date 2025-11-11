@@ -124,10 +124,11 @@ template:
           {% if is_state('input_boolean.presence_simulation_running', 'on') %}
             {% set start_time = states('input_datetime.presence_simulation_start_time') %}
             {% if start_time not in ['unknown', 'unavailable', ''] %}
-              {% set start = strptime(start_time, '%Y-%m-%d %H:%M:%S') %}
-              {% set duration = now() - start %}
-              {% set hours = duration.total_seconds() // 3600 %}
-              {% set minutes = (duration.total_seconds() % 3600) // 60 %}
+              {% set start_timestamp = as_timestamp(strptime(start_time, '%Y-%m-%d %H:%M:%S')) %}
+              {% set current_timestamp = as_timestamp(now()) %}
+              {% set duration_seconds = current_timestamp - start_timestamp %}
+              {% set hours = (duration_seconds // 3600) | int %}
+              {% set minutes = ((duration_seconds % 3600) // 60) | int %}
               {{ '%02d:%02d' | format(hours, minutes) }}
             {% else %}
               00:00
