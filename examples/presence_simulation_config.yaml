@@ -1,0 +1,113 @@
+alias: Presence Simulation
+description: >
+  Simulación de presencia usando PezAustral Presence Simulation v1.0
+  Migrado desde la configuración original de Blackshome
+use_blueprint:
+  path: pezaustral/pezaustral_presence_simulation.yaml
+  input:
+    # ========================================
+    # CONTROL DE AUTOMATIZACIÓN
+    # ========================================
+    automation_control_entity:
+      - input_boolean.presence_simulation
+    
+    # No se usan fechas ni zona en la configuración original
+    start_date: ""
+    end_date: ""
+    zone_control: []
+    people_control: []
+    
+    # ========================================
+    # CONFIGURACIÓN DE TRIGGERS
+    # ========================================
+    # Trigger cuando input_boolean.presence_simulation cambia a ON
+    trigger_type: entity_on
+    trigger_entity:
+      - input_boolean.presence_simulation
+    
+    # ========================================
+    # CONFIGURACIÓN DE LUCES/SWITCHES
+    # ========================================
+    # Los 6 switches de la configuración original
+    lights_on:
+      - switch.3gang_switch_switch_1
+      - switch.4gang_switch_2_switch_1
+      - switch.sonoff_10025ffc47_1
+      - switch.4gang_switch_switch_1
+      - switch.3gang_switch_switch_2
+      - switch.bedroom_3_switch_switch_1
+    
+    # NUEVA CARACTERÍSTICA: Máximo de lámparas simultáneas
+    # Ajusta este valor según prefieras (1-6)
+    # Recomendado: 2-3 para mayor realismo
+    max_lights_on: 2
+    
+    # Orden aleatorio (shuffled) como en la configuración original
+    entity_order_on: entities_on_shuffled
+    
+    # Delays entre encendidos
+    # Original: random_on_delay: 300 (0-300 segundos)
+    # Nuevo: separado en min/max
+    random_on_delay_min: 10
+    random_on_delay_max: 300
+    
+    # Configuración de apariencia (no aplica a switches, pero se incluye)
+    brightness: 100
+    color_temp: 3000
+    transition_on: 1
+    
+    # ========================================
+    # CONFIGURACIÓN DE DURACIÓN
+    # ========================================
+    # Mantiene los mismos tiempos: 8-30 minutos
+    duration_method: min_max_time
+    min_on_time: 8
+    max_on_time: 30
+    
+    # Transición al apagar
+    # Original: random_off_delay: 300
+    # En el nuevo blueprint esto se maneja diferente
+    transition_off: 2
+    
+    # ========================================
+    # CONFIGURACIÓN DE LOOP
+    # ========================================
+    # NUEVO: Si quieres que se repita continuamente
+    # mientras presence_simulation esté ON
+    enable_loop: true
+    
+    # 0 = infinito (se repetirá mientras esté activo)
+    # Si prefieres un número fijo, cambia a 3, 5, 10, etc.
+    loop_count: 0
+    
+    # Delay entre loops (tiempo de "pausa" entre ciclos)
+    loop_delay_min: 2
+    loop_delay_max: 5
+    
+    # ========================================
+    # ESCENA DE SALIDA
+    # ========================================
+    # NUEVO: Puedes configurar una escena para cuando termines
+    # Por ahora deshabilitado (no aplica con loop infinito)
+    enable_exit_scene: false
+    exit_scene: []
+    
+    # ========================================
+    # DÍAS DE LA SEMANA
+    # ========================================
+    # Todos los días (como en la configuración original)
+    weekdays:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+      - sat
+      - sun
+    
+    # ========================================
+    # CONDICIONES GLOBALES
+    # ========================================
+    # Sin condiciones adicionales (como en la original)
+    global_conditions: []
+

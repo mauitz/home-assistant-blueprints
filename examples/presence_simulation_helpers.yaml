@@ -1,0 +1,210 @@
+# ════════════════════════════════════════════════════════════════════════════
+# HELPERS PARA MONITORING DE PRESENCE SIMULATION
+# ════════════════════════════════════════════════════════════════════════════
+#
+# INSTRUCCIONES:
+# 1. Copia este contenido en tu configuration.yaml
+# 2. Reinicia Home Assistant
+# 3. Estos helpers permitirán trackear el estado de la simulación
+#
+# NOTA: Si prefieres crearlos desde la UI:
+# Ve a Configuración → Dispositivos y Servicios → Helpers → Crear Helper
+# ════════════════════════════════════════════════════════════════════════════
+
+# ──────────────────────────────────────────────────────────────────────────
+# INPUT BOOLEANS
+# ──────────────────────────────────────────────────────────────────────────
+input_boolean:
+  # Control principal (si no lo tienes ya)
+  presence_simulation:
+    name: Simulación de Presencia
+    icon: mdi:home-account
+    initial: off
+  
+  # Estado interno de ejecución
+  presence_simulation_running:
+    name: Simulación Activa
+    icon: mdi:play-circle
+    initial: off
+
+# ──────────────────────────────────────────────────────────────────────────
+# INPUT NUMBERS - Contadores
+# ──────────────────────────────────────────────────────────────────────────
+input_number:
+  # Contador de loops completados
+  presence_simulation_loop_counter:
+    name: Loops Completados
+    icon: mdi:counter
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    initial: 0
+  
+  # Total de loops configurados
+  presence_simulation_loop_total:
+    name: Total de Loops
+    icon: mdi:numeric
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    initial: 0
+  
+  # Contador de luces encendidas actualmente
+  presence_simulation_lights_on_count:
+    name: Luces Encendidas
+    icon: mdi:lightbulb-on
+    min: 0
+    max: 20
+    step: 1
+    mode: box
+    initial: 0
+
+# ──────────────────────────────────────────────────────────────────────────
+# INPUT DATETIMES - Timestamps
+# ──────────────────────────────────────────────────────────────────────────
+input_datetime:
+  # Fecha y hora de inicio de la simulación
+  presence_simulation_start_time:
+    name: Hora de Inicio
+    has_date: true
+    has_time: true
+    icon: mdi:clock-start
+  
+  # Última actualización de estado
+  presence_simulation_last_update:
+    name: Última Actualización
+    has_date: true
+    has_time: true
+    icon: mdi:update
+
+# ──────────────────────────────────────────────────────────────────────────
+# INPUT TEXTS - Información de estado
+# ──────────────────────────────────────────────────────────────────────────
+input_text:
+  # Lista de luces actualmente encendidas (separadas por coma)
+  presence_simulation_active_lights:
+    name: Luces Activas
+    icon: mdi:format-list-bulleted
+    max: 255
+    initial: "Ninguna"
+  
+  # Última luz encendida
+  presence_simulation_last_light_on:
+    name: Última Luz Encendida
+    icon: mdi:lightbulb
+    max: 100
+    initial: "-"
+  
+  # Última luz apagada
+  presence_simulation_last_light_off:
+    name: Última Luz Apagada
+    icon: mdi:lightbulb-off
+    max: 100
+    initial: "-"
+  
+  # Estado actual de la simulación
+  presence_simulation_status:
+    name: Estado
+    icon: mdi:information
+    max: 100
+    initial: "Inactiva"
+
+# ──────────────────────────────────────────────────────────────────────────
+# SENSORS TEMPLATE - Para cálculos y visualización
+# ──────────────────────────────────────────────────────────────────────────
+template:
+  - sensor:
+      # Tiempo transcurrido desde el inicio
+      - name: "Presence Simulation Runtime"
+        unique_id: presence_simulation_runtime
+        icon: mdi:timer
+        state: >
+          {% if is_state('input_boolean.presence_simulation_running', 'on') %}
+            {% set start_time = states('input_datetime.presence_simulation_start_time') %}
+            {% if start_time not in ['unknown', 'unavailable', ''] %}
+              {% set start = strptime(start_time, '%Y-%m-%d %H:%M:%S') %}
+              {% set duration = now() - start %}
+              {% set hours = duration.total_seconds() // 3600 %}
+              {% set minutes = (duration.total_seconds() % 3600) // 60 %}
+              {{ '%02d:%02d' | format(hours, minutes) }}
+            {% else %}
+              00:00
+            {% endif %}
+          {% else %}
+            Inactiva
+          {% endif %}
+        attributes:
+          friendly_name: "Tiempo Activo"
+      
+      # Progreso del loop (porcentaje)
+      - name: "Presence Simulation Progress"
+        unique_id: presence_simulation_progress
+        icon: mdi:progress-clock
+        unit_of_measurement: "%"
+        state: >
+          {% set current = states('input_number.presence_simulation_loop_counter') | int %}
+          {% set total = states('input_number.presence_simulation_loop_total') | int %}
+          {% if total > 0 %}
+            {{ ((current / total) * 100) | round(0) }}
+          {% else %}
+            0
+          {% endif %}
+        attributes:
+          friendly_name: "Progreso"
+      
+      # Contador de luces activas con nombres
+      - name: "Presence Simulation Active Lights List"
+        unique_id: presence_simulation_active_lights_list
+        icon: mdi:lightbulb-multiple
+        state: >
+          {{ states('input_number.presence_simulation_lights_on_count') | int }}
+        attributes:
+          friendly_name: "Luces Activas"
+          lights: >
+            {{ states('input_text.presence_simulation_active_lights') }}
+          count: >
+            {{ states('input_number.presence_simulation_lights_on_count') | int }}
+      
+      # Tiempo estimado restante
+      - name: "Presence Simulation Time Remaining"
+        unique_id: presence_simulation_time_remaining
+        icon: mdi:timer-sand
+        state: >
+          {% if is_state('input_boolean.presence_simulation_running', 'on') %}
+            {% set current = states('input_number.presence_simulation_loop_counter') | int %}
+            {% set total = states('input_number.presence_simulation_loop_total') | int %}
+            {% if total > 0 and total != 99 %}
+              {% set remaining = total - current %}
+              {% set minutes_per_loop = 25 %}
+              {% set total_minutes = remaining * minutes_per_loop %}
+              {% set hours = total_minutes // 60 %}
+              {% set mins = total_minutes % 60 %}
+              {{ '%dh %02dm' | format(hours, mins) }}
+            {% else %}
+              Infinito
+            {% endif %}
+          {% else %}
+            -
+          {% endif %}
+        attributes:
+          friendly_name: "Tiempo Restante"
+
+# ──────────────────────────────────────────────────────────────────────────
+# NOTAS DE CONFIGURACIÓN:
+# ──────────────────────────────────────────────────────────────────────────
+# 
+# Después de agregar esto a tu configuration.yaml:
+# 
+# 1. Reinicia Home Assistant
+# 2. Verifica que todos los helpers se crearon:
+#    - Configuración → Dispositivos y Servicios → Helpers
+# 
+# 3. Usa el blueprint modificado (presence_simulation_monitored.yaml)
+#    que actualizará automáticamente estos helpers
+# 
+# 4. Agrega la tarjeta del dashboard (ver dashboard_card.yaml)
+# 
+# ──────────────────────────────────────────────────────────────────────────
+

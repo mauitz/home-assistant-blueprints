@@ -1,25 +1,17 @@
 blueprint:
-  name: PezAustral Presence Simulation
+  name: PezAustral Presence Simulation (FIXED - Detenible)
   description: >
-    # 🏠 PezAustral Presence Simulation
-    **Version: 1.0**
-
+    # 🏠 PezAustral Presence Simulation **Version: 1.1 FIXED**
+    
+    **CORRECCIONES EN ESTA VERSIÓN:**
+    - ✅ SE PUEDE DETENER desactivando el input_boolean
+    - ✅ Verifica el estado ANTES de cada acción
+    - ✅ Se detiene inmediatamente al desactivar
+    - ✅ Modo `single` para evitar múltiples ejecuciones
+    
     Simulación avanzada de presencia con control de lámparas simultáneas, loops y escena de salida.
     
     **Basado en:** [Holiday & Away Lighting by Blackshome](https://gist.github.com/Blackshome/0a34870755762bcb9fab159d5b94fd25)
-    
-    <details>
-    <summary><b>Características principales:</b> 👈</summary>
-    
-    - **Control de lámparas simultáneas:** Limita cuántas lámparas pueden estar encendidas al mismo tiempo
-    - **Apagado inteligente en paralelo:** El sistema apaga automáticamente lámparas cuando alcanza el límite
-    - **Modo loop:** Repite la secuencia de simulación múltiples veces
-    - **Escena de salida:** Configura una escena específica al finalizar todas las repeticiones
-    - **Múltiples triggers:** Tiempo, elevación solar, nivel de luz ambiental, estados de entidades
-    - **Control por zona:** Activa solo cuando no hay personas en la zona
-    - **Control por fechas:** Define períodos específicos de activación
-    
-    </details>
     
     Documentación completa: Ver PEZAUSTRAL_PRESENCE_SIMULATION.md
     
@@ -36,7 +28,7 @@ blueprint:
           name: Entidad de Control (Opcional)
           description: >
             Selecciona una entidad (input_boolean, switch, etc.) para activar/desactivar la automatización.
-            Cuando está ON, la automatización se activa. Cuando está OFF, se desactiva.
+            **IMPORTANTE**: La automatización verificará este estado constantemente y se detendrá si se desactiva.
           default: []
           selector:
             entity:
@@ -329,7 +321,7 @@ blueprint:
           name: Cantidad de Repeticiones
           description: >
             Número de veces que se repetirá la secuencia completa.
-            0 = infinito (se repetirá hasta que se desactive la automatización)
+            0 = infinito (se repetirá hasta que desactives el control)
           default: 3
           selector:
             number:
@@ -368,7 +360,7 @@ blueprint:
           name: Habilitar Escena de Salida
           description: >
             Cuando está habilitado, se activará una escena específica al finalizar 
-            todas las repeticiones del loop.
+            todas las repeticiones del loop (solo si se completa normalmente).
           default: false
           selector:
             boolean:
@@ -378,6 +370,17 @@ blueprint:
           description: >
             Escena que se activará al terminar la simulación completa.
             Por ejemplo, puedes crear una escena que apague todas las luces.
+          default: []
+          selector:
+            entity:
+              domain: scene
+              multiple: false
+        
+        emergency_stop_scene:
+          name: Escena de Parada de Emergencia (NUEVO)
+          description: >
+            Escena que se activará si se detiene manualmente la automatización.
+            Útil para apagar todos los switches inmediatamente.
           default: []
           selector:
             entity:
@@ -433,7 +436,11 @@ blueprint:
           selector:
             condition:
 
-mode: restart
+# ══════════════════════════════════════════════════════════════════════════
+# CAMBIO CRÍTICO: mode: single en vez de restart
+# Esto evita que se ejecuten múltiples instancias y permite control limpio
+# ══════════════════════════════════════════════════════════════════════════
+mode: single
 max_exceeded: silent
 
 variables:
@@ -465,6 +472,7 @@ variables:
   
   enable_exit_scene: !input enable_exit_scene
   exit_scene: !input exit_scene
+  emergency_stop_scene: !input emergency_stop_scene
   
   weekdays: !input weekdays
   
@@ -581,23 +589,37 @@ condition:
           {% elif trigger_type == 'entity_on' %}
             {{ trigger.id == 'trigger_entity_on' }}
           {% elif trigger_type == 'entity_off' %}
-            {{ trigger.id == 'trigger_entity_off' }}
+            {{ trigger.id == 'trigger_entity_off' %}
           {% else %}
             false
           {% endif %}
 
 action:
+  # ══════════════════════════════════════════════════════════════════════════
+  # LOOP PRINCIPAL con verificación continua del estado de control
+  # ══════════════════════════════════════════════════════════════════════════
   - repeat:
-      count: >
-        {% if enable_loop %}
-          {% if loop_count == 0 %}
-            999
-          {% else %}
-            {{ loop_count }}
-          {% endif %}
-        {% else %}
-          1
-        {% endif %}
+      while:
+        # VERIFICACIÓN CONTINUA: Solo continuar si el control sigue ON
+        - condition: template
+          value_template: >
+            {% if automation_control_entity | length > 0 %}
+              {{ is_state(automation_control_entity[0], 'on') }}
+            {% else %}
+              true
+            {% endif %}
+        # Y no hemos excedido el número de loops
+        - condition: template
+          value_template: >
+            {% if enable_loop %}
+              {% if loop_count == 0 %}
+                true
+              {% else %}
+                {{ repeat.index <= loop_count }}
+              {% endif %}
+            {% else %}
+              {{ repeat.index <= 1 }}
+            {% endif %}
       sequence:
         # Variables para tracking de luces encendidas
         - variables:
@@ -612,11 +634,23 @@ action:
               {% else %}
                 {{ entities_turn_on }}
               {% endif %}
+            loop_interrupted: false
         
         # Secuencia principal de encendido con control de límite
         - repeat:
             count: "{{ lights_on | length }}"
             sequence:
+              # ════════════════════════════════════════════════════════════
+              # VERIFICACIÓN ANTES DE CADA LUZ: ¿Sigue activo el control?
+              # ════════════════════════════════════════════════════════════
+              - condition: template
+                value_template: >
+                  {% if automation_control_entity | length > 0 %}
+                    {{ is_state(automation_control_entity[0], 'on') }}
+                  {% else %}
+                    true
+                  {% endif %}
+              
               - variables:
                   current_light: "{{ lights_order[repeat.index - 1] }}"
                   current_entity_id: "{{ current_light.id }}"
@@ -636,27 +670,24 @@ action:
                       - condition: template
                         value_template: "{{ needs_turn_off and light_to_turn_off != 'null' }}"
                     sequence:
-                      - parallel:
-                          # Apagar luz antigua
-                          - choose:
-                              - conditions:
-                                  - condition: template
-                                    value_template: "{{ light_to_turn_off.split('.')[0] == 'light' }}"
-                                sequence:
-                                  - action: light.turn_off
-                                    target:
-                                      entity_id: "{{ light_to_turn_off }}"
-                                    data:
-                                      transition: "{{ transition_off }}"
-                            default:
-                              - action: homeassistant.turn_off
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: "{{ light_to_turn_off.split('.')[0] == 'light' }}"
+                            sequence:
+                              - action: light.turn_off
                                 target:
                                   entity_id: "{{ light_to_turn_off }}"
-                          
-                          # Actualizar lista
-                          - variables:
-                              lights_currently_on: >
-                                {{ lights_currently_on[1:] }}
+                                data:
+                                  transition: "{{ transition_off }}"
+                        default:
+                          - action: homeassistant.turn_off
+                            target:
+                              entity_id: "{{ light_to_turn_off }}"
+                      
+                      - variables:
+                          lights_currently_on: >
+                            {{ lights_currently_on[1:] }}
               
               # Delay aleatorio antes de encender (si no es "todas al mismo tiempo")
               - choose:
@@ -667,6 +698,17 @@ action:
                       - delay:
                           seconds: >
                             {{ range(random_on_delay_min, random_on_delay_max + 1) | random }}
+              
+              # ════════════════════════════════════════════════════════════
+              # VERIFICACIÓN ANTES DE ENCENDER
+              # ════════════════════════════════════════════════════════════
+              - condition: template
+                value_template: >
+                  {% if automation_control_entity | length > 0 %}
+                    {{ is_state(automation_control_entity[0], 'on') }}
+                  {% else %}
+                    true
+                  {% endif %}
               
               # Encender la luz actual
               - choose:
@@ -690,13 +732,35 @@ action:
                     {{ lights_currently_on + [current_entity_id] }}
               
               # Esperar tiempo aleatorio antes de apagar esta luz
-              - delay:
+              - wait_template: >
+                  {% if automation_control_entity | length > 0 %}
+                    {{ is_state(automation_control_entity[0], 'off') }}
+                  {% else %}
+                    false
+                  {% endif %}
+                timeout:
                   minutes: >
                     {% if duration_method == 'min_max_time' %}
                       {{ range(min_on_time, max_on_time + 1) | random }}
                     {% else %}
                       {{ range(min_on_time, max_on_time + 1) | random }}
                     {% endif %}
+                continue_on_timeout: true
+              
+              # Si se detuvo (wait_template se cumplió), salir
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {% if automation_control_entity | length > 0 %}
+                            {{ is_state(automation_control_entity[0], 'off') }}
+                          {% else %}
+                            false
+                          {% endif %}
+                    sequence:
+                      - variables:
+                          loop_interrupted: true
+                      - stop: "Automatización detenida por el usuario"
               
               # Apagar esta luz después del delay
               - choose:
@@ -742,24 +806,54 @@ action:
                     target:
                       entity_id: "{{ light_to_cleanup }}"
         
-        # Delay entre loops (si está habilitado el loop y no es la última iteración)
+        # Delay entre loops (si está habilitado el loop y sigue activo)
         - choose:
             - conditions:
                 - condition: template
                   value_template: >
-                    {{ enable_loop and (loop_count == 0 or repeat.index < loop_count) }}
+                    {{ enable_loop and not loop_interrupted }}
+                - condition: template
+                  value_template: >
+                    {% if automation_control_entity | length > 0 %}
+                      {{ is_state(automation_control_entity[0], 'on') }}
+                    {% else %}
+                      true
+                    {% endif %}
               sequence:
                 - delay:
                     minutes: >
                       {{ range(loop_delay_min, loop_delay_max + 1) | random }}
   
-  # Activar escena de salida si está habilitada
+  # ══════════════════════════════════════════════════════════════════════════
+  # ESCENAS DE SALIDA
+  # ══════════════════════════════════════════════════════════════════════════
+  
+  # Verificar si se completó normalmente o se interrumpió
   - choose:
+      # COMPLETADO NORMALMENTE - Activar escena de salida
       - conditions:
           - condition: template
             value_template: "{{ enable_exit_scene and exit_scene | length > 0 }}"
+          - condition: template
+            value_template: >
+              {% if automation_control_entity | length > 0 %}
+                {{ is_state(automation_control_entity[0], 'on') }}
+              {% else %}
+                true
+              {% endif %}
         sequence:
           - action: scene.turn_on
             target:
               entity_id: "{{ exit_scene[0] }}"
+    
+    # DETENIDO MANUALMENTE - Activar escena de emergencia
+    default:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ emergency_stop_scene | length > 0 }}"
+            sequence:
+              - action: scene.turn_on
+                target:
+                  entity_id: "{{ emergency_stop_scene[0] }}"
 

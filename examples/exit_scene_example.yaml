@@ -1,0 +1,60 @@
+# ========================================
+# ESCENA DE SALIDA - Para usar con la configuración optimizada
+# ========================================
+# 
+# INSTRUCCIONES PARA CREAR EN HOME ASSISTANT:
+# 1. Ve a Configuración → Automatizaciones y Escenas → Escenas
+# 2. Haz clic en "Agregar Escena"
+# 3. Copia y pega el contenido de abajo en modo YAML
+# 4. Guarda la escena con el nombre "Apagar Todos los Switches"
+# 
+# ========================================
+
+id: apagar_todos_los_switches
+name: Apagar Todos los Switches
+icon: mdi:power-off
+entities:
+  switch.3gang_switch_switch_1:
+    state: off
+  switch.4gang_switch_2_switch_1:
+    state: off
+  switch.sonoff_10025ffc47_1:
+    state: off
+  switch.4gang_switch_switch_1:
+    state: off
+  switch.3gang_switch_switch_2:
+    state: off
+  switch.bedroom_3_switch_switch_1:
+    state: off
+
+# ========================================
+# ESCENA ALTERNATIVA - Solo dejar luz de dormitorio
+# ========================================
+# 
+# Si prefieres dejar una luz encendida al terminar:
+
+# id: escena_final_con_luz_dormitorio
+# name: Escena Final - Solo Dormitorio
+# icon: mdi:sleep
+# entities:
+#   switch.3gang_switch_switch_1:
+#     state: off
+#   switch.4gang_switch_2_switch_1:
+#     state: off
+#   switch.sonoff_10025ffc47_1:
+#     state: off
+#   switch.4gang_switch_switch_1:
+#     state: off
+#   switch.3gang_switch_switch_2:
+#     state: off
+#   switch.bedroom_3_switch_switch_1:
+#     state: on  # <-- Este queda encendido
+
+# ========================================
+# NOTAS:
+# ========================================
+# - Esta escena se activará automáticamente al finalizar todas las repeticiones del loop
+# - Solo funciona si loop_count es un número específico (no 0/infinito)
+# - Puedes personalizar los estados como prefieras
+# - También puedes agregar otros dispositivos (luces, enchufes, etc.)
+
