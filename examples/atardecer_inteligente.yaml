@@ -1,0 +1,75 @@
+alias: Atardecer Inteligente
+description: >
+  Activa escena de anochecer 30 min después del ocaso.
+  Si Nico no está en casa, inicia simulación de presencia y notifica.
+  
+trigger:
+  - platform: sun
+    event: sunset
+    offset: "00:30:00"
+
+condition: []
+
+action:
+  # 1. Activar escena de anochecer
+  - service: scene.turn_on
+    target:
+      entity_id: scene.anochecer
+  
+  # 2. Log de inicio
+  - service: logbook.log
+    data:
+      name: "Atardecer Inteligente"
+      message: "Escena de anochecer activada - Verificando presencia"
+  
+  # 3. Verificar si Nico está en casa
+  - choose:
+      # Si NO está en casa (más de 100m)
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ (distance('device_tracker.blacky', 'zone.home') | float(0)) > 0.1 }}
+        sequence:
+          # Activar simulación de presencia
+          - service: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.presence_simulation
+          
+          # Log
+          - service: logbook.log
+            data:
+              name: "Atardecer Inteligente"
+              message: >-
+                Simulación de presencia iniciada - Nico fuera de casa
+                ({{ (distance('device_tracker.blacky', 'zone.home') * 1000) | round(0) }} m)
+          
+          # Notificar
+          - service: notify.mobile_app_blacky
+            data:
+              title: "🌆 Atardecer - Simulación Activada"
+              message: >-
+                Se activó la escena de anochecer y la simulación de presencia
+                porque no estás en casa. Distancia: {{ (distance('device_tracker.blacky', 'zone.home') * 1000) | round(0) }} m
+              data:
+                push:
+                  interruption-level: time-sensitive
+                actions:
+                  - action: "STOP_SIMULATION"
+                    title: "Detener simulación"
+    
+    # Si SÍ está en casa
+    default:
+      # Log
+      - service: logbook.log
+        data:
+          name: "Atardecer Inteligente"
+          message: "Escena activada - Nico en casa, sin simulación"
+      
+      # Notificación opcional (comentada por defecto)
+      # - service: notify.mobile_app_blacky
+      #   data:
+      #     title: "🌆 Atardecer"
+      #     message: "Escena de anochecer activada. Estás en casa."
+
+mode: single
+

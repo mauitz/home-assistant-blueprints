@@ -1,7 +1,7 @@
 # 📋 AUDITORÍA DE AUTOMATIZACIONES - Home Assistant
 
-**Fecha**: 13 de Noviembre, 2025  
-**Total automatizaciones**: 13  
+**Fecha**: 13 de Noviembre, 2025
+**Total automatizaciones**: 13
 **Estado**: Auditoría completa realizada
 
 ---
@@ -14,7 +14,7 @@
 | **Obsoletas (v1.3)** | 5 | ❌ Eliminar |
 | **Duplicadas** | 2 | ⚠️ Consolidar en 1 |
 
-**Recomendación**: Eliminar 5 automatizaciones y consolidar 2 duplicadas.  
+**Recomendación**: Eliminar 5 automatizaciones y consolidar 2 duplicadas.
 **Resultado**: De 13 → 7 automatizaciones (-46% de limpieza)
 
 ---
@@ -135,7 +135,7 @@ Con el **Blueprint v1.3**, estas automatizaciones son **completamente redundante
 
 Tienes **2 automatizaciones que hacen exactamente lo mismo**:
 
-### **12. Presencia - ON al activar scene.anocheser** 
+### **12. Presencia - ON al activar scene.anocheser**
 - **Entity ID**: `automation.presencia_on_al_activar_scene_anocheser`
 - **Estado**: 🟢 ON
 - **Última ejecución**: Nunca

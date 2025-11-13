@@ -1,0 +1,59 @@
+alias: Regreso a Casa - Desactivar Simulación
+description: >
+  Cuando Nico vuelve a casa, si la simulación de presencia está activa,
+  la desactiva, aplica escena de salida y notifica.
+
+trigger:
+  - platform: zone
+    entity_id: device_tracker.blacky
+    zone: zone.home
+    event: enter
+
+condition:
+  # Solo ejecutar si la simulación está activa
+  - condition: state
+    entity_id: input_boolean.presence_simulation
+    state: "on"
+
+action:
+  # 1. Log de detección
+  - service: logbook.log
+    data:
+      name: "Regreso a Casa"
+      message: "Nico regresó a casa - Desactivando simulación"
+  
+  # 2. Desactivar simulación de presencia
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.presence_simulation
+  
+  # 3. Esperar 2 segundos para que el blueprint termine correctamente
+  - delay:
+      seconds: 2
+  
+  # 4. Activar escena de salida
+  # Nota: El blueprint tiene configurada scene.bedtime como exit_scene
+  # Se activará automáticamente, pero podemos forzarla aquí si queremos
+  - service: scene.turn_on
+    target:
+      entity_id: scene.bedtime
+  
+  # 5. Log de finalización
+  - service: logbook.log
+    data:
+      name: "Regreso a Casa"
+      message: "Simulación desactivada - Escena de salida aplicada"
+  
+  # 6. Notificar
+  - service: notify.mobile_app_blacky
+    data:
+      title: "🏠 Bienvenido a Casa"
+      message: >-
+        La simulación de presencia se desactivó automáticamente
+        porque regresaste a casa a las {{ now().strftime('%H:%M') }}.
+      data:
+        push:
+          interruption-level: time-sensitive
+
+mode: single
+

@@ -87,7 +87,7 @@ automations = [s for s in states if s['entity_id'].startswith('automation.')]
 
 #### **2. Ver Detalles de una Automatización**
 ```python
-auto = requests.get(f"{url}/api/states/automation.presence_simulation", 
+auto = requests.get(f"{url}/api/states/automation.presence_simulation",
                    headers=headers).json()
 
 print(auto['state'])  # 'on' o 'off'

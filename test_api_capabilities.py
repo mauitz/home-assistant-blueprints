@@ -23,22 +23,22 @@ def test_api_capabilities():
     print("\n" + "="*70)
     print("  🔬 CAPACIDADES DE LA API DE HOME ASSISTANT")
     print("="*70 + "\n")
-    
+
     capabilities = {
         'read': [],
         'write': [],
         'limited': [],
         'not_available': []
     }
-    
+
     # ══════════════════════════════════════════════════════════════════════
     # LECTURA (GET)
     # ══════════════════════════════════════════════════════════════════════
-    
+
     print("─"*70)
     print("  📖 CAPACIDADES DE LECTURA (GET)")
     print("─"*70 + "\n")
-    
+
     # 1. Ver estados de entidades
     try:
         response = requests.get(f"{url_base}/api/states", headers=headers, timeout=5)
@@ -53,7 +53,7 @@ def test_api_capabilities():
             print(f"❌ Ver estados: HTTP {response.status_code}")
     except Exception as e:
         print(f"❌ Ver estados: {e}")
-    
+
     # 2. Ver estado específico
     try:
         response = requests.get(f"{url_base}/api/states/automation.presence_simulation", headers=headers, timeout=5)
@@ -68,7 +68,7 @@ def test_api_capabilities():
             print(f"❌ Ver estado específico: HTTP {response.status_code}")
     except Exception as e:
         print(f"❌ Ver estado específico: {e}")
-    
+
     # 3. Ver servicios disponibles
     try:
         response = requests.get(f"{url_base}/api/services", headers=headers, timeout=5)
@@ -76,7 +76,7 @@ def test_api_capabilities():
             services = response.json()
             print(f"\n✅ Ver servicios disponibles")
             print(f"   • Total dominios: {len(services)}")
-            
+
             # Buscar automation
             for service in services:
                 if service.get('domain') == 'automation':
@@ -87,7 +87,7 @@ def test_api_capabilities():
             print(f"❌ Ver servicios: HTTP {response.status_code}")
     except Exception as e:
         print(f"❌ Ver servicios: {e}")
-    
+
     # 4. Ver configuración
     try:
         response = requests.get(f"{url_base}/api/config", headers=headers, timeout=5)
@@ -101,7 +101,7 @@ def test_api_capabilities():
             print(f"❌ Ver configuración: HTTP {response.status_code}")
     except Exception as e:
         print(f"❌ Ver configuración: {e}")
-    
+
     # 5. Ver eventos
     try:
         response = requests.get(f"{url_base}/api/events", headers=headers, timeout=5)
@@ -114,15 +114,15 @@ def test_api_capabilities():
             print(f"❌ Ver eventos: HTTP {response.status_code}")
     except Exception as e:
         print(f"❌ Ver eventos: {e}")
-    
+
     # ══════════════════════════════════════════════════════════════════════
     # ESCRITURA (POST)
     # ══════════════════════════════════════════════════════════════════════
-    
+
     print("\n" + "─"*70)
     print("  ✍️  CAPACIDADES DE ESCRITURA (POST)")
     print("─"*70 + "\n")
-    
+
     # 1. Llamar servicios
     print("✅ Llamar servicios (automation.turn_on, automation.trigger, etc.)")
     print("   Endpoint: POST /api/services/{domain}/{service}")
@@ -132,28 +132,28 @@ def test_api_capabilities():
     print("   • automation.trigger - Ejecutar automatización manualmente")
     print("   • automation.reload - Recargar automatizaciones")
     capabilities['write'].append('Llamar servicios (turn_on, turn_off, trigger, reload)')
-    
+
     # 2. Cambiar estados (limitado)
     print("\n⚠️  Cambiar estados directamente")
     print("   Endpoint: POST /api/states/{entity_id}")
     print("   Limitación: Solo para entidades virtuales/sensores custom")
     print("   ❌ NO funciona para automatizaciones (se gestionan por servicios)")
     capabilities['limited'].append('Cambiar estados (solo entidades específicas)')
-    
+
     # 3. Disparar eventos
     print("\n✅ Disparar eventos")
     print("   Endpoint: POST /api/events/{event_type}")
     print("   Uso: Activar automatizaciones basadas en eventos")
     capabilities['write'].append('Disparar eventos personalizados')
-    
+
     # ══════════════════════════════════════════════════════════════════════
     # NO DISPONIBLE VÍA API REST
     # ══════════════════════════════════════════════════════════════════════
-    
+
     print("\n" + "─"*70)
     print("  ❌ NO DISPONIBLE VÍA API REST")
     print("─"*70 + "\n")
-    
+
     not_available = [
         "Crear nuevas automatizaciones",
         "Modificar configuración YAML de automatizaciones",
@@ -165,25 +165,25 @@ def test_api_capabilities():
         "Acceso a configuration.yaml",
         "Acceso a automations.yaml"
     ]
-    
+
     for item in not_available:
         print(f"   ❌ {item}")
         capabilities['not_available'].append(item)
-    
+
     print("\n   ℹ️  Estas operaciones requieren:")
     print("      • Interfaz web de Home Assistant")
     print("      • Acceso SSH al servidor")
     print("      • File Editor add-on")
     print("      • Studio Code Server add-on")
-    
+
     # ══════════════════════════════════════════════════════════════════════
     # GESTIÓN DE AUTOMATIZACIONES VÍA API
     # ══════════════════════════════════════════════════════════════════════
-    
+
     print("\n" + "─"*70)
     print("  🤖 QUÉ PUEDO HACER CON AUTOMATIZACIONES")
     print("─"*70 + "\n")
-    
+
     automation_capabilities = {
         '✅ VER': [
             'Listar todas las automatizaciones',
@@ -208,35 +208,35 @@ def test_api_capabilities():
             'Editar condiciones/acciones'
         ]
     }
-    
+
     for category, items in automation_capabilities.items():
         print(f"{category}:")
         for item in items:
             print(f"   • {item}")
         print()
-    
+
     # ══════════════════════════════════════════════════════════════════════
     # RESUMEN
     # ══════════════════════════════════════════════════════════════════════
-    
+
     print("="*70)
     print("  📊 RESUMEN DE CAPACIDADES")
     print("="*70 + "\n")
-    
+
     print(f"✅ Lectura: {len(capabilities['read'])} capacidades")
     print(f"✅ Escritura: {len(capabilities['write'])} capacidades")
     print(f"⚠️  Limitadas: {len(capabilities['limited'])} capacidades")
     print(f"❌ No disponibles: {len(capabilities['not_available'])} operaciones")
-    
+
     print("\n" + "="*70)
     print("  💡 RECOMENDACIÓN")
     print("="*70 + "\n")
-    
+
     print("Para gestión completa de automatizaciones:")
     print("  1. 📖 LECTURA/MONITOREO → Usar API REST ✅")
     print("  2. 🎮 CONTROL (on/off/trigger) → Usar API REST ✅")
     print("  3. ✏️  EDICIÓN/CREACIÓN → Usar Interfaz Web o SSH ⚠️")
-    
+
     print("\n" + "="*70 + "\n")
 
 if __name__ == '__main__':
