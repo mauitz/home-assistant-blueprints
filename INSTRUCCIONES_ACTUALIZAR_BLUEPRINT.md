@@ -76,13 +76,13 @@ Una vez que el blueprint esté actualizado:
    - Click en "⋮" → "Edit in YAML"
    - Busca la sección `input:`
    - **Agrega al INICIO**:
-   
+
    ```yaml
    use_blueprint:
      path: mauitz/pezaustral_presence_simulation.yaml
      input:
        enable_monitoring: true  # ← NUEVO EN V1.3
-       
+
        # ... resto de tus inputs (no cambiar)
        automation_control_entity:
          - input_boolean.presence_simulation
