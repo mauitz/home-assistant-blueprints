@@ -57,3 +57,6 @@ venv/
 .coverage
 htmlcov/
 
+
+# Backups temporales
+*_backup.yaml
