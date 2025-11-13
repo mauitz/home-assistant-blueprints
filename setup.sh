@@ -65,8 +65,10 @@ echo "              🔍 TESTEANDO CONEXIÓN"
 echo "────────────────────────────────────────────────────────────────"
 echo ""
 
-# Load .env
-export $(cat .env | xargs)
+# Load .env (ignorar comentarios)
+set -a
+source .env
+set +a
 
 # Test connection
 python3 ha_manager.py test
