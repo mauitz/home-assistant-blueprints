@@ -360,5 +360,5 @@ MIT License - Libre para uso personal y comercial.
 
 ---
 
-*Home Assistant Blueprints - Automatización Inteligente con IA*  
+*Home Assistant Blueprints - Automatización Inteligente con IA*
 *Actualizado: 2025-11-14*
