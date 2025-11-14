@@ -109,8 +109,8 @@ docker pull ghcr.io/home-assistant/home-assistant:stable
 docker run -d \
   --name homeassistant \
   --restart=unless-stopped \
-  -e TZ=America/Santiago \
-  -v /PATH_TO_YOUR_CONFIG:/config \
+  -e TZ=America/Montevideo \
+  -v /opt/server/containers/homeassistant/config:/config \
   --network=host \
   ghcr.io/home-assistant/home-assistant:stable
 
@@ -275,4 +275,5 @@ Una vez que todo funciona:
 ---
 
 **¿Listo para empezar? Dime cuando hayas hecho el backup para continuar.** 🚀
+
 
