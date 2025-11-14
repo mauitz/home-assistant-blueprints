@@ -422,7 +422,7 @@ views:
             icon: mdi:home-city-outline
             tap_action:
               action: navigate
-              navigation_path: /lovelace-areas/0
+              navigation_path: /dashboard-areas/0
             styles:
               card:
                 - height: 60px
