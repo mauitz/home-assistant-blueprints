@@ -1,0 +1,344 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Dashboard Maui V3.1 - Con Alertas de Cámaras AGRANDADAS
+# Versión: 3.1
+# Estética: Minimalista, oscura, profesional
+# MEJORA: Widget de cámaras se agranda a 2 columnas cuando hay alerta
+# ════════════════════════════════════════════════════════════════════════════
+
+title: Maui
+views:
+  - title: Principal
+    path: home
+    icon: mdi:home
+    theme: maui_dark
+    type: custom:grid-layout  # ← ESTO HABILITA EL AGRANDAMIENTO
+    layout:
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))
+      grid-gap: 16px
+    badges: []
+    cards:
+      # ═══════════════════════════════════════════════════════════════════
+      # TÍTULO: CÁMARAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # Cámaras
+        view_layout:
+          grid-column: 1 / -1  # Ocupa todo el ancho
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              padding: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ MODO NORMAL: Ambas cámaras en tamaño estándar              │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "none"
+        card:
+          type: vertical-stack
+          cards:
+            # Cámara Entrada
+            - type: picture-entity
+              entity: camera.tapo_c530ws_entrada_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "16:9"
+              card_mod:
+                style: |
+                  ha-card {
+                    border-radius: 8px;
+                    overflow: hidden;
+                    border: 1px solid #2A2A2A;
+                  }
+
+            # Cámara Exterior
+            - type: picture-entity
+              entity: camera.tapo_c310_exterior_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "16:9"
+              card_mod:
+                style: |
+                  ha-card {
+                    border-radius: 8px;
+                    overflow: hidden;
+                    border: 1px solid #2A2A2A;
+                    margin-top: 12px;
+                  }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ ALERTA ENTRADA: Cámara AGRANDADA (ocupa 2 columnas)        │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "entrada"
+        card:
+          type: picture-entity
+          entity: camera.tapo_c530ws_entrada_live_view
+          camera_view: live
+          show_name: true
+          show_state: false
+          aspect_ratio: "21:9"
+        view_layout:
+          grid-column: span 2  # ← ESTO AGRANDA EL WIDGET A 2 COLUMNAS
+        card_mod:
+          style: |
+            ha-card {
+              border-radius: 12px;
+              overflow: hidden;
+              border: 3px solid #EF4444;
+              box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+              animation: pulse-red 2s ease-in-out infinite;
+            }
+            @keyframes pulse-red {
+              0%, 100% {
+                box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+              }
+              50% {
+                box-shadow: 0 0 32px rgba(239, 68, 68, 0.8);
+              }
+            }
+            ha-card::before {
+              content: "🚨 DETECCIÓN ACTIVA";
+              position: absolute;
+              top: 12px;
+              right: 12px;
+              background: rgba(239, 68, 68, 0.9);
+              color: white;
+              padding: 8px 16px;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 14px;
+              z-index: 10;
+              animation: blink 1s ease-in-out infinite;
+            }
+            @keyframes blink {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ ALERTA EXTERIOR: Cámara AGRANDADA (ocupa 2 columnas)       │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "exterior"
+        card:
+          type: picture-entity
+          entity: camera.tapo_c310_exterior_live_view
+          camera_view: live
+          show_name: true
+          show_state: false
+          aspect_ratio: "21:9"
+        view_layout:
+          grid-column: span 2  # ← ESTO AGRANDA EL WIDGET A 2 COLUMNAS
+        card_mod:
+          style: |
+            ha-card {
+              border-radius: 12px;
+              overflow: hidden;
+              border: 3px solid #F97316;
+              box-shadow: 0 0 24px rgba(249, 115, 22, 0.5);
+              animation: pulse-orange 2s ease-in-out infinite;
+            }
+            @keyframes pulse-orange {
+              0%, 100% {
+                box-shadow: 0 0 24px rgba(249, 115, 22, 0.5);
+              }
+              50% {
+                box-shadow: 0 0 32px rgba(249, 115, 22, 0.8);
+              }
+            }
+            ha-card::before {
+              content: "🚨 DETECCIÓN ACTIVA";
+              position: absolute;
+              top: 12px;
+              right: 12px;
+              background: rgba(249, 115, 22, 0.9);
+              color: white;
+              padding: 8px 16px;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 14px;
+              z-index: 10;
+              animation: blink 1s ease-in-out infinite;
+            }
+            @keyframes blink {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 2: ESCENAS RÁPIDAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # Escenas
+        view_layout:
+          grid-column: 1 / -1
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+              margin-top: 24px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      - type: custom:button-card
+        entity: scene.amanecer
+        name: Amanecer
+        icon: mdi:weather-sunset-up
+        tap_action:
+          action: call-service
+          service: scene.turn_on
+          service_data:
+            entity_id: scene.amanecer
+        styles:
+          card:
+            - height: 100px
+          icon:
+            - width: 40px
+            - color: '#FDB813'
+          name:
+            - font-size: 14px
+
+      - type: custom:button-card
+        entity: scene.nightfall
+        name: Anochecer
+        icon: mdi:weather-sunset-down
+        tap_action:
+          action: call-service
+          service: scene.turn_on
+          service_data:
+            entity_id: scene.nightfall
+        styles:
+          card:
+            - height: 100px
+          icon:
+            - width: 40px
+            - color: '#4F46E5'
+          name:
+            - font-size: 14px
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 3: ÁREAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # Áreas
+        view_layout:
+          grid-column: 1 / -1
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+              margin-top: 24px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      - type: custom:button-card
+        name: Ver Todas las Áreas  →
+        icon: mdi:home-city-outline
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-areas/0
+        styles:
+          card:
+            - height: 60px
+            - background: "linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)"
+            - border: none
+            - border-radius: 12px
+            - box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3)
+            - cursor: pointer
+          icon:
+            - width: 28px
+            - height: 28px
+            - color: white
+          name:
+            - font-size: 14px
+            - font-weight: 500
+            - color: white
+            - letter-spacing: 0.5px
+        card_mod:
+          style: |
+            ha-card:hover {
+              background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%) !important;
+              transform: translateY(-2px);
+              box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4) !important;
+              transition: all 0.3s ease;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 4: SIMULACIÓN DE PRESENCIA (Condicional)
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: input_boolean.presence_simulation_running
+            state: 'on'
+        card:
+          type: vertical-stack
+          view_layout:
+            grid-column: 1 / -1
+          cards:
+            - type: markdown
+              content: |
+                # Simulación de Presencia Activa
+              card_mod:
+                style: |
+                  ha-card {
+                    background: none;
+                    box-shadow: none;
+                    margin-bottom: -12px;
+                    margin-top: 24px;
+                  }
+                  h1 {
+                    font-size: 18px;
+                    font-weight: 400;
+                    margin: 0;
+                    color: #A0A0A0;
+                    letter-spacing: 0.5px;
+                  }
+
+            - type: entities
+              entities:
+                - entity: input_boolean.presence_simulation_running
+                  name: Estado
+                - entity: sensor.presence_simulation_progress
+                  name: Loops completados
+                - entity: sensor.presence_simulation_status_summary
+                  name: Estado actual
+
