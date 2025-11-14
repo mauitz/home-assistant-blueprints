@@ -1,0 +1,235 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Dashboard Maui V3.1 - VERSIÓN SIMPLE (SIN custom cards)
+# Versión: 3.1 Simple
+# Estética: Minimalista, oscura, profesional
+# VENTAJA: NO requiere HACS, solo componentes nativos de HA
+# ════════════════════════════════════════════════════════════════════════════
+
+title: Maui V3.1
+views:
+  - title: Principal
+    path: home
+    icon: mdi:home
+    theme: maui_dark
+    badges: []
+    cards:
+      # ═══════════════════════════════════════════════════════════════════
+      # TÍTULO: CÁMARAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # 📹 Cámaras
+        style: |
+          ha-card {
+            background: none;
+            box-shadow: none;
+            padding: 16px 0 0 0;
+          }
+          ha-markdown {
+            color: #A0A0A0;
+            font-size: 18px;
+            font-weight: 400;
+          }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ MODO NORMAL: Ambas cámaras en tamaño estándar              │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "none"
+        card:
+          type: vertical-stack
+          cards:
+            # Cámara Entrada
+            - type: picture-entity
+              entity: camera.tapo_c530ws_entrada_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "16:9"
+
+            # Cámara Exterior
+            - type: picture-entity
+              entity: camera.tapo_c310_exterior_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "16:9"
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ ALERTA ENTRADA: Cámara AGRANDADA                            │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "entrada"
+        card:
+          type: vertical-stack
+          cards:
+            # Badge de alerta
+            - type: markdown
+              content: |
+                ## 🚨 DETECCIÓN ACTIVA - ENTRADA
+              style: |
+                ha-card {
+                  background: rgba(239, 68, 68, 0.2);
+                  border: 2px solid #EF4444;
+                  border-radius: 8px;
+                  padding: 8px;
+                  text-align: center;
+                }
+                ha-markdown {
+                  color: #EF4444;
+                  font-size: 16px;
+                  font-weight: 600;
+                  margin: 0;
+                }
+
+            # Cámara agrandada
+            - type: picture-entity
+              entity: camera.tapo_c530ws_entrada_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "21:9"
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ ALERTA EXTERIOR: Cámara AGRANDADA                           │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "exterior"
+        card:
+          type: vertical-stack
+          cards:
+            # Badge de alerta
+            - type: markdown
+              content: |
+                ## 🚨 DETECCIÓN ACTIVA - EXTERIOR
+              style: |
+                ha-card {
+                  background: rgba(249, 115, 22, 0.2);
+                  border: 2px solid #F97316;
+                  border-radius: 8px;
+                  padding: 8px;
+                  text-align: center;
+                }
+                ha-markdown {
+                  color: #F97316;
+                  font-size: 16px;
+                  font-weight: 600;
+                  margin: 0;
+                }
+
+            # Cámara agrandada
+            - type: picture-entity
+              entity: camera.tapo_c310_exterior_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "21:9"
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 2: ESCENAS RÁPIDAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # 🎨 Escenas
+        style: |
+          ha-card {
+            background: none;
+            box-shadow: none;
+            padding: 24px 0 0 0;
+          }
+          ha-markdown {
+            color: #A0A0A0;
+            font-size: 18px;
+            font-weight: 400;
+          }
+
+      - type: horizontal-stack
+        cards:
+          - type: button
+            entity: scene.amanecer
+            name: Amanecer
+            icon: mdi:weather-sunset-up
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.amanecer
+            icon_height: 40px
+
+          - type: button
+            entity: scene.nightfall
+            name: Anochecer
+            icon: mdi:weather-sunset-down
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              service_data:
+                entity_id: scene.nightfall
+            icon_height: 40px
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 3: ÁREAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # 🏠 Áreas
+        style: |
+          ha-card {
+            background: none;
+            box-shadow: none;
+            padding: 24px 0 0 0;
+          }
+          ha-markdown {
+            color: #A0A0A0;
+            font-size: 18px;
+            font-weight: 400;
+          }
+
+      - type: button
+        name: Ver Todas las Áreas →
+        icon: mdi:home-city-outline
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-areas/0
+        icon_height: 28px
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 4: SIMULACIÓN DE PRESENCIA (Condicional)
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: input_boolean.presence_simulation_running
+            state: 'on'
+        card:
+          type: vertical-stack
+          cards:
+            - type: markdown
+              content: |
+                # ⚡ Simulación de Presencia Activa
+              style: |
+                ha-card {
+                  background: none;
+                  box-shadow: none;
+                  padding: 24px 0 0 0;
+                }
+                ha-markdown {
+                  color: #A0A0A0;
+                  font-size: 18px;
+                  font-weight: 400;
+                }
+
+            - type: entities
+              entities:
+                - entity: input_boolean.presence_simulation_running
+                  name: Estado
+                - entity: sensor.presence_simulation_progress
+                  name: Loops completados
+                - entity: sensor.presence_simulation_status_summary
+                  name: Estado actual
+
