@@ -159,7 +159,7 @@ cameras:
   # ──────────────────────────────────────────────────────────────
   entrada:
     enabled: true
-    
+
     # Stream RTSP de la cámara
     ffmpeg:
       inputs:
@@ -167,18 +167,18 @@ cameras:
           roles:
             - detect
             - record
-    
+
     # Resolución nativa de C530WS
     detect:
       width: 1920
       height: 1080
       fps: 5              # FPS para detección (5 es suficiente)
-    
+
     # Zonas de detección (opcional)
     motion:
       mask:
         # - 0,0,0,200,200,200,200,0  # Ejemplo: ignorar esquina superior izquierda
-    
+
     # Objetos específicos para esta cámara
     objects:
       track:
@@ -190,7 +190,7 @@ cameras:
         person:
           min_area: 5000
           threshold: 0.75  # Más estricto para entrada
-    
+
     # Snapshots
     snapshots:
       enabled: true
@@ -198,7 +198,7 @@ cameras:
       bounding_box: true
       crop: false
       required_zones: []
-    
+
     # Grabación
     record:
       enabled: true
@@ -215,19 +215,19 @@ cameras:
   # ──────────────────────────────────────────────────────────────
   exterior:
     enabled: true
-    
+
     ffmpeg:
       inputs:
         - path: rtsp://USUARIO:PASSWORD@192.168.1.XXX:554/stream1
           roles:
             - detect
             - record
-    
+
     detect:
       width: 1920
       height: 1080
       fps: 5
-    
+
     objects:
       track:
         - person
@@ -244,12 +244,12 @@ cameras:
         car:
           min_area: 10000
           threshold: 0.7
-    
+
     snapshots:
       enabled: true
       timestamp: true
       bounding_box: true
-    
+
     record:
       enabled: true
       retain:
@@ -321,14 +321,14 @@ services:
     container_name: frigate
     image: ghcr.io/blakeblackshear/frigate:stable
     restart: unless-stopped
-    
+
     # Privilegios necesarios
     privileged: true
-    
+
     # Compartir dispositivos (si tienes Coral USB)
     # devices:
     #   - /dev/bus/usb:/dev/bus/usb
-    
+
     # Volúmenes
     volumes:
       - /etc/localtime:/etc/localtime:ro
@@ -338,26 +338,26 @@ services:
         target: /tmp/cache
         tmpfs:
           size: 1000000000  # 1GB de RAM para cache
-    
+
     # Puertos
     ports:
       - "5000:5000"  # UI Web de Frigate
       - "8554:8554"  # RTSP restream
       - "8555:8555/tcp"  # WebRTC
       - "8555:8555/udp"
-    
+
     # Variables de entorno
     environment:
       - FRIGATE_RTSP_PASSWORD=mipassword123  # Password para streams de Frigate
       - TZ=America/Santiago  # Tu zona horaria
-    
+
     # Recursos (limitar uso de CPU/RAM)
     deploy:
       resources:
         limits:
           cpus: '2.0'      # Máximo 2 cores
           memory: 2G       # Máximo 2GB RAM
-    
+
     # Healthcheck
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/version"]

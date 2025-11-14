@@ -1,243 +1,364 @@
-# 🏠 Home Assistant Blueprints
+# 🏠 Home Assistant - Automatizaciones Avanzadas
 
-Colección de blueprints para Home Assistant, enfocados en automatización inteligente y simulación de presencia.
+Colección completa de blueprints, automatizaciones y dashboards para Home Assistant, con enfoque en simulación de presencia, detección inteligente con IA y UI moderna.
 
 ---
 
-## 📦 Blueprints Disponibles
+## 📦 **COMPONENTES PRINCIPALES**
 
-### 🏠 PezAustral Presence Simulation
-**Versión:** 1.1 (Fixed - Nov 2025)
+### 🎯 **1. Presence Simulation Blueprint (v1.3)**
 
-Simulación avanzada de presencia con control de lámparas simultáneas y detención inmediata.
+Simulación inteligente de presencia con monitoreo integrado y control de lámparas simultáneas.
 
 **Características:**
-- Control de lámparas simultáneas (límite configurable)
-- Apagado inteligente en paralelo
-- Loop configurable (0-50 o infinito)
-- **Detención inmediata** (< 5 segundos) 🆕
-- Escena de parada de emergencia 🆕
-- Múltiples triggers (tiempo, sol, luz, entidades)
-- Control por zona y personas
+- ✅ Monitoreo integrado (loops, luces activas, tiempo de ejecución)
+- ✅ Control de lámparas simultáneas configurable
+- ✅ Detención inmediata (< 5 segundos)
+- ✅ Loops configurables (0-50 o infinito)
+- ✅ Múltiples triggers (tiempo, elevación solar, sensores)
+- ✅ Logging detallado para debugging
 
 **Instalación:**
-```
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/TU_USUARIO/home-assistant-blueprints/blob/main/blueprints/pezaustral_presence_simulation.yaml)
+```yaml
+Configuración → Blueprints → Importar
+URL: https://github.com/mauitz/home-assistant-blueprints/blob/main/blueprints/pezaustral_presence_simulation.yaml
 ```
 
-**Documentación:**
-- [README](docs/pezaustral_presence_simulation/README.md)
-- [Troubleshooting](docs/pezaustral_presence_simulation/TROUBLESHOOTING.md)
-- [Changelog](docs/pezaustral_presence_simulation/CHANGELOG.md)
-- [Ejemplos](/examples/)
-
-**Basado en:** [Holiday & Away Lighting by Blackshome](https://gist.github.com/Blackshome/0a34870755762bcb9fab159d5b94fd25)
+**Documentación completa:** [docs/pezaustral_presence_simulation/](docs/pezaustral_presence_simulation/)
 
 ---
 
-### 🔄 Tuya-Sonoff Sync
-**Versión:** 1.0
+### 📸 **2. Sistema de Detección con Frigate NVR**
 
-Sincronización bidireccional entre dos switches (ej: Tuya ↔ Sonoff) con protección anti-loop.
+Detección de objetos con IA (YOLO) usando Frigate para personas, vehículos y animales.
 
 **Características:**
-- Sincronización ON/OFF bidireccional
-- Protección anti-loop
-- Debounce configurable
-- Modo queued
+- 🚨 Detección de personas (alerta crítica)
+- 🚗 Detección de vehículos (alerta normal)
+- 🐕 Detección de animales (alerta silenciosa)
+- 📷 Snapshots con bounding boxes
+- 🔔 Notificaciones push diferenciadas
+- 🎛️ Widget de dashboard con estados en tiempo real
+- 🔊 Activación de sirenas y floodlights
+
+**Cámaras soportadas:**
+- Tapo C530WS (Entrada) - Personas + Vehículos
+- Tapo C310 (Exterior) - Personas + Vehículos + Animales
+
+**Instalación:** [INSTALAR_FRIGATE_SERVIDOR.md](INSTALAR_FRIGATE_SERVIDOR.md)
+
+**Automatizaciones:** [examples/camera_alert_system_v3.3_frigate.yaml](examples/camera_alert_system_v3.3_frigate.yaml)
+
+---
+
+### 🌆 **3. Atardecer Inteligente**
+
+Automatizaciones para gestión inteligente de iluminación al atardecer y control de simulación de presencia.
+
+**Características:**
+- 🌅 Activa escena "Anochecer" 30 min después del ocaso
+- 🏠 Detecta si usuario está en casa
+- 🔐 Activa simulación de presencia si no hay nadie
+- 🔔 Notificaciones push al activar/desactivar
+- 🚪 Desactivación automática al regresar a casa
+
+**Automatizaciones:**
+- [examples/atardecer_inteligente.yaml](examples/atardecer_inteligente.yaml)
+- [examples/regreso_casa_desactivar_simulacion.yaml](examples/regreso_casa_desactivar_simulacion.yaml)
+
+**Documentación:** [docs/ATARDECER_INTELIGENTE.md](docs/ATARDECER_INTELIGENTE.md)
+
+---
+
+### 🎨 **4. Dashboard Maui**
+
+Dashboard moderno y profesional con diseño oscuro y funcionalidad avanzada.
+
+**Características:**
+- 📹 Vistas de cámaras en tiempo real
+- 🎭 Botones de escenas con acceso rápido
+- 📍 Widget de áreas (navegación al dashboard nativo)
+- 📊 Widget de monitoreo de Frigate (personas/vehículos/animales)
+- 📸 Cámaras dinámicas que se agrandan al detectar alertas
+- 🎨 Tema oscuro profesional (Maui Dark)
+
+**Dashboard:** [dashboards/maui_dashboard_v3.1.yaml](dashboards/maui_dashboard_v3.1.yaml)
+
+**Tema:** [themes/maui_theme.yaml](themes/maui_theme.yaml)
+
+**Documentación:** [docs/FRIGATE_QUICK_START.md](docs/FRIGATE_QUICK_START.md)
+
+---
+
+### 🔄 **5. Tuya-Sonoff Sync**
+
+Sincronización bidireccional entre switches Tuya y Sonoff con protección anti-loop.
 
 **Instalación:**
-```
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/TU_USUARIO/home-assistant-blueprints/blob/main/blueprints/tuya_sonoff_sync.yaml)
+```yaml
+Configuración → Blueprints → Importar
+URL: https://github.com/mauitz/home-assistant-blueprints/blob/main/blueprints/tuya_sonoff_sync.yaml
 ```
 
 ---
 
-## 📂 Estructura del Repositorio
+## 📂 **ESTRUCTURA DEL PROYECTO**
 
 ```
 home-assistant-blueprints/
-├── blueprints/                          # Blueprints principales
-│   ├── pezaustral_presence_simulation.yaml
+├── blueprints/                              # Blueprints principales
+│   ├── pezaustral_presence_simulation.yaml  # v1.3 con monitoreo integrado
+│   ├── pezaustral_presence_simulation_v1.3.yaml
 │   └── tuya_sonoff_sync.yaml
-├── examples/                            # Ejemplos de configuración
-│   ├── presence_simulation_config.yaml       # Config básica
-│   ├── presence_simulation_optimized.yaml    # Config optimizada
-│   ├── presence_simulation_helpers.yaml      # Helpers para monitoring
-│   ├── presence_simulation_monitoring.yaml   # Automatizaciones auxiliares
-│   ├── dashboard_card.yaml                   # Tarjeta dashboard
-│   └── exit_scene_example.yaml               # Escena de ejemplo
-├── docs/                                # Documentación
-│   ├── pezaustral_presence_simulation/
+│
+├── dashboards/                              # Dashboards Lovelace
+│   ├── maui_dashboard_v3.1.yaml             # Dashboard principal
+│   ├── maui_templates/                      # Templates reutilizables
+│   └── maui_views/                          # Vistas modulares
+│
+├── themes/                                  # Temas personalizados
+│   └── maui_theme.yaml                      # Tema oscuro profesional
+│
+├── examples/                                # Configuraciones de ejemplo
+│   ├── atardecer_inteligente.yaml           # Automatización atardecer
+│   ├── regreso_casa_desactivar_simulacion.yaml
+│   ├── camera_alert_system_v3.3_frigate.yaml # Automatizaciones Frigate
+│   ├── camera_alert_helpers.yaml            # Helpers para alertas
+│   ├── frigate_config.yml                   # Config de Frigate
+│   ├── presence_simulation_config.yaml      # Config básica de simulación
+│   ├── presence_simulation_helpers.yaml     # Helpers para monitoreo
+│   └── exit_scene_example.yaml              # Escena de salida
+│
+├── docs/                                    # Documentación completa
+│   ├── pezaustral_presence_simulation/      # Docs del blueprint
 │   │   ├── README.md
 │   │   ├── TROUBLESHOOTING.md
 │   │   └── CHANGELOG.md
-│   └── monitoring/
-│       └── README.md
-└── README.md                            # Este archivo
+│   ├── ATARDECER_INTELIGENTE.md             # Atardecer inteligente
+│   ├── CAMARAS_TAPO_INTEGRACION_CORRECTA.md # Integración Tapo
+│   ├── FRIGATE_INSTALACION_COMPLETA.md      # Instalación Frigate detallada
+│   ├── FRIGATE_QUICK_START.md               # Quick start Frigate
+│   ├── IMPLEMENTACION_BLE_BEACONS.md        # BLE beacons (futuro)
+│   ├── PLANTILLA_BEACONS.md                 # Template para beacons
+│   ├── WIDGET_AREA_INTELIGENTE.md           # Widget de áreas
+│   └── beacons-esp32.md                     # ESP32 beacons
+│
+├── HA_config_proxy/                         # Proxy de config del servidor
+│   ├── configuration.yaml                   # Configuración principal
+│   ├── automations.yaml                     # Todas las automatizaciones
+│   └── scenes.yaml                          # Escenas
+│
+├── ha_manager.py                            # CLI para gestión vía API
+├── setup.sh                                 # Setup de API access
+├── requirements.txt                         # Dependencias Python
+├── INSTALAR_FRIGATE_SERVIDOR.md             # Guía de instalación Frigate
+└── README.md                                # Este archivo
 ```
 
 ---
 
-## 🚀 Inicio Rápido
+## 🚀 **INICIO RÁPIDO**
 
-### PezAustral Presence Simulation
+### **Opción 1: Simulación de Presencia**
 
-**1. Importar Blueprint:**
 ```bash
-Configuración → Automatizaciones y Escenas → Blueprints
-→ Importar Blueprint → URL del repositorio
+1. Importar blueprint desde GitHub
+2. Crear input_boolean.presence_simulation
+3. Configurar lista de luces
+4. Activar y probar
 ```
 
-**2. Crear Automatización:**
-```yaml
-Nombre: Simulación de Presencia
-Blueprint: PezAustral Presence Simulation
-Config:
-  - Trigger: input_boolean.presence_simulation
-  - Luces: [switch.sala, switch.cocina, switch.dormitorio]
-  - Máximo simultáneas: 2
-  - Tiempo ON: 15-45 min
-  - Loop: 5 repeticiones
-```
+### **Opción 2: Frigate + Detección IA**
 
-**3. Probar:**
 ```bash
-1. Activa input_boolean.presence_simulation
-2. Observa las luces
-3. Desactiva input_boolean.presence_simulation
-4. ✅ Se debe detener en < 5 segundos
+1. Instalar Frigate en Docker (ver INSTALAR_FRIGATE_SERVIDOR.md)
+2. Configurar cámaras en frigate_config.yml
+3. Instalar integración Frigate en Home Assistant
+4. Importar automatizaciones V3.3
+5. Actualizar dashboard con widget de monitoreo
+```
+
+### **Opción 3: Dashboard Maui**
+
+```bash
+1. Instalar HACS custom cards (Button Card, Grid Layout, Card-Mod)
+2. Instalar tema Maui Dark
+3. Importar dashboard maui_dashboard_v3.1.yaml
+4. Ajustar entity_ids a tu configuración
 ```
 
 ---
 
-## 📚 Documentación
+## 📚 **DOCUMENTACIÓN**
 
-### Por Blueprint
+### **Blueprints**
+- [Presence Simulation - README](docs/pezaustral_presence_simulation/README.md)
+- [Presence Simulation - Troubleshooting](docs/pezaustral_presence_simulation/TROUBLESHOOTING.md)
+- [Presence Simulation - Changelog](docs/pezaustral_presence_simulation/CHANGELOG.md)
 
-- **PezAustral Presence Simulation**
-  - [README completo](docs/pezaustral_presence_simulation/README.md)
-  - [Troubleshooting](docs/pezaustral_presence_simulation/TROUBLESHOOTING.md)
-  - [Changelog](docs/pezaustral_presence_simulation/CHANGELOG.md)
-  - [Ejemplos](examples/)
+### **Automatizaciones**
+- [Atardecer Inteligente](docs/ATARDECER_INTELIGENTE.md)
+- [Frigate - Quick Start](docs/FRIGATE_QUICK_START.md)
+- [Frigate - Instalación Completa](docs/FRIGATE_INSTALACION_COMPLETA.md)
 
-- **Tuya-Sonoff Sync**
-  - Ver comentarios en el blueprint
+### **Cámaras y Detección**
+- [Integración Tapo Correcta](docs/CAMARAS_TAPO_INTEGRACION_CORRECTA.md)
+- [Instalar Frigate en Servidor](INSTALAR_FRIGATE_SERVIDOR.md)
 
-### Recursos Adicionales
+### **Dashboard y UI**
+- [Widget de Área Inteligente](docs/WIDGET_AREA_INTELIGENTE.md)
 
-- [Sistema de Monitoring](docs/monitoring/README.md) - Panel de control para simulación de presencia
-- [Ejemplos de Configuración](examples/) - Configs listas para usar
-
----
-
-## 🆕 Últimas Actualizaciones
-
-### v1.1 - PezAustral Presence Simulation (2025-11-11)
-- 🚨 **CRÍTICO**: Corregido bug que impedía detener la automatización
-- ✅ Ahora se detiene en menos de 5 segundos
-- ✅ Agregada escena de parada de emergencia
-- ✅ Verificación continua de estado durante ejecución
-
-[Ver changelog completo](docs/pezaustral_presence_simulation/CHANGELOG.md)
+### **Futuras Implementaciones**
+- [BLE Beacons - Implementación](docs/IMPLEMENTACION_BLE_BEACONS.md)
+- [BLE Beacons - Plantilla](docs/PLANTILLA_BEACONS.md)
+- [ESP32 Beacons](docs/beacons-esp32.md)
 
 ---
 
-## 🛠️ Requisitos
+## 🆕 **ÚLTIMAS ACTUALIZACIONES**
 
-- **Home Assistant**: v2024.1 o superior (recomendado v2025.7+)
-- **Dispositivos**: Cualquier entidad `switch.*` o `light.*` compatible
-- **Protocolos**: Zigbee, Z-Wave, WiFi, Bluetooth (cualquiera que HA soporte)
+### **v3.3 - Sistema de Detección con Frigate** (Nov 2025)
+- ✅ Integración completa de Frigate NVR
+- ✅ Detección con IA (YOLO): personas, vehículos, animales
+- ✅ 7 automatizaciones específicas por tipo de objeto
+- ✅ Widget de dashboard con timestamps y animaciones
+- ✅ Notificaciones diferenciadas por tipo de detección
+- ✅ Snapshots con bounding boxes
+
+### **v3.1 - Dashboard Maui** (Nov 2025)
+- ✅ Cámaras dinámicas que se agrandan al detectar
+- ✅ Widget de monitoreo de Frigate en tiempo real
+- ✅ Tema oscuro profesional
+- ✅ Grid layout para mejor organización
+- ✅ Notificaciones optimizadas (una sola por detección)
+
+### **v1.3 - Presence Simulation** (Nov 2025)
+- ✅ Monitoreo integrado en el blueprint
+- ✅ Logging detallado
+- ✅ Sensores de progreso y estado
+- ✅ Sin necesidad de automatizaciones externas
 
 ---
 
-## 💡 Casos de Uso
+## 🛠️ **REQUISITOS**
 
-### Simulación de Presencia
+### **Sistema**
+- **Home Assistant**: v2024.10+ (recomendado 2025.7+)
+- **Supervisor/Docker**: Para instalación de Frigate
+- **HACS**: Para custom cards del dashboard
 
-**Escenario 1: Vacaciones**
+### **Hardware Recomendado (Frigate)**
+- **CPU**: 3+ cores
+- **RAM**: 2GB+ disponibles
+- **Disco**: 20GB+ para grabaciones (ajustable)
+- **Red**: Gigabit ethernet (recomendado)
+
+### **Integraciones**
+- **Frigate** (HACS): Para detección con IA
+- **Tapo: Cameras Control** (HACS): Para cámaras Tapo
+- **Mosquitto MQTT**: Para comunicación Frigate-HA
+
+---
+
+## 💡 **CASOS DE USO**
+
+### **1. Seguridad en Vacaciones**
 ```yaml
-Trigger: Elevación solar (-5°)
-Luces: Todas las principales
-Max simultáneas: 3
-Loop: Infinito
-Control: Solo si zona.home vacía
+Sistema completo:
+- Simulación de presencia activada al atardecer
+- Frigate monitoreando 24/7
+- Notificaciones críticas de personas detectadas
+- Dashboard con estado en tiempo real
 ```
 
-**Escenario 2: Salida Nocturna**
+### **2. Automatización Nocturna**
 ```yaml
-Trigger: input_boolean manual
-Luces: Sala, cocina, entrada
-Max simultáneas: 2
-Loop: 5 repeticiones (~3 horas)
-Escena salida: Apagar todo
+Al atardecer:
+- Activa escena "Anochecer"
+- Si no hay nadie: Inicia simulación de presencia
+- Detecta personas/vehículos con Frigate
+- Notifica cualquier movimiento
 ```
 
-**Escenario 3: Rutina Laboral**
+### **3. Monitoreo Diurno**
 ```yaml
-Trigger: Lunes-Viernes 09:00
-Luces: Principales
-Max simultáneas: 1
-Loop: 8 repeticiones
-Días: Lun-Vie
+Durante el día:
+- Frigate detecta vehículos (notificación normal)
+- Frigate detecta personas (alerta crítica + sirena)
+- Dashboard muestra estado en tiempo real
+- Grabaciones automáticas de eventos
 ```
 
 ---
 
-## 🤝 Contribuir
+## 🎯 **BLUEPRINTS POTENCIALES PARA OPEN SOURCE**
+
+### ✅ **Ya Disponibles**
+1. **Presence Simulation** (v1.3) - Listo para compartir
+2. **Tuya-Sonoff Sync** - Listo para compartir
+
+### 🚧 **En Consideración**
+3. **Frigate Alert System** - Sistema completo de alertas con notificaciones diferenciadas
+4. **Intelligent Sunset** - Automatización de atardecer con simulación de presencia
+5. **Dynamic Camera Dashboard** - Widget de cámaras que se agranda al detectar
+
+**Nota:** Los sistemas 3-5 son muy específicos de la instalación actual, pero podrían ser generalizados para la comunidad.
+
+---
+
+## 🤝 **CONTRIBUIR**
 
 ¿Encontraste un bug? ¿Tienes una sugerencia?
 
-1. **Issues**: Reporta en [GitHub Issues](https://github.com/TU_USUARIO/home-assistant-blueprints/issues)
+1. **Issues**: [GitHub Issues](https://github.com/mauitz/home-assistant-blueprints/issues)
 2. **Pull Requests**: Mejoras bienvenidas
 3. **Documentación**: Ayuda a mejorar las guías
 
-### Reportar Bugs
-
-Incluye:
-- Versión de Home Assistant
-- Versión del blueprint
-- Configuración YAML (sin datos sensibles)
-- Logs relevantes
-- Pasos para reproducir
-
 ---
 
-## 📄 Licencia
+## 📄 **LICENCIA**
 
 MIT License - Libre para uso personal y comercial.
 
 ---
 
-## 🙏 Créditos
+## 🙏 **CRÉDITOS**
 
-### PezAustral Presence Simulation
-- **Autor**: PezAustral
+### **Presence Simulation**
+- **Autor**: Mauitz (PezAustral)
 - **Basado en**: [Holiday & Away Lighting](https://gist.github.com/Blackshome/0a34870755762bcb9fab159d5b94fd25) por Blackshome
-- **Versión**: 1.1 (Noviembre 2025)
+- **Versión**: 1.3 (Noviembre 2025)
 
-### Tuya-Sonoff Sync
-- **Autor**: PezAustral
-- **Versión**: 1.0
+### **Frigate Integration**
+- **Frigate NVR**: [blakeblackshear/frigate](https://github.com/blakeblackshear/frigate)
+- **YOLO Model**: [Ultralytics](https://github.com/ultralytics/ultralytics)
+
+### **Dashboard**
+- **Mushroom Cards**: [piitaya/lovelace-mushroom](https://github.com/piitaya/lovelace-mushroom)
+- **Grid Layout**: [thomasloven/lovelace-layout-card](https://github.com/thomasloven/lovelace-layout-card)
+- **Card-Mod**: [thomasloven/lovelace-card-mod](https://github.com/thomasloven/lovelace-card-mod)
 
 ---
 
-## 🔗 Links Útiles
+## 🔗 **LINKS ÚTILES**
 
 - [Home Assistant](https://www.home-assistant.io/)
+- [Frigate NVR](https://frigate.video/)
+- [HACS](https://hacs.xyz/)
 - [Home Assistant Community](https://community.home-assistant.io/)
-- [Blueprint Documentation](https://www.home-assistant.io/docs/automation/using_blueprints/)
 
 ---
 
-## 📊 Estadísticas
+## 📊 **ESTADÍSTICAS**
 
-- **Blueprints**: 2
-- **Ejemplos**: 6
-- **Documentación**: ~40 páginas
+- **Blueprints**: 2 (+ 3 en consideración)
+- **Automatizaciones**: 12 activas
+- **Documentación**: ~50 páginas
+- **Cámaras**: 2 (Tapo C530WS + C310)
+- **Objetos detectados**: Personas, vehículos, animales
 - **Última actualización**: Noviembre 2025
 
 ---
 
-*Home Assistant Blueprints - Automatización Inteligente*  
-*Actualizado: 2025-11-11*
+*Home Assistant Blueprints - Automatización Inteligente con IA*  
+*Actualizado: 2025-11-14*

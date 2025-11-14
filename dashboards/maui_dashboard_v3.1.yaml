@@ -187,6 +187,242 @@ views:
             }
 
       # ═══════════════════════════════════════════════════════════════════
+      # WIDGET: ESTADO DE DETECCIÓN FRIGATE V2 (con timestamps)
+      # ═══════════════════════════════════════════════════════════════════
+      - type: vertical-stack
+        cards:
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ TÍTULO PRINCIPAL                                            │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: markdown
+            content: |
+              ## 🤖 Frigate - Monitoreo en Tiempo Real
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 12px 12px 0 0;
+                  border-bottom: none;
+                  padding: 8px 16px 0 16px;
+                  box-shadow: none;
+                }
+                h2 {
+                  font-size: 16px;
+                  font-weight: 500;
+                  margin: 8px 0;
+                  color: #E0E0E0;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: PERSONAS 👤                                        │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "👤 Detección de Personas"
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.entrada_person_occupancy
+                name: "📹 Entrada"
+                icon: mdi:cctv
+                secondary_info: last-changed
+              - entity: binary_sensor.exterior_person_occupancy
+                name: "📹 Exterior"
+                icon: mdi:cctv
+                secondary_info: last-changed
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-top: none;
+                  border-bottom: none;
+                  border-radius: 0;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(66, 165, 245, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #42A5F5;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #42A5F5;
+                }
+                /* Detectando persona = ROJO */
+                .state-on {
+                  background: rgba(244, 67, 54, 0.2) !important;
+                  animation: pulse-red 2s ease-in-out infinite;
+                }
+                @keyframes pulse-red {
+                  0%, 100% { background: rgba(244, 67, 54, 0.2); }
+                  50% { background: rgba(244, 67, 54, 0.35); }
+                }
+                .state-on .state {
+                  color: #F44336 !important;
+                  font-weight: 700;
+                  font-size: 14px;
+                }
+                .state-on .entity-name {
+                  color: #F44336 !important;
+                  font-weight: 600;
+                }
+                .state-on .state::before {
+                  content: "🚨 ";
+                }
+                /* No detectando = VERDE */
+                .state-off .state {
+                  color: #4CAF50 !important;
+                  font-weight: 500;
+                }
+                /* Timestamp más visible cuando ON */
+                .state-on .secondary {
+                  color: #FF8A80 !important;
+                  font-weight: 500;
+                }
+                /* unavailable */
+                .state-unavailable {
+                  opacity: 0.4;
+                }
+                .state-unavailable .state {
+                  color: #757575 !important;
+                  font-style: italic;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: VEHÍCULOS 🚗                                       │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "🚗 Detección de Vehículos"
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.entrada_car_occupancy
+                name: "📹 Entrada"
+                icon: mdi:cctv
+                secondary_info: last-changed
+              - entity: binary_sensor.exterior_car_occupancy
+                name: "📹 Exterior"
+                icon: mdi:cctv
+                secondary_info: last-changed
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-top: none;
+                  border-bottom: none;
+                  border-radius: 0;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(255, 152, 0, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #FF9800;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #FF9800;
+                }
+                /* Detectando vehículo = NARANJA */
+                .state-on {
+                  background: rgba(255, 152, 0, 0.2) !important;
+                }
+                .state-on .state {
+                  color: #FF9800 !important;
+                  font-weight: 700;
+                  font-size: 14px;
+                }
+                .state-on .entity-name {
+                  color: #FF9800 !important;
+                  font-weight: 600;
+                }
+                .state-on .state::before {
+                  content: "⚠️ ";
+                }
+                /* No detectando = VERDE */
+                .state-off .state {
+                  color: #4CAF50 !important;
+                  font-weight: 500;
+                }
+                /* Timestamp */
+                .state-on .secondary {
+                  color: #FFB74D !important;
+                  font-weight: 500;
+                }
+                .state-unavailable {
+                  opacity: 0.4;
+                }
+                .state-unavailable .state {
+                  color: #757575 !important;
+                  font-style: italic;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: ANIMALES 🐕 (solo exterior, entrada no soporta)  │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "🐕 Detección de Animales (Solo Exterior)"
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.exterior_dog_occupancy
+                name: "🐕 Perro"
+                icon: mdi:dog
+                secondary_info: last-changed
+              - entity: binary_sensor.exterior_cat_occupancy
+                name: "🐱 Gato"
+                icon: mdi:cat
+                secondary_info: last-changed
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 0 0 12px 12px;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(156, 39, 176, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #9C27B0;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #9C27B0;
+                }
+                /* Detectando animal = PÚRPURA */
+                .state-on {
+                  background: rgba(156, 39, 176, 0.15) !important;
+                }
+                .state-on .state {
+                  color: #BA68C8 !important;
+                  font-weight: 700;
+                  font-size: 14px;
+                }
+                .state-on .entity-name {
+                  color: #BA68C8 !important;
+                  font-weight: 600;
+                }
+                .state-on .state::before {
+                  content: "👀 ";
+                }
+                /* No detectando = VERDE */
+                .state-off .state {
+                  color: #4CAF50 !important;
+                  font-weight: 500;
+                }
+                /* Timestamp */
+                .state-on .secondary {
+                  color: #CE93D8 !important;
+                  font-weight: 500;
+                }
+                .state-unavailable {
+                  opacity: 0.4;
+                }
+                .state-unavailable .state {
+                  color: #757575 !important;
+                  font-style: italic;
+                }
+
+      # ═══════════════════════════════════════════════════════════════════
       # SECCIÓN 2: ESCENAS RÁPIDAS
       # ═══════════════════════════════════════════════════════════════════
       - type: markdown
