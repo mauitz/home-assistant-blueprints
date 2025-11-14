@@ -1,0 +1,494 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Dashboard Maui Professional - Home Assistant
+# Versión: 1.1
+# Estética: Minimalista, oscura, profesional
+# ════════════════════════════════════════════════════════════════════════════
+
+title: Maui
+views:
+  - title: Principal
+    path: home
+    icon: mdi:home
+    theme: maui_dark
+    badges: []
+    cards:
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 1: CÁMARAS TAPO CON ALERTAS DINÁMICAS V2
+      # ═══════════════════════════════════════════════════════════════════
+
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              # Cámaras
+            card_mod:
+              style: |
+                ha-card {
+                  background: none;
+                  box-shadow: none;
+                  margin-bottom: -12px;
+                }
+                h1 {
+                  font-size: 18px;
+                  font-weight: 400;
+                  margin: 0;
+                  padding: 0;
+                  color: #A0A0A0;
+                  letter-spacing: 0.5px;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ MODO NORMAL: Ambas cámaras en tamaño estándar              │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: conditional
+            conditions:
+              - entity: input_text.camera_alert_active
+                state: "none"
+            card:
+              type: vertical-stack
+              cards:
+                # Cámara Entrada
+                - type: picture-entity
+                  entity: camera.tapo_c530ws_entrada_live_view
+                  camera_view: live
+                  show_name: true
+                  show_state: false
+                  aspect_ratio: "16:9"
+                  card_mod:
+                    style: |
+                      ha-card {
+                        border-radius: 8px;
+                        overflow: hidden;
+                        border: 1px solid #2A2A2A;
+                      }
+
+                # Cámara Exterior
+                - type: picture-entity
+                  entity: camera.tapo_c310_exterior_live_view
+                  camera_view: live
+                  show_name: true
+                  show_state: false
+                  aspect_ratio: "16:9"
+                  card_mod:
+                    style: |
+                      ha-card {
+                        border-radius: 8px;
+                        overflow: hidden;
+                        border: 1px solid #2A2A2A;
+                        margin-top: 12px;
+                      }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ ALERTA ENTRADA: Cámara entrada AGRANDADA                   │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: conditional
+            conditions:
+              - entity: input_text.camera_alert_active
+                state: "entrada"
+            card:
+              type: picture-entity
+              entity: camera.tapo_c530ws_entrada_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "21:9"
+              card_mod:
+                style: |
+                  ha-card {
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 3px solid #EF4444;
+                    box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+                    animation: pulse-red 2s ease-in-out infinite;
+                  }
+                  @keyframes pulse-red {
+                    0%, 100% {
+                      box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+                    }
+                    50% {
+                      box-shadow: 0 0 32px rgba(239, 68, 68, 0.8);
+                    }
+                  }
+                  ha-card::before {
+                    content: "🚨 DETECCIÓN ACTIVA";
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    background: rgba(239, 68, 68, 0.9);
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    font-size: 12px;
+                    z-index: 10;
+                    animation: blink 1s ease-in-out infinite;
+                  }
+                  @keyframes blink {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.7; }
+                  }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ ALERTA EXTERIOR: Cámara exterior AGRANDADA                  │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: conditional
+            conditions:
+              - entity: input_text.camera_alert_active
+                state: "exterior"
+            card:
+              type: picture-entity
+              entity: camera.tapo_c310_exterior_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "21:9"
+              card_mod:
+                style: |
+                  ha-card {
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 3px solid #EF4444;
+                    box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+                    animation: pulse-red 2s ease-in-out infinite;
+                  }
+                  @keyframes pulse-red {
+                    0%, 100% {
+                      box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+                    }
+                    50% {
+                      box-shadow: 0 0 32px rgba(239, 68, 68, 0.8);
+                    }
+                  }
+                  ha-card::before {
+                    content: "🚨 DETECCIÓN ACTIVA";
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    background: rgba(239, 68, 68, 0.9);
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    font-size: 12px;
+                    z-index: 10;
+                    animation: blink 1s ease-in-out infinite;
+                  }
+                  @keyframes blink {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.7; }
+                  }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 2: ESCENAS
+      # ═══════════════════════════════════════════════════════════════════
+
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              # Escenas
+            card_mod:
+              style: |
+                ha-card {
+                  background: none;
+                  box-shadow: none;
+                  margin-bottom: -12px;
+                  margin-top: 24px;
+                }
+                h1 {
+                  font-size: 18px;
+                  font-weight: 400;
+                  margin: 0;
+                  color: #A0A0A0;
+                  letter-spacing: 0.5px;
+                }
+
+          - type: horizontal-stack
+            cards:
+              # Amanecer
+              - type: custom:button-card
+                entity: scene.amanecer
+                name: Amanecer
+                icon: mdi:weather-sunset-up
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  service_data:
+                    entity_id: scene.amanecer
+                styles:
+                  card:
+                    - height: 80px
+                    - background: "#121212"
+                    - border: 1px solid #2A2A2A
+                    - border-radius: 8px
+                  icon:
+                    - width: 32px
+                    - height: 32px
+                    - color: "#707070"
+                  name:
+                    - font-size: 13px
+                    - font-weight: 400
+                    - margin-top: 6px
+                    - color: "#A0A0A0"
+                state:
+                  - value: "on"
+                    styles:
+                      icon:
+                        - color: "#1E40AF"
+                      name:
+                        - color: "#E5E5E5"
+
+              # Anochecer
+              - type: custom:button-card
+                entity: scene.nightfall
+                name: Anochecer
+                icon: mdi:weather-sunset-down
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  service_data:
+                    entity_id: scene.nightfall
+                styles:
+                  card:
+                    - height: 80px
+                    - background: "#121212"
+                    - border: 1px solid #2A2A2A
+                    - border-radius: 8px
+                  icon:
+                    - width: 32px
+                    - height: 32px
+                    - color: "#707070"
+                  name:
+                    - font-size: 13px
+                    - font-weight: 400
+                    - margin-top: 6px
+                    - color: "#A0A0A0"
+                state:
+                  - value: "on"
+                    styles:
+                      icon:
+                        - color: "#1E40AF"
+                      name:
+                        - color: "#E5E5E5"
+
+              # A Dormir
+              - type: custom:button-card
+                entity: scene.bedtime
+                name: Dormir
+                icon: mdi:sleep
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  service_data:
+                    entity_id: scene.bedtime
+                styles:
+                  card:
+                    - height: 80px
+                    - background: "#121212"
+                    - border: 1px solid #2A2A2A
+                    - border-radius: 8px
+                  icon:
+                    - width: 32px
+                    - height: 32px
+                    - color: "#707070"
+                  name:
+                    - font-size: 13px
+                    - font-weight: 400
+                    - margin-top: 6px
+                    - color: "#A0A0A0"
+                state:
+                  - value: "on"
+                    styles:
+                      icon:
+                        - color: "#1E40AF"
+                      name:
+                        - color: "#E5E5E5"
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 3: SIMULACIÓN DE PRESENCIA (condicional)
+      # ═══════════════════════════════════════════════════════════════════
+
+      - type: conditional
+        conditions:
+          - entity: input_boolean.presence_simulation_running
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: markdown
+              content: |
+                # Automatizaciones
+              card_mod:
+                style: |
+                  ha-card {
+                    background: none;
+                    box-shadow: none;
+                    margin-bottom: -12px;
+                    margin-top: 24px;
+                  }
+                  h1 {
+                    font-size: 18px;
+                    font-weight: 400;
+                    margin: 0;
+                    color: #A0A0A0;
+                    letter-spacing: 0.5px;
+                  }
+
+            - type: custom:button-card
+              entity: input_boolean.presence_simulation
+              name: Simulación de Presencia
+              icon: mdi:home-account
+              show_state: false
+              show_label: true
+              label: |
+                [[[
+                  const loops = states['input_number.presence_simulation_loop_counter'].state;
+                  const lights = states['input_number.presence_simulation_lights_on_count'].state;
+                  const runtime = states['sensor.presence_simulation_runtime'].state;
+                  return `Loop ${loops} • ${lights} luces • ${runtime}`;
+                ]]]
+              tap_action:
+                action: fire-dom-event
+                browser_mod:
+                  service: browser_mod.popup
+                  data:
+                    title: Simulación de Presencia
+                    content:
+                      type: entities
+                      entities:
+                        - entity: sensor.presence_simulation_runtime
+                          name: Tiempo activo
+                        - entity: input_number.presence_simulation_loop_counter
+                          name: Loops completados
+                        - entity: input_number.presence_simulation_lights_on_count
+                          name: Luces encendidas
+                        - entity: input_text.presence_simulation_active_lights
+                          name: Luces activas
+                        - entity: input_text.presence_simulation_last_light_on
+                          name: Última encendida
+                        - entity: input_text.presence_simulation_last_light_off
+                          name: Última apagada
+                        - type: divider
+                        - entity: input_boolean.presence_simulation
+                          name: Control
+              styles:
+                card:
+                  - height: 70px
+                  - background: "rgba(30, 64, 175, 0.1)"
+                  - border: 1px solid rgba(30, 64, 175, 0.3)
+                  - border-radius: 8px
+                icon:
+                  - width: 28px
+                  - height: 28px
+                  - color: "#1E40AF"
+                name:
+                  - font-size: 14px
+                  - font-weight: 400
+                  - color: "#E5E5E5"
+                label:
+                  - font-size: 11px
+                  - color: "#A0A0A0"
+                  - margin-top: 4px
+                  - font-family: "Roboto Mono, monospace"
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 4: ACCESO RÁPIDO A TODAS LAS ÁREAS
+      # ═══════════════════════════════════════════════════════════════════
+
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              # Áreas
+            card_mod:
+              style: |
+                ha-card {
+                  background: none;
+                  box-shadow: none;
+                  margin-bottom: -12px;
+                  margin-top: 24px;
+                }
+                h1 {
+                  font-size: 18px;
+                  font-weight: 400;
+                  margin: 0;
+                  color: #A0A0A0;
+                  letter-spacing: 0.5px;
+                }
+
+          # Botón para navegar al dashboard de Áreas nativo de HA
+          - type: custom:button-card
+            name: Ver Todas las Áreas  →
+            icon: mdi:home-city-outline
+            tap_action:
+              action: navigate
+              navigation_path: /lovelace-areas/0
+            styles:
+              card:
+                - height: 60px
+                - background: "linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)"
+                - border: none
+                - border-radius: 12px
+                - box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3)
+                - cursor: pointer
+              icon:
+                - width: 28px
+                - height: 28px
+                - color: white
+              name:
+                - font-size: 14px
+                - font-weight: 500
+                - color: white
+                - letter-spacing: 0.5px
+            card_mod:
+              style: |
+                ha-card:hover {
+                  background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%) !important;
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4) !important;
+                  transition: all 0.3s ease;
+                }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 5: ESTADÍSTICAS (Próximamente)
+      # ═══════════════════════════════════════════════════════════════════
+
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              # Estadísticas
+            card_mod:
+              style: |
+                ha-card {
+                  background: none;
+                  box-shadow: none;
+                  margin-bottom: -12px;
+                  margin-top: 24px;
+                }
+                h1 {
+                  font-size: 18px;
+                  font-weight: 400;
+                  margin: 0;
+                  color: #A0A0A0;
+                  letter-spacing: 0.5px;
+                }
+
+          - type: markdown
+            content: |
+              Próximamente: Gráficos y análisis del hogar
+            card_mod:
+              style: |
+                ha-card {
+                  background: #121212;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 8px;
+                  padding: 16px;
+                  margin-bottom: 24px;
+                }
+                p {
+                  font-size: 13px;
+                  color: #707070;
+                  margin: 0;
+                  text-align: center;
+                }

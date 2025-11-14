@@ -1,0 +1,108 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Tema Maui Professional - Dashboard Minimalista para Home Assistant
+# Paleta: Negro absoluto con acentos azul oscuro sutiles
+# ════════════════════════════════════════════════════════════════════════════
+
+maui_dark:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Colores Principales - Azul oscuro muy sutil
+  # ──────────────────────────────────────────────────────────────────────────
+  primary-color: "#1E40AF"              # Azul oscuro sutil
+  accent-color: "#3B82F6"               # Azul para acentos
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Fondos - Negro absoluto y grises muy oscuros
+  # ──────────────────────────────────────────────────────────────────────────
+  primary-background-color: "#000000"   # Negro absoluto
+  secondary-background-color: "#0A0A0A" # Casi negro
+  card-background-color: "#121212"      # Gris muy oscuro
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Texto - Grises suaves para no cansar la vista
+  # ──────────────────────────────────────────────────────────────────────────
+  primary-text-color: "#E5E5E5"         # Gris muy claro
+  secondary-text-color: "#A0A0A0"       # Gris medio
+  disabled-text-color: "#555555"        # Gris oscuro
+  text-primary-color: "#FFFFFF"         # Blanco puro para contraste
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Estados e Iconos - Sutiles
+  # ──────────────────────────────────────────────────────────────────────────
+  state-icon-color: "#707070"           # Gris neutro
+  state-icon-active-color: "#1E40AF"    # Azul oscuro
+  state-active-color: "#1E40AF"         # Azul oscuro para activos
+  state-inactive-color: "#404040"       # Gris muy oscuro
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Sidebar - Negro puro
+  # ──────────────────────────────────────────────────────────────────────────
+  sidebar-background-color: "#000000"
+  sidebar-text-color: "#E5E5E5"
+  sidebar-selected-background-color: "#1A1A1A"
+  sidebar-selected-text-color: "#3B82F6"
+  sidebar-icon-color: "#707070"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Switches y Controles - Minimalistas
+  # ──────────────────────────────────────────────────────────────────────────
+  switch-checked-color: "#1E40AF"       # Azul oscuro cuando está ON
+  switch-unchecked-color: "#404040"     # Gris oscuro cuando está OFF
+  switch-checked-button-color: "#FFFFFF"
+  switch-unchecked-button-color: "#707070"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Sliders - Sutiles
+  # ──────────────────────────────────────────────────────────────────────────
+  slider-color: "#1E40AF"
+  slider-secondary-color: "#404040"
+  slider-track-color: "#1A1A1A"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Bordes y Divisores - Casi invisibles
+  # ──────────────────────────────────────────────────────────────────────────
+  divider-color: "#2A2A2A"
+  ha-card-border-color: "#2A2A2A"
+  ha-card-border-width: "1px"
+  ha-card-border-radius: "8px"          # Bordes menos redondeados, más profesional
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Sombras - Mínimas
+  # ──────────────────────────────────────────────────────────────────────────
+  ha-card-box-shadow: "0 1px 3px 0 rgba(0,0,0,0.5)"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Estados de Alerta - Sutiles
+  # ──────────────────────────────────────────────────────────────────────────
+  success-color: "#1E40AF"              # Azul en lugar de verde
+  warning-color: "#D97706"              # Ámbar oscuro
+  error-color: "#DC2626"                # Rojo oscuro
+  info-color: "#1E40AF"                 # Azul oscuro
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Mushroom Cards (RGB values) - Tonos oscuros
+  # ──────────────────────────────────────────────────────────────────────────
+  mush-rgb-red: "220, 38, 38"
+  mush-rgb-orange: "217, 119, 6"
+  mush-rgb-yellow: "161, 98, 7"
+  mush-rgb-green: "30, 64, 175"        # Azul oscuro en lugar de verde
+  mush-rgb-blue: "30, 64, 175"
+  mush-rgb-purple: "79, 70, 229"
+  mush-rgb-pink: "219, 39, 119"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Otros
+  # ──────────────────────────────────────────────────────────────────────────
+  paper-listbox-background-color: "#121212"
+  paper-item-icon-color: "#707070"
+  paper-item-icon-active-color: "#1E40AF"
+
+  # Tablas
+  table-row-background-color: "#121212"
+  table-row-alternative-background-color: "#0A0A0A"
+
+  # Markdown
+  markdown-code-background-color: "#0A0A0A"
+
+  # Header
+  app-header-background-color: "#000000"
+  app-header-text-color: "#E5E5E5"

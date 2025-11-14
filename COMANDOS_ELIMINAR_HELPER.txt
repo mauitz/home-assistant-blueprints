@@ -1,0 +1,79 @@
+════════════════════════════════════════════════════════════════
+    COMANDOS PARA ELIMINAR presence_simulation_2
+════════════════════════════════════════════════════════════════
+
+EJECUTA ESTO DIRECTAMENTE EN EL SERVIDOR HOME ASSISTANT:
+
+────────────────────────────────────────────────────────────────
+1. Conectarse al servidor:
+────────────────────────────────────────────────────────────────
+
+ssh nico@192.168.1.100
+
+────────────────────────────────────────────────────────────────
+2. Buscar dónde está definido:
+────────────────────────────────────────────────────────────────
+
+cd /config
+
+# Buscar en archivos YAML
+find . -name "*.yaml" -o -name "*.yml" | xargs grep -l "presence_simulation_2" 2>/dev/null
+
+# Buscar en packages (si existe)
+grep -r "presence_simulation_2" packages/ 2>/dev/null
+
+# Buscar en archivos .storage
+grep -l "presence_simulation_2" .storage/*.json 2>/dev/null
+
+────────────────────────────────────────────────────────────────
+3. Ver el contenido del archivo donde se encontró:
+────────────────────────────────────────────────────────────────
+
+# Reemplaza ARCHIVO por el archivo encontrado
+grep -C 10 "presence_simulation_2" ARCHIVO
+
+────────────────────────────────────────────────────────────────
+4a. Si está en un archivo YAML (packages/):
+────────────────────────────────────────────────────────────────
+
+# Hacer backup
+cp ARCHIVO ARCHIVO.backup
+
+# Editar y eliminar la sección presence_simulation_2
+nano ARCHIVO
+
+# O eliminar automáticamente (si está en packages/helpers.yaml)
+sed -i '/presence_simulation_2:/,/initial: off/d' ARCHIVO
+
+# Recargar configuración
+# Ir a UI: Herramientas de Desarrollo → YAML → 
+# "Recargar entidades de input_boolean"
+
+────────────────────────────────────────────────────────────────
+4b. Si está en .storage/ (core.entity_registry):
+────────────────────────────────────────────────────────────────
+
+# IMPORTANTE: Detener Home Assistant primero
+ha core stop
+
+# Hacer backup
+cp .storage/core.entity_registry .storage/core.entity_registry.backup
+
+# Editar el archivo (es JSON, ten cuidado)
+nano .storage/core.entity_registry
+
+# Buscar la entrada de presence_simulation_2 y eliminar TODO el bloque
+# Desde { hasta el } correspondiente, incluyendo la coma si hay
+
+# Iniciar Home Assistant
+ha core start
+
+────────────────────────────────────────────────────────────────
+5. Verificar que se eliminó:
+────────────────────────────────────────────────────────────────
+
+# En la UI, ve a: Configuración → Dispositivos y Servicios → Entidades
+# Busca: "simulation"
+# Ya no debería aparecer presence_simulation_2
+
+════════════════════════════════════════════════════════════════

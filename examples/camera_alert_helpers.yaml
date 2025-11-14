@@ -1,0 +1,23 @@
+# ════════════════════════════════════════════════════════════════
+# HELPERS PARA SISTEMA DE ALERTAS DE CÁMARAS V2
+# ════════════════════════════════════════════════════════════════
+#
+# Agregar a configuration.yaml:
+#
+# input_text:
+#   <<: !include camera_alert_helpers.yaml
+#
+# ════════════════════════════════════════════════════════════════
+
+# Tracking de cámara con alerta activa
+camera_alert_active:
+  name: Cámara con Alerta Activa
+  initial: "none"
+  icon: mdi:cctv
+
+# Timestamp de última detección
+camera_alert_timestamp:
+  name: Timestamp de Última Alerta
+  initial: "0"
+  icon: mdi:clock-outline
+
