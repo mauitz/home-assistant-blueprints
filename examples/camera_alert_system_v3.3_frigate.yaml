@@ -1,0 +1,506 @@
+# ════════════════════════════════════════════════════════════════════════════
+# SISTEMA DE ALERTAS V3.3 - CON FRIGATE (IA COMPLETA)
+# ════════════════════════════════════════════════════════════════════════════
+#
+# CAMBIOS EN V3.3:
+# ✅ Usa Frigate para detección con IA
+# ✅ Detecta PERSONAS + VEHÍCULOS + ANIMALES
+# ✅ Snapshots con bounding boxes de Frigate
+# ✅ Menos falsos positivos (modelo YOLO)
+# ✅ Notificaciones diferenciadas por tipo de objeto
+#
+# REQUISITOS:
+# • Frigate instalado y configurado
+# • Integración Frigate en Home Assistant
+# • Binary sensors de Frigate activos
+#
+# SENSORES USADOS:
+# • binary_sensor.entrada_person_occupancy
+# • binary_sensor.entrada_car_occupancy
+# • binary_sensor.exterior_person_occupancy
+# • binary_sensor.exterior_car_occupancy
+#
+# ════════════════════════════════════════════════════════════════════════════
+
+# ────────────────────────────────────────────────────────────────────────────
+# ENTRADA: PERSONA DETECTADA
+# ────────────────────────────────────────────────────────────────────────────
+- id: '1763080000001'
+  alias: '🚨 Frigate - Entrada - PERSONA'
+  description: >
+    Detecta personas en la entrada usando Frigate AI.
+    Envía notificación con snapshot de Frigate.
+
+  triggers:
+    - platform: state
+      entity_id: binary_sensor.entrada_person_occupancy
+      from: 'off'
+      to: 'on'
+
+  conditions: []
+
+  actions:
+    # 1. Actualizar helper (activa widget agrandado)
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "entrada"
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_timestamp
+      data:
+        value: "{{ as_timestamp(now()) | int }}"
+
+    # 2. Log
+    - service: logbook.log
+      data:
+        name: "🚨 Frigate - Alerta"
+        message: "ENTRADA: PERSONA detectada por IA a las {{ now().strftime('%H:%M:%S') }}"
+        entity_id: binary_sensor.entrada_person_occupancy
+
+    # 3. Notificación con snapshot de Frigate
+    - service: notify.mobile_app_blacky
+      data:
+        title: "🚨 PERSONA en Entrada"
+        message: "Detectada por IA a las {{ now().strftime('%H:%M') }}"
+        data:
+          push:
+            interruption-level: critical
+            sound: alarm.caf
+          tag: "frigate_entrada_person"
+          # Snapshot de Frigate con bounding boxes
+          image: "http://192.168.1.100:5000/api/entrada/person/snapshot.jpg"
+
+    # 4. Activar sirena (solo 5 segundos)
+    - service: siren.turn_on
+      target:
+        entity_id: siren.tapo_c530ws_entrada_siren
+      data:
+        duration: 5
+
+    # 5. Encender floodlight
+    - service: light.turn_on
+      target:
+        entity_id: light.tapo_c530ws_entrada_floodlight_timed
+      data:
+        brightness: 255
+
+    # 6. Esperar 10 segundos
+    - delay:
+        seconds: 10
+
+    # 7. Apagar sirena
+    - service: siren.turn_off
+      target:
+        entity_id: siren.tapo_c530ws_entrada_siren
+
+    # 8. Reset automático
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "none"
+
+    - service: logbook.log
+      data:
+        name: "Sistema de Alertas"
+        message: "✅ Alerta de ENTRADA (persona) finalizada"
+
+  mode: single
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# ENTRADA: VEHÍCULO DETECTADO
+# ────────────────────────────────────────────────────────────────────────────
+- id: '1763080000002'
+  alias: '🚗 Frigate - Entrada - VEHÍCULO'
+  description: >
+    Detecta vehículos (car, truck, motorcycle) en la entrada.
+    Notificación NORMAL (no crítica).
+
+  triggers:
+    - platform: state
+      entity_id: binary_sensor.entrada_car_occupancy
+      from: 'off'
+      to: 'on'
+
+  conditions: []
+
+  actions:
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "entrada"
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_timestamp
+      data:
+        value: "{{ as_timestamp(now()) | int }}"
+
+    - service: logbook.log
+      data:
+        name: "🚗 Frigate - Alerta"
+        message: "ENTRADA: VEHÍCULO detectado a las {{ now().strftime('%H:%M:%S') }}"
+        entity_id: binary_sensor.entrada_car_occupancy
+
+    # Notificación NORMAL (no crítica)
+    - service: notify.mobile_app_blacky
+      data:
+        title: "🚗 Vehículo en Entrada"
+        message: "Detectado a las {{ now().strftime('%H:%M') }}"
+        data:
+          push:
+            interruption-level: active  # Normal, no crítica
+          tag: "frigate_entrada_vehicle"
+          image: "http://192.168.1.100:5000/api/entrada/car/snapshot.jpg"
+
+    # SIN sirena para vehículos (solo encender luz)
+    - service: light.turn_on
+      target:
+        entity_id: light.tapo_c530ws_entrada_floodlight_timed
+      data:
+        brightness: 180  # Menos brillo que para personas
+
+    - delay:
+        seconds: 10
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "none"
+
+  mode: single
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# EXTERIOR: PERSONA DETECTADA
+# ────────────────────────────────────────────────────────────────────────────
+- id: '1763080000003'
+  alias: '🚨 Frigate - Exterior - PERSONA'
+  description: >
+    Detecta personas en el exterior usando Frigate AI.
+
+  triggers:
+    - platform: state
+      entity_id: binary_sensor.exterior_person_occupancy
+      from: 'off'
+      to: 'on'
+
+  conditions: []
+
+  actions:
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "exterior"
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_timestamp
+      data:
+        value: "{{ as_timestamp(now()) | int }}"
+
+    - service: logbook.log
+      data:
+        name: "🚨 Frigate - Alerta"
+        message: "EXTERIOR: PERSONA detectada por IA a las {{ now().strftime('%H:%M:%S') }}"
+        entity_id: binary_sensor.exterior_person_occupancy
+
+    - service: notify.mobile_app_blacky
+      data:
+        title: "🚨 PERSONA en Exterior"
+        message: "Detectada por IA a las {{ now().strftime('%H:%M') }}"
+        data:
+          push:
+            interruption-level: critical
+            sound: alarm.caf
+          tag: "frigate_exterior_person"
+          image: "http://192.168.1.100:5000/api/exterior/person/snapshot.jpg"
+
+    - service: siren.turn_on
+      target:
+        entity_id: siren.tapo_c310_exterior_siren
+      data:
+        duration: 5
+
+    - service: light.turn_on
+      target:
+        entity_id: light.tapo_c310_exterior_floodlight_timed
+      data:
+        brightness: 255
+
+    - delay:
+        seconds: 10
+
+    - service: siren.turn_off
+      target:
+        entity_id: siren.tapo_c310_exterior_siren
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "none"
+
+  mode: single
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# EXTERIOR: VEHÍCULO DETECTADO
+# ────────────────────────────────────────────────────────────────────────────
+- id: '1763080000004'
+  alias: '🚗 Frigate - Exterior - VEHÍCULO'
+  description: >
+    Detecta vehículos en el exterior.
+
+  triggers:
+    - platform: state
+      entity_id: binary_sensor.exterior_car_occupancy
+      from: 'off'
+      to: 'on'
+
+  conditions: []
+
+  actions:
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "exterior"
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_timestamp
+      data:
+        value: "{{ as_timestamp(now()) | int }}"
+
+    - service: logbook.log
+      data:
+        name: "🚗 Frigate - Alerta"
+        message: "EXTERIOR: VEHÍCULO detectado a las {{ now().strftime('%H:%M:%S') }}"
+        entity_id: binary_sensor.exterior_car_occupancy
+
+    - service: notify.mobile_app_blacky
+      data:
+        title: "🚗 Vehículo en Exterior"
+        message: "Detectado a las {{ now().strftime('%H:%M') }}"
+        data:
+          push:
+            interruption-level: active
+          tag: "frigate_exterior_vehicle"
+          image: "http://192.168.1.100:5000/api/exterior/car/snapshot.jpg"
+
+    - service: light.turn_on
+      target:
+        entity_id: light.tapo_c310_exterior_floodlight_timed
+      data:
+        brightness: 180
+
+    - delay:
+        seconds: 10
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "none"
+
+  mode: single
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# OPCIONAL: DETECCIÓN DE ANIMALES (DOG/CAT)
+# ────────────────────────────────────────────────────────────────────────────
+- id: '1763080000005'
+  alias: '🐕 Frigate - Entrada - ANIMAL'
+  description: >
+    Detecta perros/gatos. Solo log, sin sirena.
+
+  triggers:
+    - platform: state
+      entity_id: binary_sensor.entrada_dog_occupancy
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.entrada_cat_occupancy
+      from: 'off'
+      to: 'on'
+
+  conditions: []
+
+  actions:
+    - service: logbook.log
+      data:
+        name: "🐕 Frigate - Alerta"
+        message: >
+          ENTRADA: ANIMAL detectado ({{ trigger.to_state.attributes.friendly_name }})
+          a las {{ now().strftime('%H:%M:%S') }}
+
+    # Solo notificación silenciosa (sin sirena)
+    - service: notify.mobile_app_blacky
+      data:
+        title: "🐕 Animal detectado"
+        message: "{{ trigger.to_state.attributes.friendly_name }} en entrada"
+        data:
+          push:
+            interruption-level: passive  # Silenciosa
+          tag: "frigate_entrada_animal"
+          image: "http://192.168.1.100:5000/api/entrada/dog/snapshot.jpg"
+
+  mode: single
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# RESET MANUAL
+# ────────────────────────────────────────────────────────────────────────────
+- id: '1763080000006'
+  alias: 'Reset Manual V3.3'
+  description: Resetea alertas manualmente
+
+  triggers:
+    - platform: state
+      entity_id: input_text.camera_alert_active
+      to: "reset"
+
+  actions:
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "none"
+
+    - service: siren.turn_off
+      target:
+        entity_id:
+          - siren.tapo_c530ws_entrada_siren
+          - siren.tapo_c310_exterior_siren
+
+    - service: logbook.log
+      data:
+        name: "Sistema de Alertas V3.3"
+        message: "🔄 Sistema reseteado manualmente"
+
+  mode: single
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# TEST MANUAL
+# ────────────────────────────────────────────────────────────────────────────
+- id: '1763080000007'
+  alias: 'Test Manual V3.3'
+  description: Prueba el sistema manualmente
+
+  triggers:
+    - platform: state
+      entity_id: input_text.camera_alert_active
+      to: "test"
+
+  actions:
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "entrada"
+
+    - service: logbook.log
+      data:
+        name: "Sistema de Alertas V3.3"
+        message: "🧪 TEST: Simulando detección Frigate"
+
+    - service: notify.mobile_app_blacky
+      data:
+        title: "🧪 TEST: Frigate V3.3"
+        message: "Esta es una notificación de prueba"
+        data:
+          tag: "frigate_test"
+
+    - delay:
+        seconds: 10
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.camera_alert_active
+      data:
+        value: "none"
+
+  mode: single
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# NOTAS DE USO
+# ════════════════════════════════════════════════════════════════════════════
+#
+# BINARY SENSORS DE FRIGATE:
+# ───────────────────────────────────────────────────────────────────────────
+# Frigate crea automáticamente binary sensors para cada objeto:
+#
+# • binary_sensor.{camera}_person_occupancy
+# • binary_sensor.{camera}_car_occupancy
+# • binary_sensor.{camera}_truck_occupancy
+# • binary_sensor.{camera}_motorcycle_occupancy
+# • binary_sensor.{camera}_bicycle_occupancy
+# • binary_sensor.{camera}_dog_occupancy
+# • binary_sensor.{camera}_cat_occupancy
+# • binary_sensor.{camera}_bus_occupancy
+#
+# Estado: "on" cuando objeto está presente, "off" cuando no
+#
+# SNAPSHOTS DE FRIGATE:
+# ───────────────────────────────────────────────────────────────────────────
+# URL format: http://IP:5000/api/{camera}/{object}/snapshot.jpg
+#
+# Ejemplos:
+# • http://192.168.1.100:5000/api/entrada/person/snapshot.jpg
+# • http://192.168.1.100:5000/api/entrada/car/snapshot.jpg
+# • http://192.168.1.100:5000/api/exterior/person/snapshot.jpg
+#
+# Los snapshots incluyen:
+# ✅ Bounding boxes (cuadros de detección)
+# ✅ Timestamp
+# ✅ Label del objeto detectado
+# ✅ Confidence score
+#
+# DIFERENCIAS CON V3.2:
+# ───────────────────────────────────────────────────────────────────────────
+# V3.2 (Tapo nativo):
+# • Solo person detection
+# • Binary sensor de la cámara
+# • Snapshots sin bounding boxes
+#
+# V3.3 (Frigate):
+# ✅ Person + Vehicle + Animal detection
+# ✅ Modelo YOLO (más preciso)
+# ✅ Snapshots con bounding boxes
+# ✅ Menos falsos positivos
+# ✅ Timeline de eventos en UI
+# ✅ Grabación inteligente
+#
+# NOTIFICACIONES:
+# ───────────────────────────────────────────────────────────────────────────
+# • Personas: CRÍTICA (interruption-level: critical + sirena)
+# • Vehículos: NORMAL (interruption-level: active, sin sirena)
+# • Animales: SILENCIOSA (interruption-level: passive)
+#
+# PRUEBAS:
+# ───────────────────────────────────────────────────────────────────────────
+# 1. Pasar frente a cámara
+# 2. Verificar en UI de Frigate que detectó (http://192.168.1.100:5000)
+# 3. Verificar binary sensor en HA (Herramientas de desarrollador → Estados)
+# 4. Verificar que llegó notificación
+# 5. Verificar widget agrandado en dashboard
+#
+# TROUBLESHOOTING:
+# ───────────────────────────────────────────────────────────────────────────
+# • Binary sensor no cambia: Verificar Frigate logs
+# • No llegan notificaciones: Verificar URL de snapshot (debe ser accesible)
+# • Muchos falsos positivos: Ajustar threshold en frigate config.yml
+# • Widget no agranda: Verificar input_text.camera_alert_active
+#
+# ════════════════════════════════════════════════════════════════════════════
+

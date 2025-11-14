@@ -1,0 +1,398 @@
+# ════════════════════════════════════════════════════════════════════════════
+# FRIGATE CONFIGURATION - Cámaras Tapo Maui
+# ════════════════════════════════════════════════════════════════════════════
+#
+# ANTES DE USAR:
+# 1. Cambiar USUARIO y PASSWORD por credenciales RTSP reales
+# 2. Cambiar IPs de cámaras (192.168.1.XXX)
+# 3. Cambiar password MQTT si es necesario
+# 4. Ajustar zona horaria si no es America/Santiago
+#
+# ════════════════════════════════════════════════════════════════════════════
+
+# ────────────────────────────────────────────────────────────────────────────
+# MQTT - Comunicación con Home Assistant
+# ────────────────────────────────────────────────────────────────────────────
+mqtt:
+  enabled: true
+  host: 192.168.1.100  # IP del servidor Home Assistant
+  port: 1883
+  user: homeassistant
+  password: "CAMBIAR_PASSWORD_MQTT"  # ← CAMBIAR
+
+# ────────────────────────────────────────────────────────────────────────────
+# DETECTOR - CPU por defecto (cambiar a coral si tienes TPU)
+# ────────────────────────────────────────────────────────────────────────────
+detectors:
+  cpu1:
+    type: cpu
+    num_threads: 3
+
+# Si tienes Google Coral TPU, descomentar:
+#  coral1:
+#    type: edgetpu
+#    device: usb
+
+# ────────────────────────────────────────────────────────────────────────────
+# MODELO DE DETECCIÓN
+# ────────────────────────────────────────────────────────────────────────────
+model:
+  width: 320
+  height: 320
+  input_tensor: nhwc
+  input_pixel_format: rgb
+  labelmap_path: /labelmap/coco-80.txt
+
+# ────────────────────────────────────────────────────────────────────────────
+# OBJETOS A DETECTAR
+# ────────────────────────────────────────────────────────────────────────────
+objects:
+  track:
+    - person      # Personas
+    - car         # Autos
+    - truck       # Camiones
+    - bus         # Buses
+    - motorcycle  # Motos
+    - bicycle     # Bicicletas
+    - cat         # Gatos
+    - dog         # Perros
+  
+  # Filtros globales (se pueden sobrescribir por cámara)
+  filters:
+    person:
+      min_area: 5000       # Área mínima en píxeles (evita detecciones pequeñas)
+      max_area: 100000     # Área máxima
+      threshold: 0.75      # Confianza mínima 75%
+      min_score: 0.6       # Score mínimo
+    
+    car:
+      min_area: 10000
+      max_area: 100000
+      threshold: 0.7
+      min_score: 0.6
+    
+    truck:
+      min_area: 15000
+      threshold: 0.7
+    
+    motorcycle:
+      min_area: 3000
+      threshold: 0.7
+    
+    bicycle:
+      min_area: 3000
+      threshold: 0.7
+
+# ────────────────────────────────────────────────────────────────────────────
+# GRABACIÓN Y RETENCIÓN
+# ────────────────────────────────────────────────────────────────────────────
+record:
+  enabled: true
+  retain:
+    days: 7              # Retener 7 días de grabaciones continuas
+    mode: motion         # Solo grabar cuando hay movimiento (ahorra espacio)
+  
+  events:
+    pre_capture: 5       # Grabar 5 segundos ANTES del evento
+    post_capture: 5      # Grabar 5 segundos DESPUÉS del evento
+    retain:
+      default: 14        # Retener eventos 14 días
+      mode: motion
+      objects:
+        person: 30       # Retener personas 30 días
+        car: 14          # Retener vehículos 14 días
+
+# ────────────────────────────────────────────────────────────────────────────
+# SNAPSHOTS (Imágenes con bounding boxes)
+# ────────────────────────────────────────────────────────────────────────────
+snapshots:
+  enabled: true
+  timestamp: true          # Mostrar timestamp en la imagen
+  bounding_box: true       # Dibujar cuadros de detección
+  crop: false              # No recortar (mostrar toda la imagen)
+  retain:
+    default: 14            # Retener snapshots 14 días
+    objects:
+      person: 30
+      car: 14
+
+# ────────────────────────────────────────────────────────────────────────────
+# MOTION DETECTION (Pre-filtro antes de IA)
+# ────────────────────────────────────────────────────────────────────────────
+motion:
+  threshold: 25            # Umbral de cambio de píxeles (25 es normal)
+  contour_area: 100        # Área mínima del contorno
+  delta_alpha: 0.2
+  frame_alpha: 0.2
+  frame_height: 50         # Reducir resolución para motion detection (más rápido)
+
+# ────────────────────────────────────────────────────────────────────────────
+# CÁMARAS
+# ────────────────────────────────────────────────────────────────────────────
+cameras:
+  
+  # ══════════════════════════════════════════════════════════════════════════
+  # CÁMARA 1: C530WS ENTRADA
+  # ══════════════════════════════════════════════════════════════════════════
+  entrada:
+    enabled: true
+    
+    # ── RTSP Stream ──
+    ffmpeg:
+      inputs:
+        # Stream principal (alta calidad para grabación)
+        - path: rtsp://USUARIO:PASSWORD@192.168.1.XXX:554/stream1
+          roles:
+            - record
+        
+        # Stream secundario (baja calidad para detección - RECOMENDADO)
+        - path: rtsp://USUARIO:PASSWORD@192.168.1.XXX:554/stream2
+          roles:
+            - detect
+      
+      # Configuración de ffmpeg
+      output_args:
+        record: preset-record-generic-audio-aac
+    
+    # ── Configuración de Detección ──
+    detect:
+      width: 640           # Resolución para detección (stream2)
+      height: 360
+      fps: 5               # FPS para detección (5 es suficiente, ahorra CPU)
+      enabled: true
+      max_disappeared: 25  # Frames antes de considerar objeto "desaparecido"
+    
+    # ── Motion Detection ──
+    motion:
+      threshold: 25
+      contour_area: 100
+      
+      # Máscara (opcional): Ignorar áreas específicas
+      # Formato: lista de coordenadas [x1,y1,x2,y2,x3,y3,...]
+      # mask:
+      #   - 0,0,640,0,640,50,0,50      # Ignorar borde superior
+      #   - 0,360,100,360,100,300,0,300  # Ignorar esquina inferior izquierda
+    
+    # ── Zonas (opcional): Definir áreas específicas ──
+    # zones:
+    #   puerta:
+    #     coordinates: 200,0,640,0,640,360,200,360
+    #     objects:
+    #       - person
+    #   calle:
+    #     coordinates: 0,200,200,200,200,360,0,360
+    #     objects:
+    #       - car
+    #       - truck
+    
+    # ── Objetos a detectar en esta cámara ──
+    objects:
+      track:
+        - person
+        - car
+        - truck
+        - bicycle
+        - motorcycle
+        - dog
+        - cat
+      
+      # Filtros específicos para esta cámara
+      filters:
+        person:
+          min_area: 5000
+          max_area: 100000
+          threshold: 0.75      # Más estricto para entrada (menos falsos positivos)
+          min_score: 0.65
+          # required_zones: ["puerta"]  # Solo alertar si está en zona "puerta"
+        
+        car:
+          min_area: 10000
+          threshold: 0.7
+          min_score: 0.6
+    
+    # ── Snapshots ──
+    snapshots:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+      crop: false
+      height: 500
+      quality: 90
+      required_zones: []     # Vacío = snapshots en toda el área
+    
+    # ── Grabación ──
+    record:
+      enabled: true
+      retain:
+        days: 7
+        mode: motion
+      events:
+        pre_capture: 5
+        post_capture: 5
+        retain:
+          default: 14
+          mode: motion
+          objects:
+            person: 30
+    
+    # ── Restreaming (opcional) ──
+    live:
+      stream_name: entrada_live
+      quality: 5           # 1-31 (1 = mejor calidad)
+      height: 720
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # CÁMARA 2: C310 EXTERIOR
+  # ══════════════════════════════════════════════════════════════════════════
+  exterior:
+    enabled: true
+    
+    ffmpeg:
+      inputs:
+        - path: rtsp://USUARIO:PASSWORD@192.168.1.XXX:554/stream1
+          roles:
+            - record
+        - path: rtsp://USUARIO:PASSWORD@192.168.1.XXX:554/stream2
+          roles:
+            - detect
+      output_args:
+        record: preset-record-generic-audio-aac
+    
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+      enabled: true
+    
+    motion:
+      threshold: 25
+      contour_area: 100
+    
+    objects:
+      track:
+        - person
+        - car
+        - truck
+        - bus
+        - motorcycle
+        - bicycle
+        - dog
+        - cat
+      
+      filters:
+        person:
+          min_area: 5000
+          threshold: 0.7       # Menos estricto para exterior (más distancia)
+          min_score: 0.6
+        
+        car:
+          min_area: 10000
+          threshold: 0.7
+        
+        truck:
+          min_area: 15000
+          threshold: 0.7
+    
+    snapshots:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+      crop: false
+      height: 500
+      quality: 90
+    
+    record:
+      enabled: true
+      retain:
+        days: 7
+        mode: motion
+      events:
+        pre_capture: 5
+        post_capture: 5
+        retain:
+          default: 14
+          objects:
+            person: 30
+            car: 14
+    
+    live:
+      stream_name: exterior_live
+      quality: 5
+      height: 720
+
+# ════════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN AVANZADA
+# ════════════════════════════════════════════════════════════════════════════
+
+# ── Telemetry ──
+telemetry:
+  version_check: true
+
+# ── UI Web ──
+ui:
+  live_mode: mse           # Mejor para streaming (también: webrtc, jsmpeg)
+  timezone: America/Santiago
+  use_experimental: false
+  time_format: 24hour
+  date_style: short
+  strftime_fmt: "%Y-%m-%d %H:%M"
+
+# ── Logging ──
+logger:
+  default: info
+  logs:
+    frigate.event: debug
+    frigate.record: info
+    detector.cpu1: info
+    # detector.coral1: info  # Si usas Coral
+
+# ── FFMPEG ──
+ffmpeg:
+  hwaccel_args: preset-vaapi  # Hardware acceleration (si está disponible)
+  # Otras opciones: preset-nvidia-h264, preset-intel-qsv-h264
+
+# ── Birdseye (Vista de todas las cámaras) ──
+birdseye:
+  enabled: true
+  width: 1280
+  height: 720
+  quality: 8
+  mode: motion             # continuous, motion, objects
+
+# ── Database ──
+database:
+  path: /config/frigate.db
+
+# ════════════════════════════════════════════════════════════════════════════
+# NOTAS:
+# ════════════════════════════════════════════════════════════════════════════
+#
+# 1. CREDENCIALES RTSP:
+#    - Crear usuario específico en App Tapo para Frigate
+#    - Recomendado: usuario "frigate" con password seguro
+#
+# 2. STREAMS:
+#    - stream1: Alta calidad (1920x1080) para grabación
+#    - stream2: Baja calidad (640x360) para detección (ahorra CPU)
+#
+# 3. CPU vs CORAL:
+#    - CPU: ~50-100% por cámara
+#    - Coral TPU: ~5-10% total (hasta 8 cámaras)
+#    - Si CPU es muy alto, considera Coral (~$60)
+#
+# 4. ESPACIO EN DISCO:
+#    - ~1-2 GB por cámara por día (con motion recording)
+#    - 7 días × 2 cámaras = ~14-28 GB
+#    - Ajustar "retain: days" según espacio disponible
+#
+# 5. ZONAS Y MÁSCARAS:
+#    - Usar UI de Frigate para dibujar zonas visualmente
+#    - http://IP:5000/cameras/CAMERA/editor
+#
+# 6. OPTIMIZACIÓN:
+#    - Reducir FPS si CPU es alto (de 5 a 3)
+#    - Usar stream2 para detección siempre
+#    - Deshabilitar objetos que no necesites (ej: cat, dog)
+#
+# ════════════════════════════════════════════════════════════════════════════
+
