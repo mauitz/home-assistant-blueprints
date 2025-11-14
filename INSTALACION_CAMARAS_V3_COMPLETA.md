@@ -17,7 +17,7 @@
 
 ### ❗ CRÍTICO: Sin esto, nada funcionará
 
-**Sigue la guía completa:**  
+**Sigue la guía completa:**
 📖 `docs/CAMARAS_TAPO_INTEGRACION_CORRECTA.md`
 
 ### Resumen:
@@ -69,14 +69,14 @@ Debe existir:
 ```yaml
 input_text:
   # ... (helpers existentes)
-  
+
   # Helpers para sistema de alertas V3
   camera_alert_active:
     name: Cámara con Alerta Activa
     max: 50
     initial: "none"
     icon: mdi:cctv
-  
+
   camera_alert_timestamp:
     name: Timestamp de Última Alerta
     max: 50
@@ -327,7 +327,7 @@ conditions:
 ```yaml
 actions:
   # ... (acciones existentes)
-  
+
   # AGREGAR:
   - service: notify.telegram
     data:

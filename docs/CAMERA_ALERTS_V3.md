@@ -1,8 +1,8 @@
 # 📹 Sistema de Alertas de Cámaras V3 - Con Binary Sensors Reales
 
-**Versión:** 3.0  
-**Fecha:** Noviembre 2025  
-**Estado:** ✅ Producción  
+**Versión:** 3.0
+**Fecha:** Noviembre 2025
+**Estado:** ✅ Producción
 
 ---
 
@@ -143,7 +143,7 @@ chmod 755 /config/www/snapshots
 
 **Trigger:** `binary_sensor.tapo_c530ws_entrada_motion` → `on`
 
-**Condición:** 
+**Condición:**
 - Usuario no está en casa
 - NO es persona (ya tiene otra automatización)
 

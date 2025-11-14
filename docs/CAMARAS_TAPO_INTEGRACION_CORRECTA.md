@@ -164,13 +164,13 @@ Tu integración actual **NO genera binary sensors de movimiento**, por lo que la
 
 ## 🎯 Ventajas de esta Integración
 
-✅ **Binary sensors** reales de detección  
-✅ **Eventos** en tiempo real (< 2 segundos de latency)  
-✅ **Control local** (no depende de cloud)  
-✅ **Múltiples streams** (HD/SD)  
-✅ **Control de PTZ** (Pan/Tilt en C530WS)  
-✅ **Alarmas** integrables  
-✅ **Privacidad** (privacy mode switch)  
+✅ **Binary sensors** reales de detección
+✅ **Eventos** en tiempo real (< 2 segundos de latency)
+✅ **Control local** (no depende de cloud)
+✅ **Múltiples streams** (HD/SD)
+✅ **Control de PTZ** (Pan/Tilt en C530WS)
+✅ **Alarmas** integrables
+✅ **Privacidad** (privacy mode switch)
 
 ---
 

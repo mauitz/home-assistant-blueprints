@@ -1,23 +1,75 @@
-# ════════════════════════════════════════════════════════════════
-# HELPERS PARA SISTEMA DE ALERTAS DE CÁMARAS V2
-# ════════════════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════════
+# HELPERS PARA SISTEMA DE ALERTAS DE CÁMARAS V3 - ADAPTADO
+# ════════════════════════════════════════════════════════════════════════════
 #
-# Agregar a configuration.yaml:
+# Estos helpers rastrean el estado del sistema de alertas de cámaras
+# y se sincronizan con el dashboard dinámico.
 #
-# input_text:
-#   <<: !include camera_alert_helpers.yaml
+# CÓMO AGREGAR A configuration.yaml:
 #
-# ════════════════════════════════════════════════════════════════
+#   input_text:
+#     <<: !include camera_alert_helpers.yaml
+#
+#   input_datetime:
+#     <<: !include camera_alert_datetime.yaml
+#
+#   input_select:
+#     <<: !include camera_alert_select.yaml
+#
+# O copiar directamente el contenido completo de este archivo.
+#
+# VALORES DE camera_alert_active:
+# • "none"     → Sin alertas activas
+# • "entrada"  → Alerta activa en entrada (widget agrandado)
+# • "exterior" → Alerta activa en exterior (widget agrandado)
+# • "reset"    → Trigger para resetear el sistema
+# • "test"     → Trigger para modo de prueba
+#
+# ════════════════════════════════════════════════════════════════════════════
 
-# Tracking de cámara con alerta activa
+# ──────────────────────────────────────────────────────────────────────────
+# INPUT_TEXT: Estado de alerta y timestamp legacy
+# ──────────────────────────────────────────────────────────────────────────
 camera_alert_active:
   name: Cámara con Alerta Activa
+  max: 50
   initial: "none"
   icon: mdi:cctv
 
-# Timestamp de última detección
 camera_alert_timestamp:
-  name: Timestamp de Última Alerta
+  name: Timestamp de Última Alerta (Legacy)
+  max: 50
   initial: "0"
   icon: mdi:clock-outline
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ARCHIVO SEPARADO: camera_alert_datetime.yaml
+# ══════════════════════════════════════════════════════════════════════════════
+# (Copiar este contenido en configuration.yaml bajo 'input_datetime:')
+#
+# camera_alert_last_trigger:
+#   name: Última Detección de Cámara
+#   has_date: true
+#   has_time: true
+#   icon: mdi:calendar-clock
+#
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ARCHIVO SEPARADO: camera_alert_select.yaml
+# ══════════════════════════════════════════════════════════════════════════════
+# (Copiar este contenido en configuration.yaml bajo 'input_select:')
+#
+# camera_alert_type:
+#   name: Tipo de Alerta
+#   options:
+#     - "Ninguna"
+#     - "Movimiento"
+#     - "Persona"
+#     - "Vehículo"
+#     - "Mascota"
+#     - "Test"
+#   initial: "Ninguna"
+#   icon: mdi:eye-settings
+#

@@ -43,19 +43,19 @@ automation:
     description: >
       Cuando la cámara de entrada detecta una persona (no solo movimiento),
       agranda el widget, activa alarma y notifica con alta prioridad.
-    
+
     triggers:
       - platform: state
         entity_id: binary_sensor.tapo_c530ws_entrada_person
         from: 'off'
         to: 'on'
-    
+
     conditions:
       # Solo si no estamos en casa
       - condition: state
         entity_id: person.nico
         state: 'not_home'
-    
+
     actions:
       # 1. Actualizar helpers
       - service: input_text.set_value
@@ -63,38 +63,38 @@ automation:
           entity_id: input_text.camera_alert_active
         data:
           value: "entrada"
-      
+
       - service: input_select.select_option
         target:
           entity_id: input_select.camera_alert_type
         data:
           option: "Persona"
-      
+
       - service: input_datetime.set_datetime
         target:
           entity_id: input_datetime.camera_alert_last_trigger
         data:
           datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-      
+
       # 2. Capturar snapshot
       - service: camera.snapshot
         target:
           entity_id: camera.tapo_c530ws_entrada_hd
         data:
           filename: "/config/www/snapshots/entrada_{{ now().strftime('%Y%m%d_%H%M%S') }}.jpg"
-      
+
       # 3. Activar alarma de la cámara (sirena/luz)
       - service: switch.turn_on
         target:
           entity_id: switch.tapo_c530ws_entrada_alarm
-      
+
       # 4. Log
       - service: logbook.log
         data:
           name: "🚨 Alerta Crítica"
           message: "PERSONA detectada en ENTRADA - {{ now().strftime('%H:%M:%S') }}"
           entity_id: binary_sensor.tapo_c530ws_entrada_person
-      
+
       # 5. Notificación con imagen
       - service: notify.mobile_app_blacky
         data:
@@ -107,21 +107,21 @@ automation:
             push:
               interruption-level: critical
               sound: alarm.caf
-      
+
       # 6. Encadenar comportamiento: encender luces
       - service: scene.turn_on
         target:
           entity_id: scene.anochecer
-      
+
       # 7. Esperar 60 segundos (persona = más tiempo)
       - delay:
           seconds: 60
-      
+
       # 8. Desactivar alarma
       - service: switch.turn_off
         target:
           entity_id: switch.tapo_c530ws_entrada_alarm
-      
+
       # 9. Reset si no hay nueva detección
       - choose:
           - conditions:
@@ -133,12 +133,12 @@ automation:
                   entity_id: input_text.camera_alert_active
                 data:
                   value: "none"
-              
+
               - service: logbook.log
                 data:
                   name: "Sistema de Alertas"
                   message: "✅ Alerta de ENTRADA finalizada"
-    
+
     mode: restart
 
 
@@ -150,19 +150,19 @@ automation:
     description: >
       Cuando la cámara de entrada detecta movimiento (pero no persona),
       agranda el widget y log, sin alarma.
-    
+
     triggers:
       - platform: state
         entity_id: binary_sensor.tapo_c530ws_entrada_motion
         from: 'off'
         to: 'on'
-    
+
     conditions:
       # Solo si NO es persona (ya tiene otra automatización)
       - condition: state
         entity_id: binary_sensor.tapo_c530ws_entrada_person
         state: 'off'
-    
+
     actions:
       # 1. Actualizar helpers
       - service: input_text.set_value
@@ -170,31 +170,31 @@ automation:
           entity_id: input_text.camera_alert_active
         data:
           value: "entrada"
-      
+
       - service: input_select.select_option
         target:
           entity_id: input_select.camera_alert_type
         data:
           option: "Movimiento"
-      
+
       # 2. Capturar snapshot
       - service: camera.snapshot
         target:
           entity_id: camera.tapo_c530ws_entrada_sd
         data:
           filename: "/config/www/snapshots/entrada_motion_{{ now().strftime('%Y%m%d_%H%M%S') }}.jpg"
-      
+
       # 3. Log
       - service: logbook.log
         data:
           name: "Detección de Movimiento"
           message: "Movimiento detectado en ENTRADA - {{ now().strftime('%H:%M:%S') }}"
           entity_id: binary_sensor.tapo_c530ws_entrada_motion
-      
+
       # 4. Esperar 30 segundos (movimiento = menos tiempo)
       - delay:
           seconds: 30
-      
+
       # 5. Reset
       - choose:
           - conditions:
@@ -206,7 +206,7 @@ automation:
                   entity_id: input_text.camera_alert_active
                 data:
                   value: "none"
-    
+
     mode: restart
 
 
@@ -217,53 +217,53 @@ automation:
     alias: '📹 Exterior - Detección de Persona'
     description: >
       Cuando la cámara exterior detecta una persona.
-    
+
     triggers:
       - platform: state
         entity_id: binary_sensor.tapo_c310_exterior_person
         from: 'off'
         to: 'on'
-    
+
     conditions:
       - condition: state
         entity_id: person.nico
         state: 'not_home'
-    
+
     actions:
       - service: input_text.set_value
         target:
           entity_id: input_text.camera_alert_active
         data:
           value: "exterior"
-      
+
       - service: input_select.select_option
         target:
           entity_id: input_select.camera_alert_type
         data:
           option: "Persona"
-      
+
       - service: input_datetime.set_datetime
         target:
           entity_id: input_datetime.camera_alert_last_trigger
         data:
           datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-      
+
       - service: camera.snapshot
         target:
           entity_id: camera.tapo_c310_exterior_hd
         data:
           filename: "/config/www/snapshots/exterior_{{ now().strftime('%Y%m%d_%H%M%S') }}.jpg"
-      
+
       - service: switch.turn_on
         target:
           entity_id: switch.tapo_c310_exterior_alarm
-      
+
       - service: logbook.log
         data:
           name: "🚨 Alerta Crítica"
           message: "PERSONA detectada en EXTERIOR - {{ now().strftime('%H:%M:%S') }}"
           entity_id: binary_sensor.tapo_c310_exterior_person
-      
+
       - service: notify.mobile_app_blacky
         data:
           title: "🚨 PERSONA en Exterior"
@@ -273,14 +273,14 @@ automation:
             image: "/local/snapshots/exterior_{{ now().strftime('%Y%m%d_%H%M%S') }}.jpg"
             push:
               interruption-level: critical
-      
+
       - delay:
           seconds: 60
-      
+
       - service: switch.turn_off
         target:
           entity_id: switch.tapo_c310_exterior_alarm
-      
+
       - choose:
           - conditions:
               - condition: template
@@ -291,7 +291,7 @@ automation:
                   entity_id: input_text.camera_alert_active
                 data:
                   value: "none"
-    
+
     mode: restart
 
 
@@ -302,46 +302,46 @@ automation:
     alias: '📹 Exterior - Detección de Movimiento'
     description: >
       Cuando la cámara exterior detecta movimiento (pero no persona).
-    
+
     triggers:
       - platform: state
         entity_id: binary_sensor.tapo_c310_exterior_motion
         from: 'off'
         to: 'on'
-    
+
     conditions:
       - condition: state
         entity_id: binary_sensor.tapo_c310_exterior_person
         state: 'off'
-    
+
     actions:
       - service: input_text.set_value
         target:
           entity_id: input_text.camera_alert_active
         data:
           value: "exterior"
-      
+
       - service: input_select.select_option
         target:
           entity_id: input_select.camera_alert_type
         data:
           option: "Movimiento"
-      
+
       - service: camera.snapshot
         target:
           entity_id: camera.tapo_c310_exterior_sd
         data:
           filename: "/config/www/snapshots/exterior_motion_{{ now().strftime('%Y%m%d_%H%M%S') }}.jpg"
-      
+
       - service: logbook.log
         data:
           name: "Detección de Movimiento"
           message: "Movimiento detectado en EXTERIOR - {{ now().strftime('%H:%M:%S') }}"
           entity_id: binary_sensor.tapo_c310_exterior_motion
-      
+
       - delay:
           seconds: 30
-      
+
       - choose:
           - conditions:
               - condition: template
@@ -352,7 +352,7 @@ automation:
                   entity_id: input_text.camera_alert_active
                 data:
                   value: "none"
-    
+
     mode: restart
 
 
@@ -362,35 +362,35 @@ automation:
   - id: '1763075000005'
     alias: 'Reset Manual de Alertas de Cámaras'
     description: Resetea el sistema de alertas manualmente
-    
+
     triggers:
       - platform: state
         entity_id: input_text.camera_alert_active
         to: "reset"
-    
+
     actions:
       - service: input_text.set_value
         target:
           entity_id: input_text.camera_alert_active
         data:
           value: "none"
-      
+
       - service: input_select.select_option
         target:
           entity_id: input_select.camera_alert_type
         data:
           option: "Ninguna"
-      
+
       - service: switch.turn_off
         target:
           entity_id:
             - switch.tapo_c530ws_entrada_alarm
             - switch.tapo_c310_exterior_alarm
-      
+
       - service: logbook.log
         data:
           name: "Sistema de Alertas"
           message: "🔄 Sistema reseteado manualmente"
-    
+
     mode: single
 
