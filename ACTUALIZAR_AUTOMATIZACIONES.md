@@ -232,6 +232,6 @@ Si algo no funciona:
 
 ---
 
-**Fecha:** 2025-11-14  
+**Fecha:** 2025-11-14
 **Versión:** V3.3.1 (Todas críticas)
 

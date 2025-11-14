@@ -1,0 +1,256 @@
+# ════════════════════════════════════════════════════════════════════════════
+# FRIGATE CONFIG OPTIMIZADO - Para C310 con Detección Mejorada
+# ════════════════════════════════════════════════════════════════════════════
+
+mqtt:
+  enabled: true
+  host: 192.168.1.100
+  port: 1883
+  user: mqtt-user
+  password: Nicomaui1
+
+detectors:
+  cpu1:
+    type: cpu
+    num_threads: 3
+
+model:
+  width: 320
+  height: 320
+
+objects:
+  track:
+    - person
+    - car
+    - truck
+    - motorcycle
+    - bicycle
+    - dog
+    - cat
+  filters:
+    person:
+      min_area: 5000
+      threshold: 0.75
+    car:
+      min_area: 10000
+      threshold: 0.7
+
+record:
+  enabled: true
+  retain:
+    days: 7
+    mode: motion
+  events:
+    pre_capture: 5
+    post_capture: 5
+    retain:
+      default: 14
+      mode: motion
+      objects:
+        person: 30
+        car: 14
+
+snapshots:
+  enabled: true
+  timestamp: true
+  bounding_box: true
+  retain:
+    default: 14
+    objects:
+      person: 30
+      car: 14
+
+cameras:
+  # ══════════════════════════════════════════════════════════════════════════
+  # ENTRADA: C530WS - OPTIMIZADA
+  # ══════════════════════════════════════════════════════════════════════════
+  entrada:
+    enabled: true
+    
+    ffmpeg:
+      inputs:
+        - path: rtsp://PezAustral:R3spons3@192.168.1.20:554/stream2
+          roles:
+            - detect
+          input_args: preset-rtsp-restream
+        - path: rtsp://PezAustral:R3spons3@192.168.1.20:554/stream1
+          roles:
+            - record
+      output_args:
+        detect: -f rawvideo -pix_fmt yuv420p
+        record: preset-record-generic-audio-copy
+    
+    detect:
+      width: 640
+      height: 360
+      fps: 3                    # ← Reducido de 5 a 3 para estabilidad
+      enabled: true
+      max_disappeared: 50       # ← Aumentado para tracking persistente
+    
+    motion:
+      threshold: 25
+      contour_area: 100
+    
+    objects:
+      track:
+        - person
+        - car
+        - truck
+        - bicycle
+        - motorcycle
+      
+      filters:
+        person:
+          min_area: 5000
+          threshold: 0.75
+          min_score: 0.65
+        car:
+          min_area: 10000
+          threshold: 0.7
+          min_score: 0.6
+    
+    snapshots:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+    
+    record:
+      enabled: true
+      retain:
+        days: 7
+        mode: motion
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # EXTERIOR: C310 - OPTIMIZADA PARA DETECCIÓN CERCANA
+  # ══════════════════════════════════════════════════════════════════════════
+  exterior:
+    enabled: true
+    
+    ffmpeg:
+      inputs:
+        - path: rtsp://PezAustral:R3spons3@192.168.1.21:554/stream2
+          roles:
+            - detect
+          input_args: preset-rtsp-restream
+        - path: rtsp://PezAustral:R3spons3@192.168.1.21:554/stream1
+          roles:
+            - record
+      output_args:
+        detect: -f rawvideo -pix_fmt yuv420p
+        record: preset-record-generic-audio-copy
+    
+    detect:
+      width: 640
+      height: 360
+      fps: 3                    # ← Reducido para estabilidad
+      enabled: true
+      max_disappeared: 50       # ← Aumentado para tracking persistente
+    
+    motion:
+      threshold: 20             # ← MÁS SENSIBLE (era 25)
+      contour_area: 50          # ← MÁS SENSIBLE (era 100)
+      delta_alpha: 0.1
+      frame_alpha: 0.1
+    
+    # Zona cercana (debajo de la cámara)
+    # AJUSTAR COORDENADAS según tu vista en:
+    # http://192.168.1.100:5000/cameras/exterior/editor
+    zones:
+      zona_cercana:
+        coordinates: 200,250,440,250,440,360,200,360
+        inertia: 5              # Tolera 5 frames sin movimiento
+        objects:
+          - person
+    
+    objects:
+      track:
+        - person
+        - car
+        - truck
+        - motorcycle
+        - bicycle
+        - dog
+        - cat
+      
+      filters:
+        person:
+          min_area: 3000        # ← REDUCIDO (era 5000) - más sensible
+          max_area: 100000
+          threshold: 0.65       # ← REDUCIDO (era 0.7) - menos estricto
+          min_score: 0.5        # ← REDUCIDO (era 0.6)
+          min_ratio: 0.3        # ← AGREGADO - detecta personas agachadas
+          max_ratio: 5.0
+          # Si quieres SOLO alertar en zona cercana, descomentar:
+          # required_zones: ["zona_cercana"]
+        
+        car:
+          min_area: 10000
+          threshold: 0.7
+          min_score: 0.6
+    
+    snapshots:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+      required_zones: []        # Snapshots en toda el área
+    
+    record:
+      enabled: true
+      retain:
+        days: 7
+        mode: motion
+
+# ════════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN GLOBAL
+# ════════════════════════════════════════════════════════════════════════════
+
+ui:
+  timezone: America/Montevideo
+
+logger:
+  default: info
+  logs:
+    frigate.event: debug
+
+# ════════════════════════════════════════════════════════════════════════════
+# NOTAS DE OPTIMIZACIÓN APLICADAS:
+# ════════════════════════════════════════════════════════════════════════════
+#
+# CAMBIOS PRINCIPALES:
+#
+# 1. FPS reducido de 5 a 3 en ambas cámaras
+#    → Menos carga de CPU y red
+#    → Más estable
+#
+# 2. max_disappeared aumentado a 50 frames
+#    → Tracking más persistente
+#    → No pierde objetos si se quedan quietos
+#
+# 3. EXTERIOR - Motion detection más sensible:
+#    - threshold: 20 (era 25)
+#    - contour_area: 50 (era 100)
+#    → Detecta movimientos más pequeños
+#
+# 4. EXTERIOR - Filtros de persona más permisivos:
+#    - min_area: 3000 (era 5000)
+#    - threshold: 0.65 (era 0.7)
+#    - min_score: 0.5 (era 0.6)
+#    - min_ratio: 0.3 (nuevo)
+#    → Detecta personas más lejos o en ángulo
+#
+# 5. Zona "zona_cercana" definida
+#    → Área específica debajo de la cámara
+#    → Puedes hacer que SOLO alerte aquí (required_zones)
+#
+# 6. RTSP optimizado:
+#    - input_args: preset-rtsp-restream
+#    - output_args optimizados
+#    → Menos errores de conexión
+#
+# ════════════════════════════════════════════════════════════════════════════
+
+detect:
+  enabled: true
+
+version: 0.16-0
+
