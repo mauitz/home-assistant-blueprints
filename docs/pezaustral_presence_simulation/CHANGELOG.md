@@ -1,135 +1,209 @@
-# Changelog - PezAustral Presence Simulation
-
-Todos los cambios notables en este blueprint serán documentados aquí.
+# 📋 Changelog - PezAustral Presence Simulation
 
 ---
 
-## [1.1] - 2025-11-11
+## v2.0.0 (2025-11-18) - 🎉 MAJOR UPDATE
 
-### 🚨 CRÍTICO - Bug Fix
+### ✨ Nuevas Características
 
-#### Fixed
-- **[CRÍTICO] Automatización no se podía detener** (#1)
-  - Cambiado `mode: restart` a `mode: single`
-  - Agregada verificación continua del estado de control durante ejecución
-  - Implementado `wait_template` en delays para detención inmediata
-  - La automatización ahora se detiene en menos de 5 segundos al desactivar
+- **🧹 CLEANUP AUTOMÁTICO INTEGRADO**
+  - Ya NO requiere automatizaciones adicionales
+  - Apaga TODAS las luces al detener la simulación
+  - Funciona independientemente de cómo se detenga (manual, error, o fin normal)
+  - Se ejecuta ANTES de las escenas de salida
 
-#### Added
-- **Escena de parada de emergencia**
-  - Nueva opción: `emergency_stop_scene`
-  - Se activa automáticamente cuando se detiene manualmente
-  - Permite apagar todos los switches inmediatamente
+- **🎯 SIMPLICIDAD**
+  - Todo en un solo blueprint
+  - Sin necesidad de instalar scripts adicionales
+  - Configuración más sencilla
 
-- **Verificación continua de estado**
-  - El blueprint ahora verifica el estado del `automation_control_entity` antes de cada acción
-  - Verifica durante todos los delays
-  - Verifica entre loops
+### 🔧 Mejoras Técnicas
 
-#### Changed
-- **Loop mejorado**
-  - Cambiado de `repeat.count` a `repeat.while` con condiciones
-  - Permite salida limpia del loop
-  - Mejor control del flujo de ejecución
+- **Flujo de detención mejorado:**
+  - El cleanup se ejecuta SIEMPRE (no solo al finalizar loops normalmente)
+  - Variable `detener_manualmente` para distinguir tipo de detención
+  - Escenas de salida se ejecutan DESPUÉS del cleanup
 
-#### Technical Details
-- Mode cambiado de `restart` → `single`
-- Agregadas condiciones `while` en el repeat principal
-- Agregado `wait_template` con timeout en cada delay de luz
-- Agregada acción `stop` cuando se detecta desactivación
-- Documentación actualizada con fix urgente
+- **Código optimizado:**
+  - Eliminadas dependencias de automatizaciones externas
+  - Manejo de errores más robusto
+  - Logs más descriptivos
 
-### Migration Notes
-**Si vienes de v1.0:**
-1. Actualiza el blueprint desde el repositorio
-2. Recarga blueprints en Home Assistant
-3. Crea escena de parada de emergencia (opcional pero recomendado)
-4. Actualiza tu automatización para incluir la escena
-5. Prueba que se detiene correctamente
+### 🗑️ Deprecated
 
-**Compatibilidad:** Todas las configuraciones de v1.0 son compatibles con v1.1
+- ❌ `presence_simulation_cleanup_smart.yaml` (automatización externa) - Ya no necesaria
+- ❌ `presence_simulation_cleanup.yaml` (automatización externa) - Ya no necesaria
+- ❌ Scripts de instalación de cleanup - Ya no necesarios
 
----
+### 📚 Documentación
 
-## [1.0] - 2025-11-08
+- ✅ README actualizado con instrucciones v2.0
+- ✅ Changelog consolidado
+- ✅ Troubleshooting actualizado
 
-### Initial Release
+### ⚠️ Breaking Changes
 
-#### Added
-- **Control de lámparas simultáneas**
-  - Parámetro `max_lights_on` para limitar luces encendidas simultáneamente
-  - Sistema automático de apagado de luces antiguas
-  - Tracking interno de luces activas
+Ninguno. Compatible con configuraciones existentes de v1.3.
 
-- **Loop configurable**
-  - 0-50 repeticiones o infinito
-  - Delays aleatorios entre loops (min/max)
-  - Escena de salida configurable
-
-- **Múltiples triggers**
-  - Tiempo específico
-  - Elevación solar
-  - Nivel de luz ambiental
-  - Estado de entidad (ON/OFF)
-
-- **Control avanzado**
-  - Control por zona geográfica
-  - Control por personas específicas
-  - Control por rango de fechas
-  - Días de la semana configurables
-
-- **Configuración de luces**
-  - Brillo configurable (solo luces)
-  - Temperatura de color (solo luces)
-  - Tiempo de transición ON/OFF
-  - Orden de encendido: secuencial, reverso, aleatorio, simultáneo
-  - Delays aleatorios entre encendidos
-
-- **Configuración de duración**
-  - Método: tiempo min/max o rango horario
-  - Tiempo mínimo/máximo ON configurable
-  - Transición de apagado configurable
-
-- **Documentación completa**
-  - Guía de instalación
-  - Manual de configuración (50+ páginas)
-  - Ejemplos de uso
-  - FAQ y troubleshooting
-
-#### Known Issues
-- ⚠️ **[CRÍTICO]** Automatización no se puede detener una vez iniciada (Fixed en v1.1)
-- ⚠️ Mode `restart` causa problemas de control (Fixed en v1.1)
+Solo necesitas:
+1. Actualizar al nuevo blueprint v2.0
+2. Eliminar automatización de cleanup si la tenías instalada
+3. Reiniciar Home Assistant
 
 ---
 
-## [Pre-Release] - 2025-11-07
+## v1.3.0 (2025-11) - Monitoreo Integrado
 
-### Development
-- Diseño inicial basado en Holiday & Away Lighting de Blackshome
-- Implementación de características únicas
-- Testing inicial
+### ✨ Nuevas Características
 
----
+- **📊 MONITOREO INTEGRADO**
+  - Actualización automática de helpers
+  - Tracking de luces activas en tiempo real
+  - Contador de loops automático
+  - Estado de ejecución en tiempo real
 
-## Notas de Versiones
+### 🔧 Mejoras
 
-### Semantic Versioning
-Este proyecto sigue [Semantic Versioning](https://semver.org/):
-- **MAJOR**: Cambios incompatibles en la API/configuración
-- **MINOR**: Nuevas características compatibles hacia atrás
-- **PATCH**: Bug fixes compatibles hacia atrás
+- Helper `presence_simulation_running` actualizado automáticamente
+- Lista de luces activas (`active_lights`) con nombres friendly
+- Última luz encendida/apagada registrada
+- Contador de luces simultáneas
 
-### Política de Soporte
-- **Última versión**: Soporte completo y actualizaciones activas
-- **Versiones anteriores**: Solo bug fixes críticos de seguridad
-- **Deprecated**: Sin soporte, migración recomendada
+### 📚 Documentación
 
-### Links
-- [Repositorio GitHub](https://github.com/TU_USUARIO/home-assistant-blueprints)
-- [Reportar Issues](https://github.com/TU_USUARIO/home-assistant-blueprints/issues)
-- [Documentación](README.md)
+- Guía de monitoreo con dashboard completo
+- Widget de estado en tiempo real
+- Ejemplos de configuración
 
 ---
 
-*Changelog actualizado: 2025-11-11*
+## v1.2.0 (2025-11) - Logging Detallado
 
+### ✨ Nuevas Características
+
+- **📝 LOGGING DETALLADO EN LOGBOOK**
+  - Tracking de cada luz que se enciende/apaga
+  - Registro de inicio/fin de cada loop
+  - Información de configuración al iniciar
+  - Logs de escenas de salida
+
+### 🔧 Mejoras
+
+- Mensajes con emojis para fácil identificación
+- Entity_id en cada log para filtrado
+- Timestamps automáticos
+
+---
+
+## v1.1.0 (2025-11) - Detención Limpia
+
+### ✨ Nuevas Características
+
+- **🛑 SE PUEDE DETENER**
+  - Desactivando el input_boolean de control
+  - Verificación de estado ANTES de cada acción
+  - Se detiene inmediatamente (< 5 segundos)
+
+### 🔧 Mejoras Técnicas
+
+- Modo `single` para evitar múltiples ejecuciones
+- Verificación de estado en wait_template
+- Stop limpio con mensaje descriptivo
+- Variable `loop_interrupted` para tracking
+
+### 🐛 Bugs Corregidos
+
+- ❌ Problema: No se podía detener con `mode: restart`
+  - ✅ Solución: Cambiado a `mode: single` + verificaciones continuas
+
+---
+
+## v1.0.0 (2025-11) - Release Inicial
+
+### ✨ Características
+
+- Control de lámparas simultáneas configurab le
+- Loops configurables (0-50 o infinito)
+- Tiempos aleatorios de encendido/apagado
+- Transiciones configurables
+- Escenas de salida (normal y emergencia)
+- Control por zona y fechas
+- Múltiples triggers (tiempo, sol, luz ambiental)
+
+### 📚 Documentación
+
+- README completo
+- Troubleshooting
+- Ejemplos de configuración
+
+---
+
+## 🔮 Roadmap
+
+### v2.1 (Planeado)
+
+- [ ] Perfiles predefinidos (casual, intensivo, aleatorio extremo)
+- [ ] Prioridad de luces (algunas más probables que otras)
+- [ ] Integración con calendario (días específicos)
+- [ ] Notificaciones opcionales (inicio/fin)
+
+### v2.2 (Considerando)
+
+- [ ] Machine Learning para patrones realistas
+- [ ] Integración con detectores de movimiento reales
+- [ ] API para control externo
+- [ ] Estadísticas de uso
+
+---
+
+## 📝 Notas de Migración
+
+### De v1.3 a v2.0
+
+**Pasos:**
+
+1. **Actualizar blueprint:**
+   ```
+   Configuración → Automatizaciones → Blueprints
+   → Reimportar desde GitHub (URL actualizada a v2.0)
+   ```
+
+2. **Eliminar automatización de cleanup (si la tienes):**
+   ```
+   Configuración → Automatizaciones
+   → Buscar: "Presence Simulation - Cleanup"
+   → Eliminar
+   ```
+
+3. **Verificar configuración:**
+   ```bash
+   ./utils/verify_presence_simulation.sh
+   ```
+
+4. **Probar:**
+   - Activar simulación
+   - Esperar luces encendidas
+   - Desactivar
+   - Verificar que TODO se apaga automáticamente
+
+**NO necesitas:**
+- ❌ Cambiar helpers
+- ❌ Cambiar dashboard
+- ❌ Reconfigurar la automatización
+- ❌ Reinstalar scripts
+
+---
+
+## 🆘 Soporte
+
+Si tienes problemas después de actualizar:
+
+1. Ver [Troubleshooting](TROUBLESHOOTING.md)
+2. Verificar logs: `Configuración → Registros → Logbook`
+3. Abrir issue en GitHub con detalles
+
+---
+
+**Mantenedor:** [@mauitz](https://github.com/mauitz)
+**Licencia:** MIT
+**Última actualización:** 2025-11-18

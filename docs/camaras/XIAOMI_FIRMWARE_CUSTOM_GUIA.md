@@ -564,3 +564,4 @@ Antes de comenzar, confirma:
 
 **¿Listo para proceder?** Primero identifica el modelo exacto en la app Xiaomi Home y verifica compatibilidad.
 
+

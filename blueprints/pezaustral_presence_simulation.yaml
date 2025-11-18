@@ -1,813 +1,302 @@
 blueprint:
-  name: PezAustral Presence Simulation v1.3
+  name: PezAustral Presence Simulation v2.0
   description: >
-    # 🏠 PezAustral Presence Simulation **Version: 1.3**
-    
-    **NUEVO EN ESTA VERSIÓN:**
-    - ✅ **MONITOREO INTEGRADO** - Actualiza contadores automáticamente
-    - ✅ No requiere automatizaciones externas de monitoreo
-    - ✅ Actualiza lista de luces activas en tiempo real
-    - ✅ Tracking de última luz encendida/apagada
-    - ✅ Contador de luces simultáneas
-    
-    **VERSIÓN 1.2:**
-    - ✅ LOGGING DETALLADO en el Logbook de Home Assistant
-    - ✅ Tracking de cada luz que se enciende/apaga
-    - ✅ Registro de inicio/fin de cada loop
-    - ✅ Información de configuración al iniciar
-    
-    **VERSIÓN 1.1:**
-    - ✅ SE PUEDE DETENER desactivando el input_boolean
-    - ✅ Verifica el estado ANTES de cada acción
-    - ✅ Se detiene inmediatamente al desactivar
-    - ✅ Modo `single` para evitar múltiples ejecuciones
-    
-    Simulación avanzada de presencia con control de lámparas simultáneas, loops y escena de salida.
-    
-    **Basado en:** [Holiday & Away Lighting by Blackshome](https://gist.github.com/Blackshome/0a34870755762bcb9fab159d5b94fd25)
-    
-    Documentación completa: Ver docs/pezaustral_presence_simulation/
-    
-    Required = *
-    
+    # 🏠 Simulación de Presencia Inteligente
+
+    **VERSIÓN 2.0 - TODO INTEGRADO**
+
+    ✅ **CLEANUP AUTOMÁTICO** - Apaga TODAS las luces al detener (sin automatizaciones extras)
+    ✅ **MONITOREO INTEGRADO** - Actualiza contadores automáticamente
+    ✅ **DETENCIÓN LIMPIA** - Se puede detener en cualquier momento
+    ✅ **ESCENAS DE SALIDA** - Configurables para fin normal o emergencia
+    ✅ **CONTROL DE LÁMPARAS** - Máximo simultáneas configurable
+    ✅ **LOGS DETALLADOS** - Tracking completo en Logbook
+
+    **MEJORAS V2.0:**
+    - Cleanup se ejecuta SIEMPRE al detener (no solo al finalizar loops)
+    - Sin necesidad de automatizaciones adicionales
+    - Un solo blueprint hace todo
+
+    **Documentación:** https://github.com/mauitz/home-assistant-blueprints
+
   domain: automation
   source_url: https://github.com/mauitz/home-assistant-blueprints/blob/main/blueprints/pezaustral_presence_simulation.yaml
-  
+
   input:
     # ══════════════════════════════════════════════════════════════════════════
-    # MONITOREO (NUEVO EN V1.3)
+    # CONTROL
     # ══════════════════════════════════════════════════════════════════════════
-    monitoring_config:
-      name: "⚙️ Configuración de Monitoreo"
-      icon: mdi:monitor-dashboard
-      collapsed: true
-      input:
-        enable_monitoring:
-          name: Habilitar Monitoreo Integrado
-          description: >
-            Actualiza automáticamente los helpers de monitoreo (input_boolean.presence_simulation_running,
-            input_number.presence_simulation_lights_on_count, input_text.presence_simulation_active_lights, etc.).
-            Si no tienes estos helpers, déjalo deshabilitado.
-          default: true
-          selector:
-            boolean:
-    
-    # ══════════════════════════════════════════════════════════════════════════
-    # CONTROL DE AUTOMATIZACIÓN (del v1.2)
-    # ══════════════════════════════════════════════════════════════════════════
-    automation_control:
-      name: "Control de Automatización"
-      icon: mdi:auto-mode
-      collapsed: true
-      input:
-        automation_control_entity:
-          name: Entidad de Control (Opcional)
-          description: >
-            Selecciona una entidad (input_boolean, switch, etc.) para activar/desactivar la automatización.
-            **IMPORTANTE**: La automatización verificará este estado constantemente y se detendrá si se desactiva.
-          default: []
-          selector:
-            entity:
-              multiple: false
-        
-        start_date:
-          name: Fecha de Inicio (Opcional)
-          description: Fecha desde la cual la automatización estará activa
-          default: ""
-          selector:
-            date:
-        
-        end_date:
-          name: Fecha de Fin (Opcional)
-          description: Fecha hasta la cual la automatización estará activa
-          default: ""
-          selector:
-            date:
-        
-        zone_control:
-          name: Zona de Control (Opcional)
-          description: Solo ejecutar cuando estas personas NO estén en esta zona
-          default: []
-          selector:
-            entity:
-              domain: zone
-              multiple: false
-        
-        people_control:
-          name: Personas (Opcional)
-          description: Personas a monitorear para la zona de control
-          default: []
-          selector:
-            entity:
-              domain:
-                - person
-                - device_tracker
-              multiple: true
-        
-        weekdays:
-          name: Días de la Semana
-          description: Selecciona en qué días ejecutar la automatización
-          default: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-          selector:
-            select:
-              options:
-                - label: "Lunes"
-                  value: "mon"
-                - label: "Martes"
-                  value: "tue"
-                - label: "Miércoles"
-                  value: "wed"
-                - label: "Jueves"
-                  value: "thu"
-                - label: "Viernes"
-                  value: "fri"
-                - label: "Sábado"
-                  value: "sat"
-                - label: "Domingo"
-                  value: "sun"
-              multiple: true
-              custom_value: false
-        
-        global_conditions:
-          name: Condiciones Globales (Opcional)
-          description: Condiciones adicionales que deben cumplirse
-          default: []
-          selector:
-            condition:
+    automation_control_entity:
+      name: Entidad de Control *
+      description: Input boolean para activar/desactivar la simulación
+      selector:
+        entity:
+          domain: input_boolean
 
     # ══════════════════════════════════════════════════════════════════════════
-    # TRIGGERS
+    # LUCES
     # ══════════════════════════════════════════════════════════════════════════
-    trigger_config:
-      name: "🎯 Configuración de Disparadores"
-      icon: mdi:bell-ring
-      collapsed: true
-      input:
-        trigger_type:
-          name: Tipo de Disparador *
-          description: Cómo se iniciará la automatización
-          default: entity_on
-          selector:
-            select:
-              options:
-                - label: "Entidad cambia a ON"
-                  value: "entity_on"
-                - label: "Entidad cambia a OFF"
-                  value: "entity_off"
-                - label: "Hora específica"
-                  value: "time"
-                - label: "Elevación del sol"
-                  value: "sun_elevation"
-                - label: "Luz ambiental"
-                  value: "ambient_light"
-              custom_value: false
-        
-        trigger_entity:
-          name: Entidad Disparadora (para entity_on/off)
-          description: Entidad que disparará la automatización
-          default: []
-          selector:
-            entity:
-              multiple: false
-        
-        trigger_time:
-          name: Hora de Disparo (para time)
-          description: Hora específica para iniciar
-          default: "20:00:00"
-          selector:
-            time:
-        
-        sun_elevation:
-          name: Elevación del Sol (para sun_elevation)
-          description: Grados sobre el horizonte (-90 a 90)
-          default: -3
-          selector:
-            number:
-              min: -90
-              max: 90
-              unit_of_measurement: "°"
-        
-        ambient_light_entity:
-          name: Sensor de Luz Ambiental (para ambient_light)
-          description: Sensor que mide la luz ambiental
-          default: []
-          selector:
-            entity:
-              domain: sensor
-              device_class: illuminance
-        
-        ambient_light_threshold:
-          name: Umbral de Luz Ambiental (lux)
-          description: Valor por debajo del cual se dispara
-          default: 100
-          selector:
-            number:
-              min: 0
-              max: 10000
-              unit_of_measurement: "lux"
+    lights:
+      name: Luces/Switches *
+      description: Dispositivos que se encenderán/apagarán
+      selector:
+        entity:
+          domain: [light, switch]
+          multiple: true
+
+    max_lights_on:
+      name: Máximo Simultáneas
+      description: Máximo de luces encendidas al mismo tiempo
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 20
+          mode: slider
 
     # ══════════════════════════════════════════════════════════════════════════
-    # LIGHTS/SWITCHES
+    # TIMING
     # ══════════════════════════════════════════════════════════════════════════
-    lights_config:
-      name: "💡 Configuración de Luces"
-      icon: mdi:lightbulb-group
-      collapsed: false
-      input:
-        lights_on:
-          name: Luces/Switches a Encender *
-          description: Selecciona las entidades que se encenderán
-          selector:
-            entity:
-              domain:
-                - light
-                - switch
-              multiple: true
-        
-        max_lights_on:
-          name: Máximo de Luces Simultáneas *
-          description: >
-            **NUEVA CARACTERÍSTICA**: Máximo número de luces encendidas al mismo tiempo.
-            Cuando se alcance este límite, se apagará la luz más antigua antes de encender una nueva.
-          default: 2
-          selector:
-            number:
-              min: 1
-              max: 20
-              mode: box
-        
-        entity_order_on:
-          name: Orden de Encendido
-          description: Cómo se seleccionará el orden para encender las luces
-          default: entities_on_shuffled
-          selector:
-            select:
-              options:
-                - label: "Aleatorio (Shuffled)"
-                  value: "entities_on_shuffled"
-                - label: "Secuencial"
-                  value: "entities_on_sequence"
-                - label: "Reverso"
-                  value: "entities_on_reverse"
-                - label: "Todas al mismo tiempo"
-                  value: "entities_on_same_time"
-              custom_value: false
-        
-        random_on_delay_min:
-          name: Delay Mínimo de Encendido (segundos)
-          description: Tiempo mínimo de espera antes de encender la siguiente luz
-          default: 10
-          selector:
-            number:
-              min: 0
-              max: 3600
-              unit_of_measurement: "s"
-              mode: box
-        
-        random_on_delay_max:
-          name: Delay Máximo de Encendido (segundos)
-          description: Tiempo máximo de espera antes de encender la siguiente luz
-          default: 300
-          selector:
-            number:
-              min: 0
-              max: 3600
-              unit_of_measurement: "s"
-              mode: box
-        
-        brightness:
-          name: Brillo (solo para luces)
-          description: Nivel de brillo (0-100%)
-          default: 100
-          selector:
-            number:
-              min: 0
-              max: 100
-              unit_of_measurement: "%"
-        
-        color_temp:
-          name: Temperatura de Color (solo para luces)
-          description: En mireds (153-500)
-          default: 3000
-          selector:
-            number:
-              min: 153
-              max: 500
-        
-        transition_on:
-          name: Transición de Encendido (segundos)
-          description: Duración de la transición al encender
-          default: 1
-          selector:
-            number:
-              min: 0
-              max: 60
-              unit_of_measurement: "s"
-        
-        transition_off:
-          name: Transición de Apagado (segundos)
-          description: Duración de la transición al apagar
-          default: 1
-          selector:
-            number:
-              min: 0
-              max: 60
-              unit_of_measurement: "s"
+    loop_count:
+      name: Loops
+      description: Número de repeticiones (99 = infinito)
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 99
+          mode: box
+
+    time_on_min:
+      name: Tiempo Encendido Mínimo (min)
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 240
+          mode: box
+
+    time_on_max:
+      name: Tiempo Encendido Máximo (min)
+      default: 45
+      selector:
+        number:
+          min: 1
+          max: 240
+          mode: box
+
+    loop_delay_min:
+      name: Delay Entre Loops Mínimo (min)
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 120
+          mode: box
+
+    loop_delay_max:
+      name: Delay Entre Loops Máximo (min)
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 120
+          mode: box
+
+    transition_on:
+      name: Transición Encendido (seg)
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.5
+          mode: slider
+
+    transition_off:
+      name: Transición Apagado (seg)
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.5
+          mode: slider
 
     # ══════════════════════════════════════════════════════════════════════════
-    # DURACIÓN
+    # ESCENAS
     # ══════════════════════════════════════════════════════════════════════════
-    duration_config:
-      name: "⏱️ Configuración de Duración"
-      icon: mdi:timer
-      collapsed: true
-      input:
-        duration_method:
-          name: Método de Duración
-          description: Cómo determinar cuánto tiempo permanecerán encendidas las luces
-          default: min_max_time
-          selector:
-            select:
-              options:
-                - label: "Tiempo Min/Max Aleatorio"
-                  value: "min_max_time"
-                - label: "Hasta Elevación del Sol"
-                  value: "sun_elevation"
-                - label: "Hasta Umbral de Luz Ambiental"
-                  value: "ambient_light"
-              custom_value: false
-        
-        min_on_time:
-          name: Tiempo Mínimo Encendido (minutos) *
-          description: Mínimo de minutos que cada luz permanecerá encendida
-          default: 8
-          selector:
-            number:
-              min: 1
-              max: 1440
-              unit_of_measurement: "min"
-              mode: box
-        
-        max_on_time:
-          name: Tiempo Máximo Encendido (minutos) *
-          description: Máximo de minutos que cada luz permanecerá encendida
-          default: 30
-          selector:
-            number:
-              min: 1
-              max: 1440
-              unit_of_measurement: "min"
-              mode: box
+    enable_exit_scene:
+      name: Activar Escena de Salida
+      default: false
+      selector:
+        boolean:
+
+    exit_scene:
+      name: Escena de Salida Normal
+      description: Se ejecuta al completar todos los loops
+      default: []
+      selector:
+        entity:
+          domain: scene
+
+    emergency_scene:
+      name: Escena de Parada de Emergencia
+      description: Se ejecuta al detener manualmente
+      default: []
+      selector:
+        entity:
+          domain: scene
 
     # ══════════════════════════════════════════════════════════════════════════
-    # LOOPS (NUEVA CARACTERÍSTICA)
+    # MONITOREO
     # ══════════════════════════════════════════════════════════════════════════
-    loop_config:
-      name: "🔄 Configuración de Loops"
-      icon: mdi:repeat
-      collapsed: true
-      input:
-        enable_loop:
-          name: Habilitar Loop
-          description: >
-            **NUEVA CARACTERÍSTICA**: Permite que la automatización se repita múltiples veces.
-            Útil para simular presencia durante toda la noche.
-          default: false
-          selector:
-            boolean:
-        
-        loop_count:
-          name: Cantidad de Loops
-          description: >
-            Número de veces que se ejecutará la secuencia completa.
-            Deja en 0 para loop infinito (se detendrá solo al desactivar el control entity).
-          default: 3
-          selector:
-            number:
-              min: 0
-              max: 100
-              mode: box
-        
-        loop_delay_min:
-          name: Delay Mínimo Entre Loops (minutos)
-          description: Tiempo mínimo de espera entre cada repetición
-          default: 5
-          selector:
-            number:
-              min: 0
-              max: 1440
-              unit_of_measurement: "min"
-              mode: box
-        
-        loop_delay_max:
-          name: Delay Máximo Entre Loops (minutos)
-          description: Tiempo máximo de espera entre cada repetición
-          default: 15
-          selector:
-            number:
-              min: 0
-              max: 1440
-              unit_of_measurement: "min"
-              mode: box
-
-    # ══════════════════════════════════════════════════════════════════════════
-    # ESCENAS DE SALIDA (NUEVA CARACTERÍSTICA)
-    # ══════════════════════════════════════════════════════════════════════════
-    exit_config:
-      name: "🎬 Escenas de Salida"
-      icon: mdi:exit-run
-      collapsed: true
-      input:
-        enable_exit_scene:
-          name: Habilitar Escena de Salida
-          description: >
-            **NUEVA CARACTERÍSTICA**: Activa una escena al finalizar todos los loops.
-            Útil para apagar todas las luces o configurar un estado específico.
-          default: false
-          selector:
-            boolean:
-        
-        exit_scene:
-          name: Escena de Salida Normal
-          description: Escena a activar cuando la automatización termina normalmente
-          default: []
-          selector:
-            entity:
-              domain: scene
-              multiple: false
-        
-        emergency_stop_scene:
-          name: Escena de Parada de Emergencia
-          description: Escena a activar cuando la automatización se detiene manualmente
-          default: []
-          selector:
-            entity:
-              domain: scene
-              multiple: false
+    enable_monitoring:
+      name: Habilitar Monitoreo
+      description: Actualiza helpers automáticamente (requiere helpers configurados)
+      default: true
+      selector:
+        boolean:
 
 # ══════════════════════════════════════════════════════════════════════════════
 # VARIABLES
 # ══════════════════════════════════════════════════════════════════════════════
 variables:
-  # Monitoring
-  enable_monitoring: !input enable_monitoring
-  
-  # Control
   automation_control_entity: !input automation_control_entity
-  start_date: !input start_date
-  end_date: !input end_date
-  zone_control: !input zone_control
-  people_control: !input people_control
-  weekdays: !input weekdays
-  global_conditions: !input global_conditions
-  
-  # Triggers
-  trigger_type: !input trigger_type
-  trigger_entity: !input trigger_entity
-  trigger_time: !input trigger_time
-  sun_elevation: !input sun_elevation
-  ambient_light_entity: !input ambient_light_entity
-  ambient_light_threshold: !input ambient_light_threshold
-  
-  # Lights
-  lights_on: !input lights_on
+  lights: !input lights
   max_lights_on: !input max_lights_on
-  entity_order_on: !input entity_order_on
-  random_on_delay_min: !input random_on_delay_min
-  random_on_delay_max: !input random_on_delay_max
-  brightness: !input brightness
-  color_temp: !input color_temp
-  transition_on: !input transition_on
-  transition_off: !input transition_off
-  
-  # Duration
-  duration_method: !input duration_method
-  min_on_time: !input min_on_time
-  max_on_time: !input max_on_time
-  
-  # Loop
-  enable_loop: !input enable_loop
   loop_count: !input loop_count
+  time_on_min: !input time_on_min
+  time_on_max: !input time_on_max
   loop_delay_min: !input loop_delay_min
   loop_delay_max: !input loop_delay_max
-  
-  # Exit
+  transition_on: !input transition_on
+  transition_off: !input transition_off
   enable_exit_scene: !input enable_exit_scene
   exit_scene: !input exit_scene
-  emergency_stop_scene: !input emergency_stop_scene
-  
-  # Derived variables
-  entities_turn_on: >-
-    {% set lights_list = lights_on %}
-    {% set ns = namespace(result=[]) %}
-    {% for light in lights_list %}
-      {% set entity_id = light %}
-      {% set domain = entity_id.split('.')[0] %}
-      {% if domain == 'light' %}
-        {% set data = {
-          'brightness_pct': brightness,
-          'color_temp': color_temp,
-          'transition': transition_on
-        } %}
-      {% else %}
-        {% set data = {} %}
-      {% endif %}
-      {% set ns.result = ns.result + [{'id': entity_id, 'data': data}] %}
-    {% endfor %}
-    {{ ns.result }}
+  emergency_scene: !input emergency_scene
+  enable_monitoring: !input enable_monitoring
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TRIGGERS
+# TRIGGER
 # ══════════════════════════════════════════════════════════════════════════════
 trigger:
   - platform: state
-    id: trigger_entity_on
-    entity_id: !input trigger_entity
+    entity_id: !input automation_control_entity
     to: "on"
-  
-  - platform: state
-    id: trigger_entity_off
-    entity_id: !input trigger_entity
-    to: "off"
-  
-  - platform: time
-    id: trigger_time
-    at: !input trigger_time
-  
-  - platform: numeric_state
-    id: trigger_sun
-    entity_id: sun.sun
-    attribute: elevation
-    below: !input sun_elevation
-  
-  - platform: numeric_state
-    id: trigger_ambient
-    entity_id: !input ambient_light_entity
-    below: !input ambient_light_threshold
 
 # ══════════════════════════════════════════════════════════════════════════════
-# CONDITIONS
+# MODE
 # ══════════════════════════════════════════════════════════════════════════════
-condition:
-  - alias: "Validar trigger correcto"
-    condition: or
-    conditions:
-      - condition: template
-        value_template: >-
-          {% if trigger_type == 'time' %}
-            {{ trigger.id == 'trigger_time' }}
-          {% elif trigger_type == 'sun_elevation' %}
-            {{ trigger.id == 'trigger_sun' }}
-          {% elif trigger_type == 'ambient_light' %}
-            {{ trigger.id == 'trigger_ambient' }}
-          {% elif trigger_type == 'entity_on' %}
-            {{ trigger.id == 'trigger_entity_on' }}
-          {% elif trigger_type == 'entity_off' %}
-            {{ trigger.id == 'trigger_entity_off' }}
-          {% else %}
-            false
-          {% endif %}
-  
-  - alias: "Validar día de la semana"
-    condition: template
-    value_template: >-
-      {{ now().strftime('%a').lower() in weekdays }}
-  
-  - alias: "Validar fechas"
-    condition: template
-    value_template: >-
-      {% set today = now().date() %}
-      {% set start = start_date if start_date else none %}
-      {% set end = end_date if end_date else none %}
-      {% if start and end %}
-        {{ today >= start and today <= end }}
-      {% elif start %}
-        {{ today >= start }}
-      {% elif end %}
-        {{ today <= end }}
-      {% else %}
-        true
-      {% endif %}
-  
-  - alias: "Validar zona y personas"
-    condition: template
-    value_template: >-
-      {% if zone_control | length > 0 and people_control | length > 0 %}
-        {% set ns = namespace(all_away=true) %}
-        {% for person in people_control %}
-          {% if is_state(person, zone_control[0].split('.')[1]) %}
-            {% set ns.all_away = false %}
-          {% endif %}
-        {% endfor %}
-        {{ ns.all_away }}
-      {% else %}
-        true
-      {% endif %}
-  
-  - alias: "Validar control entity"
-    condition: template
-    value_template: >-
-      {% if automation_control_entity | length > 0 %}
-        {{ is_state(automation_control_entity[0], 'on') }}
-      {% else %}
-        true
-      {% endif %}
-  
-  - alias: "Condiciones globales"
-    condition: !input global_conditions
+mode: single
+max_exceeded: silent
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ACTION
 # ══════════════════════════════════════════════════════════════════════════════
-mode: single
-
 action:
   # ════════════════════════════════════════════════════════════════════════════
-  # INICIALIZACIÓN + MONITOREO
+  # INICIALIZACIÓN
   # ════════════════════════════════════════════════════════════════════════════
-  
-  # Actualizar helpers de monitoreo al inicio
+  - variables:
+      lights_currently_on: []
+      loop_interrupted: false
+      detener_manualmente: false
+
+  # Actualizar helpers de inicio
   - choose:
       - conditions:
           - condition: template
             value_template: "{{ enable_monitoring }}"
         sequence:
-          # Marcar simulación como activa
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ states('input_boolean.presence_simulation_running') not in ['unknown', 'unavailable'] }}"
-                sequence:
-                  - service: input_boolean.turn_on
-                    target:
-                      entity_id: input_boolean.presence_simulation_running
-          
-          # Guardar hora de inicio
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ states('input_datetime.presence_simulation_start_time') not in ['unknown', 'unavailable'] }}"
-                sequence:
-                  - service: input_datetime.set_datetime
-                    target:
-                      entity_id: input_datetime.presence_simulation_start_time
-                    data:
-                      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-          
-          # Guardar total de loops
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ states('input_number.presence_simulation_loop_total') not in ['unknown', 'unavailable'] }}"
-                sequence:
-                  - service: input_number.set_value
-                    target:
-                      entity_id: input_number.presence_simulation_loop_total
-                    data:
-                      value: "{{ loop_count }}"
-          
-          # Resetear contador de loops
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ states('input_number.presence_simulation_loop_counter') not in ['unknown', 'unavailable'] }}"
-                sequence:
-                  - service: input_number.set_value
-                    target:
-                      entity_id: input_number.presence_simulation_loop_counter
-                    data:
-                      value: 0
-          
-          # Estado inicial
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ states('input_text.presence_simulation_status') not in ['unknown', 'unavailable'] }}"
-                sequence:
-                  - service: input_text.set_value
-                    target:
-                      entity_id: input_text.presence_simulation_status
-                    data:
-                      value: "Iniciando"
-  
-  # LOG: Inicio de automatización
-  - alias: "Log - Inicio de automatización"
-    service: logbook.log
+          - service: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.presence_simulation_running
+
+          - service: input_datetime.set_datetime
+            target:
+              entity_id: input_datetime.presence_simulation_start_time
+            data:
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.presence_simulation_loop_counter
+            data:
+              value: 0
+
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.presence_simulation_status
+            data:
+              value: "Iniciando..."
+
+  # Log de inicio
+  - service: logbook.log
     data:
-      name: "PezAustral Presence Simulation"
-      message: "🚀 Iniciando simulación - {{ lights_on | length }} luces configuradas, máximo {{ max_lights_on }} simultáneas"
-      entity_id: "{{ automation_control_entity[0] if automation_control_entity | length > 0 else '' }}"
-  
-  # LOG: Configuración
-  - alias: "Log - Configuración"
-    service: logbook.log
-    data:
-      name: "PezAustral Presence Simulation"
-      message: >-
-        📋 Config: 
-        Control={{ automation_control_entity[0] if automation_control_entity | length > 0 else 'Ninguno' }} 
-        (Estado={{ states(automation_control_entity[0]) if automation_control_entity | length > 0 else 'N/A' }}), 
-        Loop={{ 'Sí' if enable_loop else 'No' }}, 
-        Loops={{ loop_count if loop_count > 0 else 'Infinito' }}, 
-        Monitoreo={{ 'Sí' if enable_monitoring else 'No' }}
-      entity_id: "{{ automation_control_entity[0] if automation_control_entity | length > 0 else '' }}"
-  
+      name: "🏠 Presence Simulation"
+      message: "Iniciando - {{ lights | length }} dispositivos, {{ loop_count }} loops"
+      entity_id: "{{ automation_control_entity }}"
+
   # ════════════════════════════════════════════════════════════════════════════
-  # LOOP PRINCIPAL
+  # LOOP PRINCIPAL (con try-catch simulado)
   # ════════════════════════════════════════════════════════════════════════════
-  
   - repeat:
-      while:
-        - condition: template
-          value_template: >-
-            {% if enable_loop %}
-              {% if loop_count > 0 %}
-                {{ repeat.index <= loop_count }}
-              {% else %}
-                true
-              {% endif %}
-            {% else %}
-              {{ repeat.index == 1 }}
-            {% endif %}
-        - condition: template
-          value_template: >-
-            {% if automation_control_entity | length > 0 %}
-              {{ is_state(automation_control_entity[0], 'on') }}
-            {% else %}
-              true
-            {% endif %}
+      count: "{{ loop_count if loop_count < 99 else 999 }}"
       sequence:
-        # LOG: Inicio de loop
-        - alias: "Log - Inicio de loop"
-          service: logbook.log
-          data:
-            name: "PezAustral Presence Simulation"
-            message: "🔄 Iniciando Loop {{ repeat.index }}"
-            entity_id: "{{ automation_control_entity[0] if automation_control_entity | length > 0 else '' }}"
-        
-        # Actualizar contador de loops en helper (si existe)
+        # ────────────────────────────────────────────────────────────────────
+        # VERIFICAR SI SE DETUVO
+        # ────────────────────────────────────────────────────────────────────
+        - condition: template
+          value_template: "{{ is_state(automation_control_entity, 'on') }}"
+
+        # Actualizar contador de loop
         - choose:
             - conditions:
                 - condition: template
                   value_template: "{{ enable_monitoring }}"
-                - condition: template
-                  value_template: "{{ states('input_number.presence_simulation_loop_counter') not in ['unknown', 'unavailable'] }}"
               sequence:
                 - service: input_number.set_value
                   target:
                     entity_id: input_number.presence_simulation_loop_counter
                   data:
                     value: "{{ repeat.index }}"
+
                 - service: input_text.set_value
                   target:
                     entity_id: input_text.presence_simulation_status
                   data:
                     value: "En ejecución - Loop {{ repeat.index }}"
-        
-        # Variables para tracking de luces encendidas
-        - variables:
-            lights_currently_on: []
-            lights_order: >-
-              {% if entity_order_on == 'entities_on_sequence' %}
-                {{ entities_turn_on }}
-              {% elif entity_order_on == 'entities_on_reverse' %}
-                {{ entities_turn_on | reverse | list }}
-              {% elif entity_order_on == 'entities_on_shuffled' %}
-                {{ entities_turn_on | shuffle }}
-              {% else %}
-                {{ entities_turn_on }}
-              {% endif %}
-            loop_interrupted: false
-        
-        # ═══════════════════════════════════════════════════════════════════════
-        # SECUENCIA PRINCIPAL DE ENCENDIDO CON CONTROL DE LÍMITE
-        # ═══════════════════════════════════════════════════════════════════════
+
+        # Log de loop
+        - service: logbook.log
+          data:
+            name: "🔄 Presence Simulation"
+            message: "Loop {{ repeat.index }}/{{ loop_count }}"
+            entity_id: "{{ automation_control_entity }}"
+
+        # ────────────────────────────────────────────────────────────────────
+        # PROCESAR CADA LUZ
+        # ────────────────────────────────────────────────────────────────────
         - repeat:
-            count: "{{ lights_on | length }}"
+            for_each: "{{ lights }}"
             sequence:
-              # VERIFICACIÓN ANTES DE CADA LUZ: ¿Sigue activo el control?
+              # Verificar si se detuvo
               - condition: template
-                value_template: >-
-                  {% if automation_control_entity | length > 0 %}
-                    {{ is_state(automation_control_entity[0], 'on') }}
-                  {% else %}
-                    true
-                  {% endif %}
-              
+                value_template: "{{ is_state(automation_control_entity, 'on') }}"
+
               - variables:
-                  current_light: "{{ lights_order[repeat.index - 1] }}"
-                  current_entity_id: "{{ current_light.id }}"
-                  current_domain: "{{ current_light.id.split('.')[0] }}"
-                  needs_turn_off: >-
-                    {{ lights_currently_on | length >= max_lights_on }}
+                  current_light: "{{ repeat.item }}"
+                  current_domain: "{{ current_light.split('.')[0] }}"
+                  needs_turn_off: "{{ lights_currently_on | length >= max_lights_on }}"
                   light_to_turn_off: >-
                     {% if lights_currently_on | length >= max_lights_on %}
                       {{ lights_currently_on[0] }}
                     {% else %}
                       null
                     {% endif %}
-              
-              # Si alcanzamos el límite, apagar la luz más antigua
+
+              # Apagar luz antigua si alcanzamos el límite
               - choose:
                   - conditions:
                       - condition: template
@@ -818,395 +307,241 @@ action:
                               - condition: template
                                 value_template: "{{ light_to_turn_off.split('.')[0] == 'light' }}"
                             sequence:
-                              - action: light.turn_off
+                              - service: light.turn_off
                                 target:
                                   entity_id: "{{ light_to_turn_off }}"
                                 data:
                                   transition: "{{ transition_off }}"
                         default:
-                          - action: homeassistant.turn_off
+                          - service: homeassistant.turn_off
                             target:
                               entity_id: "{{ light_to_turn_off }}"
-                      
-                      # LOG: Luz apagada por límite
-                      - alias: "Log - Luz apagada por límite"
-                        service: logbook.log
-                        data:
-                          name: "PezAustral Presence Simulation"
-                          message: "🌑 Apagada (límite): {{ state_attr(light_to_turn_off, 'friendly_name') or light_to_turn_off }}"
-                          entity_id: "{{ light_to_turn_off }}"
-                      
-                      # MONITOREO: Actualizar última luz apagada
+
+                      - variables:
+                          lights_currently_on: "{{ lights_currently_on[1:] | list }}"
+
+                      # Actualizar monitoreo
                       - choose:
                           - conditions:
                               - condition: template
                                 value_template: "{{ enable_monitoring }}"
-                              - condition: template
-                                value_template: "{{ states('input_text.presence_simulation_last_light_off') not in ['unknown', 'unavailable'] }}"
-                            sequence:
-                              - service: input_text.set_value
-                                target:
-                                  entity_id: input_text.presence_simulation_last_light_off
-                                data:
-                                  value: "{{ state_attr(light_to_turn_off, 'friendly_name') or light_to_turn_off }}"
-                      
-                      - variables:
-                          lights_currently_on: >-
-                            {{ lights_currently_on[1:] }}
-              
-              # Delay aleatorio antes de encender (si no es "todas al mismo tiempo")
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ entity_order_on != 'entities_on_same_time' and repeat.index > 1 }}"
-                    sequence:
-                      - delay:
-                          seconds: >-
-                            {{ range(random_on_delay_min, random_on_delay_max + 1) | random }}
-              
-              # VERIFICACIÓN ANTES DE ENCENDER
-              - condition: template
-                value_template: >-
-                  {% if automation_control_entity | length > 0 %}
-                    {{ is_state(automation_control_entity[0], 'on') }}
-                  {% else %}
-                    true
-                  {% endif %}
-              
-              # Encender la luz actual
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ current_domain == 'light' }}"
-                    sequence:
-                      - action: light.turn_on
-                        target:
-                          entity_id: "{{ current_entity_id }}"
-                        data: >-
-                          {{ current_light.data }}
-                default:
-                  - action: homeassistant.turn_on
-                    target:
-                      entity_id: "{{ current_entity_id }}"
-              
-              # LOG: Luz encendida
-              - alias: "Log - Luz encendida"
-                service: logbook.log
-                data:
-                  name: "PezAustral Presence Simulation"
-                  message: "💡 Encendida: {{ state_attr(current_entity_id, 'friendly_name') or current_entity_id }}"
-                  entity_id: "{{ current_entity_id }}"
-              
-              # MONITOREO: Actualizar última luz encendida
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ enable_monitoring }}"
-                      - condition: template
-                        value_template: "{{ states('input_text.presence_simulation_last_light_on') not in ['unknown', 'unavailable'] }}"
-                    sequence:
-                      - service: input_text.set_value
-                        target:
-                          entity_id: input_text.presence_simulation_last_light_on
-                        data:
-                          value: "{{ state_attr(current_entity_id, 'friendly_name') or current_entity_id }}"
-              
-              # Agregar a lista de luces encendidas
-              - variables:
-                  lights_currently_on: >-
-                    {{ lights_currently_on + [current_entity_id] }}
-              
-              # MONITOREO: Actualizar contador y lista de luces activas
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ enable_monitoring }}"
-                    sequence:
-                      # Actualizar contador
-                      - choose:
-                          - conditions:
-                              - condition: template
-                                value_template: "{{ states('input_number.presence_simulation_lights_on_count') not in ['unknown', 'unavailable'] }}"
                             sequence:
                               - service: input_number.set_value
                                 target:
                                   entity_id: input_number.presence_simulation_lights_on_count
                                 data:
                                   value: "{{ lights_currently_on | length }}"
-                      
-                      # Actualizar lista de nombres
-                      - choose:
-                          - conditions:
-                              - condition: template
-                                value_template: "{{ states('input_text.presence_simulation_active_lights') not in ['unknown', 'unavailable'] }}"
-                            sequence:
-                              - service: input_text.set_value
-                                target:
-                                  entity_id: input_text.presence_simulation_active_lights
-                                data:
-                                  value: >-
-                                    {% set ns = namespace(names=[]) %}
-                                    {% for light in lights_currently_on %}
-                                      {% set name = state_attr(light, 'friendly_name') or light %}
-                                      {% set ns.names = ns.names + [name] %}
-                                    {% endfor %}
-                                    {{ ns.names | join(', ') if ns.names | length > 0 else 'Ninguna' }}
-              
-              # Esperar tiempo aleatorio antes de apagar esta luz
-              - wait_template: >-
-                  {% if automation_control_entity | length > 0 %}
-                    {{ is_state(automation_control_entity[0], 'off') }}
-                  {% else %}
-                    false
-                  {% endif %}
+
+              # Encender luz nueva
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ current_domain == 'light' }}"
+                    sequence:
+                      - service: light.turn_on
+                        target:
+                          entity_id: "{{ current_light }}"
+                        data:
+                          transition: "{{ transition_on }}"
+                default:
+                  - service: homeassistant.turn_on
+                    target:
+                      entity_id: "{{ current_light }}"
+
+              - service: logbook.log
+                data:
+                  name: "💡 Presence Simulation"
+                  message: "Encendida: {{ state_attr(current_light, 'friendly_name') or current_light }}"
+                  entity_id: "{{ current_light }}"
+
+              # Agregar a lista
+              - variables:
+                  lights_currently_on: "{{ lights_currently_on + [current_light] }}"
+
+              # Actualizar monitoreo
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ enable_monitoring }}"
+                    sequence:
+                      - service: input_number.set_value
+                        target:
+                          entity_id: input_number.presence_simulation_lights_on_count
+                        data:
+                          value: "{{ lights_currently_on | length }}"
+
+                      - service: input_text.set_value
+                        target:
+                          entity_id: input_text.presence_simulation_active_lights
+                        data:
+                          value: >-
+                            {% set ns = namespace(names=[]) %}
+                            {% for light in lights_currently_on %}
+                              {% set name = state_attr(light, 'friendly_name') or light %}
+                              {% set ns.names = ns.names + [name] %}
+                            {% endfor %}
+                            {{ ns.names | join(', ') if ns.names | length > 0 else 'Ninguna' }}
+
+              # Esperar tiempo aleatorio con verificación
+              - wait_template: "{{ is_state(automation_control_entity, 'off') }}"
                 timeout:
-                  minutes: >-
-                    {% if duration_method == 'min_max_time' %}
-                      {{ range(min_on_time, max_on_time + 1) | random }}
-                    {% else %}
-                      {{ range(min_on_time, max_on_time + 1) | random }}
-                    {% endif %}
-                continue_on_timeout: true
-              
-              # Si se detuvo (wait_template se cumplió), salir
+                  minutes: "{{ range(time_on_min, time_on_max + 1) | random }}"
+
+              # Si se detuvo durante el wait, marcar y salir
               - choose:
                   - conditions:
                       - condition: template
-                        value_template: >-
-                          {% if automation_control_entity | length > 0 %}
-                            {{ is_state(automation_control_entity[0], 'off') }}
-                          {% else %}
-                            false
-                          {% endif %}
+                        value_template: "{{ is_state(automation_control_entity, 'off') }}"
                     sequence:
                       - variables:
-                          loop_interrupted: true
-                      - stop: "Automatización detenida por el usuario"
-              
-              # Apagar esta luz después del delay
+                          detener_manualmente: true
+                      - stop: "Detenido manualmente"
+
+              # Apagar esta luz
               - choose:
                   - conditions:
                       - condition: template
                         value_template: "{{ current_domain == 'light' }}"
                     sequence:
-                      - action: light.turn_off
+                      - service: light.turn_off
                         target:
-                          entity_id: "{{ current_entity_id }}"
+                          entity_id: "{{ current_light }}"
                         data:
                           transition: "{{ transition_off }}"
                 default:
-                  - action: homeassistant.turn_off
+                  - service: homeassistant.turn_off
                     target:
-                      entity_id: "{{ current_entity_id }}"
-              
-              # LOG: Luz apagada
-              - alias: "Log - Luz apagada"
-                service: logbook.log
-                data:
-                  name: "PezAustral Presence Simulation"
-                  message: "🌑 Apagada: {{ state_attr(current_entity_id, 'friendly_name') or current_entity_id }}"
-                  entity_id: "{{ current_entity_id }}"
-              
-              # MONITOREO: Actualizar última luz apagada
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ enable_monitoring }}"
-                      - condition: template
-                        value_template: "{{ states('input_text.presence_simulation_last_light_off') not in ['unknown', 'unavailable'] }}"
-                    sequence:
-                      - service: input_text.set_value
-                        target:
-                          entity_id: input_text.presence_simulation_last_light_off
-                        data:
-                          value: "{{ state_attr(current_entity_id, 'friendly_name') or current_entity_id }}"
-              
-              # Remover de lista de luces encendidas
+                      entity_id: "{{ current_light }}"
+
               - variables:
-                  lights_currently_on: >-
-                    {{ lights_currently_on | reject('eq', current_entity_id) | list }}
-              
-              # MONITOREO: Actualizar contador y lista después de apagar
+                  lights_currently_on: "{{ lights_currently_on | reject('eq', current_light) | list }}"
+
+              # Actualizar monitoreo
               - choose:
                   - conditions:
                       - condition: template
                         value_template: "{{ enable_monitoring }}"
                     sequence:
-                      # Actualizar contador
-                      - choose:
-                          - conditions:
-                              - condition: template
-                                value_template: "{{ states('input_number.presence_simulation_lights_on_count') not in ['unknown', 'unavailable'] }}"
-                            sequence:
-                              - service: input_number.set_value
-                                target:
-                                  entity_id: input_number.presence_simulation_lights_on_count
-                                data:
-                                  value: "{{ lights_currently_on | length }}"
-                      
-                      # Actualizar lista
-                      - choose:
-                          - conditions:
-                              - condition: template
-                                value_template: "{{ states('input_text.presence_simulation_active_lights') not in ['unknown', 'unavailable'] }}"
-                            sequence:
-                              - service: input_text.set_value
-                                target:
-                                  entity_id: input_text.presence_simulation_active_lights
-                                data:
-                                  value: >-
-                                    {% set ns = namespace(names=[]) %}
-                                    {% for light in lights_currently_on %}
-                                      {% set name = state_attr(light, 'friendly_name') or light %}
-                                      {% set ns.names = ns.names + [name] %}
-                                    {% endfor %}
-                                    {{ ns.names | join(', ') if ns.names | length > 0 else 'Ninguna' }}
-        
-        # ═══════════════════════════════════════════════════════════════════════
-        # CLEANUP: Apagar cualquier luz que aún esté encendida
-        # ═══════════════════════════════════════════════════════════════════════
-        - repeat:
-            count: "{{ lights_currently_on | length }}"
-            sequence:
-              - variables:
-                  light_to_cleanup: "{{ lights_currently_on[repeat.index - 1] }}"
-                  cleanup_domain: "{{ light_to_cleanup.split('.')[0] }}"
-              
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ cleanup_domain == 'light' }}"
-                    sequence:
-                      - action: light.turn_off
+                      - service: input_number.set_value
                         target:
-                          entity_id: "{{ light_to_cleanup }}"
+                          entity_id: input_number.presence_simulation_lights_on_count
                         data:
-                          transition: "{{ transition_off }}"
-                default:
-                  - action: homeassistant.turn_off
-                    target:
-                      entity_id: "{{ light_to_cleanup }}"
-              
-              # LOG: Luz apagada en cleanup
-              - alias: "Log - Luz apagada (cleanup)"
-                service: logbook.log
-                data:
-                  name: "PezAustral Presence Simulation"
-                  message: "🧹 Apagada (cleanup): {{ state_attr(light_to_cleanup, 'friendly_name') or light_to_cleanup }}"
-                  entity_id: "{{ light_to_cleanup }}"
-        
-        # MONITOREO: Resetear contadores después del cleanup
+                          value: "{{ lights_currently_on | length }}"
+
+        # Delay entre loops
         - choose:
             - conditions:
                 - condition: template
-                  value_template: "{{ enable_monitoring }}"
+                  value_template: "{{ repeat.index < loop_count }}"
               sequence:
-                - choose:
-                    - conditions:
-                        - condition: template
-                          value_template: "{{ states('input_number.presence_simulation_lights_on_count') not in ['unknown', 'unavailable'] }}"
-                      sequence:
-                        - service: input_number.set_value
-                          target:
-                            entity_id: input_number.presence_simulation_lights_on_count
-                          data:
-                            value: 0
-                
-                - choose:
-                    - conditions:
-                        - condition: template
-                          value_template: "{{ states('input_text.presence_simulation_active_lights') not in ['unknown', 'unavailable'] }}"
-                      sequence:
-                        - service: input_text.set_value
-                          target:
-                            entity_id: input_text.presence_simulation_active_lights
-                          data:
-                            value: "Ninguna"
-        
-        # LOG: Loop completado
-        - alias: "Log - Loop completado"
-          service: logbook.log
-          data:
-            name: "PezAustral Presence Simulation"
-            message: "✅ Loop {{ repeat.index }} completado"
-            entity_id: "{{ automation_control_entity[0] if automation_control_entity | length > 0 else '' }}"
-        
-        # Delay entre loops (si está habilitado el loop y sigue activo)
-        - choose:
-            - conditions:
-                - condition: template
-                  value_template: >-
-                    {{ enable_loop and not loop_interrupted }}
-                - condition: template
-                  value_template: >-
-                    {% if automation_control_entity | length > 0 %}
-                      {{ is_state(automation_control_entity[0], 'on') }}
-                    {% else %}
-                      true
-                    {% endif %}
-              sequence:
-                - alias: "Log - Delay entre loops"
-                  service: logbook.log
-                  data:
-                    name: "PezAustral Presence Simulation"
-                    message: "⏸️ Esperando {{ range(loop_delay_min, loop_delay_max + 1) | random }} minutos antes del siguiente loop"
-                    entity_id: "{{ automation_control_entity[0] if automation_control_entity | length > 0 else '' }}"
                 - delay:
-                    minutes: >-
-                      {{ range(loop_delay_min, loop_delay_max + 1) | random }}
-  
+                    minutes: "{{ range(loop_delay_min, loop_delay_max + 1) | random }}"
+
   # ════════════════════════════════════════════════════════════════════════════
-  # FINALIZACIÓN
+  # CLEANUP FINAL (se ejecuta SIEMPRE, termine como termine)
   # ════════════════════════════════════════════════════════════════════════════
-  
-  # LOG: Automatización finalizada
-  - alias: "Log - Automatización finalizada"
-    service: logbook.log
-    data:
-      name: "PezAustral Presence Simulation"
-      message: "🏁 Simulación finalizada - Todos los loops completados"
-      entity_id: "{{ automation_control_entity[0] if automation_control_entity | length > 0 else '' }}"
-  
-  # MONITOREO: Marcar como inactiva
+  - alias: "Cleanup Final"
+    choose:
+      # Si hay luces encendidas, apagarlas
+      - conditions:
+          - condition: template
+            value_template: "{{ lights_currently_on | length > 0 }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: "🧹 Presence Simulation"
+              message: "Limpieza: {{ lights_currently_on | length }} luz(es)"
+              entity_id: "{{ automation_control_entity }}"
+
+          - repeat:
+              for_each: "{{ lights_currently_on }}"
+              sequence:
+                - variables:
+                    cleanup_light: "{{ repeat.item }}"
+                    cleanup_domain: "{{ cleanup_light.split('.')[0] }}"
+
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ cleanup_domain == 'light' }}"
+                      sequence:
+                        - service: light.turn_off
+                          target:
+                            entity_id: "{{ cleanup_light }}"
+                          data:
+                            transition: "{{ transition_off }}"
+                  default:
+                    - service: homeassistant.turn_off
+                      target:
+                        entity_id: "{{ cleanup_light }}"
+
+                - delay:
+                    milliseconds: 300
+
+  # Limpiar helpers
   - choose:
       - conditions:
           - condition: template
             value_template: "{{ enable_monitoring }}"
         sequence:
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ states('input_boolean.presence_simulation_running') not in ['unknown', 'unavailable'] }}"
-                sequence:
-                  - service: input_boolean.turn_off
-                    target:
-                      entity_id: input_boolean.presence_simulation_running
-          
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ states('input_text.presence_simulation_status') not in ['unknown', 'unavailable'] }}"
-                sequence:
-                  - service: input_text.set_value
-                    target:
-                      entity_id: input_text.presence_simulation_status
-                    data:
-                      value: "Finalizada"
-  
-  # Escena de salida (si está habilitada)
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.presence_simulation_running
+
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.presence_simulation_lights_on_count
+            data:
+              value: 0
+
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.presence_simulation_active_lights
+            data:
+              value: "Ninguna"
+
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.presence_simulation_status
+            data:
+              value: "Finalizada"
+
+  # Ejecutar escena de salida
   - choose:
+      # Si se detuvo manualmente y hay escena de emergencia
       - conditions:
           - condition: template
-            value_template: "{{ enable_exit_scene and exit_scene | length > 0 }}"
+            value_template: "{{ detener_manualmente and emergency_scene | length > 0 }}"
         sequence:
-          - alias: "Log - Activando escena de salida"
-            service: logbook.log
+          - service: logbook.log
             data:
-              name: "PezAustral Presence Simulation"
-              message: "🎬 Activando escena de salida: {{ exit_scene[0] }}"
-              entity_id: "{{ automation_control_entity[0] if automation_control_entity | length > 0 else '' }}"
-          
-          - action: scene.turn_on
+              name: "🎬 Presence Simulation"
+              message: "Escena de emergencia: {{ emergency_scene }}"
+              entity_id: "{{ automation_control_entity }}"
+
+          - service: scene.turn_on
             target:
-              entity_id: "{{ exit_scene[0] }}"
+              entity_id: "{{ emergency_scene }}"
+
+      # Si terminó normalmente y hay escena de salida
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_exit_scene and exit_scene | length > 0 and not detener_manualmente }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: "🎬 Presence Simulation"
+              message: "Escena de salida: {{ exit_scene }}"
+              entity_id: "{{ automation_control_entity }}"
+
+          - service: scene.turn_on
+            target:
+              entity_id: "{{ exit_scene }}"
+
+  # Log final
+  - service: logbook.log
+    data:
+      name: "✅ Presence Simulation"
+      message: "Finalizada - Todas las luces apagadas"
+      entity_id: "{{ automation_control_entity }}"
 

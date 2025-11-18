@@ -378,3 +378,4 @@ Ahora tienes un sistema de detección inteligente con IA funcionando.
 **Configuración:** `examples/frigate_config.yml`
 **Automatizaciones:** `examples/camera_alert_system_v3.3_frigate.yaml`
 
+
