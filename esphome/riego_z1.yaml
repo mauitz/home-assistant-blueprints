@@ -97,17 +97,31 @@ sensor:
       return nivel;
     update_interval: 2s
 
-  # Sensor DHT11 - Temperatura
+  # Sensor DHT11 - Temperatura y Humedad Ambiente
   - platform: dht
-    pin: GPIO27
+    pin: 
+      number: GPIO27
+      mode:
+        input: true
+        pullup: true  # Pull-up interno habilitado (necesario para DHT11)
     model: DHT11
     temperature:
       name: "Temperatura Ambiente"
       id: temperatura
+      filters:
+        - offset: 0.0  # Ajustar si necesita calibración
+        - sliding_window_moving_average:  # Promedio móvil para estabilidad
+            window_size: 3
+            send_every: 3
     humidity:
       name: "Humedad Ambiente"
       id: humedad_ambiente
-    update_interval: 10s
+      filters:
+        - offset: 0.0  # Ajustar si necesita calibración
+        - sliding_window_moving_average:  # Promedio móvil para estabilidad
+            window_size: 3
+            send_every: 3
+    update_interval: 30s  # 30s para mayor estabilidad (DHT11 es lento)
 
   # LDR - Luz ambiente
   - platform: adc

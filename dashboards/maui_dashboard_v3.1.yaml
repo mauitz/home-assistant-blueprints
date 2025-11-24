@@ -1,0 +1,833 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Dashboard Maui V3.2 - Con Sistema de Riego Inteligente
+# Versión: 3.2
+# Estética: Minimalista, oscura, profesional
+# Características:
+#   - Widget de cámaras se agranda a 2 columnas cuando hay alerta
+#   - Vista dedicada para Sistema de Riego Inteligente
+# ════════════════════════════════════════════════════════════════════════════
+
+title: Maui
+views:
+  - title: Principal
+    path: home
+    icon: mdi:home
+    theme: maui_dark
+    type: custom:grid-layout  # ← ESTO HABILITA EL AGRANDAMIENTO
+    layout:
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))
+      grid-gap: 16px
+    badges: []
+    cards:
+      # ═══════════════════════════════════════════════════════════════════
+      # TÍTULO: CÁMARAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # Cámaras
+        view_layout:
+          grid-column: 1 / -1  # Ocupa todo el ancho
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              padding: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ MODO NORMAL: Ambas cámaras en tamaño estándar              │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "none"
+        card:
+          type: vertical-stack
+          cards:
+            # Cámara Entrada
+            - type: picture-entity
+              entity: camera.tapo_c530ws_entrada_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "16:9"
+              card_mod:
+                style: |
+                  ha-card {
+                    border-radius: 8px;
+                    overflow: hidden;
+                    border: 1px solid #2A2A2A;
+                  }
+
+            # Cámara Exterior
+            - type: picture-entity
+              entity: camera.tapo_c310_exterior_live_view
+              camera_view: live
+              show_name: true
+              show_state: false
+              aspect_ratio: "16:9"
+              card_mod:
+                style: |
+                  ha-card {
+                    border-radius: 8px;
+                    overflow: hidden;
+                    border: 1px solid #2A2A2A;
+                    margin-top: 12px;
+                  }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ ALERTA ENTRADA: Cámara AGRANDADA (ocupa 2 columnas)        │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "entrada"
+        card:
+          type: picture-entity
+          entity: camera.tapo_c530ws_entrada_live_view
+          camera_view: live
+          show_name: true
+          show_state: false
+          aspect_ratio: "21:9"
+        view_layout:
+          grid-column: span 2  # ← ESTO AGRANDA EL WIDGET A 2 COLUMNAS
+        card_mod:
+          style: |
+            ha-card {
+              border-radius: 12px;
+              overflow: hidden;
+              border: 3px solid #EF4444;
+              box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+              animation: pulse-red 2s ease-in-out infinite;
+            }
+            @keyframes pulse-red {
+              0%, 100% {
+                box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+              }
+              50% {
+                box-shadow: 0 0 32px rgba(239, 68, 68, 0.8);
+              }
+            }
+            ha-card::before {
+              content: "🚨 DETECCIÓN ACTIVA";
+              position: absolute;
+              top: 12px;
+              right: 12px;
+              background: rgba(239, 68, 68, 0.9);
+              color: white;
+              padding: 8px 16px;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 14px;
+              z-index: 10;
+              animation: blink 1s ease-in-out infinite;
+            }
+            @keyframes blink {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ ALERTA EXTERIOR: Cámara AGRANDADA (ocupa 2 columnas)       │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: conditional
+        conditions:
+          - entity: input_text.camera_alert_active
+            state: "exterior"
+        card:
+          type: picture-entity
+          entity: camera.tapo_c310_exterior_live_view
+          camera_view: live
+          show_name: true
+          show_state: false
+          aspect_ratio: "21:9"
+        view_layout:
+          grid-column: span 2  # ← ESTO AGRANDA EL WIDGET A 2 COLUMNAS
+        card_mod:
+          style: |
+            ha-card {
+              border-radius: 12px;
+              overflow: hidden;
+              border: 3px solid #F97316;
+              box-shadow: 0 0 24px rgba(249, 115, 22, 0.5);
+              animation: pulse-orange 2s ease-in-out infinite;
+            }
+            @keyframes pulse-orange {
+              0%, 100% {
+                box-shadow: 0 0 24px rgba(249, 115, 22, 0.5);
+              }
+              50% {
+                box-shadow: 0 0 32px rgba(249, 115, 22, 0.8);
+              }
+            }
+            ha-card::before {
+              content: "🚨 DETECCIÓN ACTIVA";
+              position: absolute;
+              top: 12px;
+              right: 12px;
+              background: rgba(249, 115, 22, 0.9);
+              color: white;
+              padding: 8px 16px;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 14px;
+              z-index: 10;
+              animation: blink 1s ease-in-out infinite;
+            }
+            @keyframes blink {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # WIDGET: ESTADO DE DETECCIÓN FRIGATE V2 (con timestamps)
+      # ═══════════════════════════════════════════════════════════════════
+      - type: vertical-stack
+        cards:
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ TÍTULO PRINCIPAL                                            │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: markdown
+            content: |
+              ## 🤖 Frigate - Monitoreo en Tiempo Real
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 12px 12px 0 0;
+                  border-bottom: none;
+                  padding: 8px 16px 0 16px;
+                  box-shadow: none;
+                }
+                h2 {
+                  font-size: 16px;
+                  font-weight: 500;
+                  margin: 8px 0;
+                  color: #E0E0E0;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: PERSONAS 👤                                        │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "👤 Detección de Personas"
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.entrada_person_occupancy
+                name: "📹 Entrada"
+                icon: mdi:cctv
+                secondary_info: last-changed
+              - entity: binary_sensor.exterior_person_occupancy
+                name: "📹 Exterior"
+                icon: mdi:cctv
+                secondary_info: last-changed
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-top: none;
+                  border-bottom: none;
+                  border-radius: 0;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(66, 165, 245, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #42A5F5;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #42A5F5;
+                }
+                /* Detectando persona = ROJO */
+                .state-on {
+                  background: rgba(244, 67, 54, 0.2) !important;
+                  animation: pulse-red 2s ease-in-out infinite;
+                }
+                @keyframes pulse-red {
+                  0%, 100% { background: rgba(244, 67, 54, 0.2); }
+                  50% { background: rgba(244, 67, 54, 0.35); }
+                }
+                .state-on .state {
+                  color: #F44336 !important;
+                  font-weight: 700;
+                  font-size: 14px;
+                }
+                .state-on .entity-name {
+                  color: #F44336 !important;
+                  font-weight: 600;
+                }
+                .state-on .state::before {
+                  content: "🚨 ";
+                }
+                /* No detectando = VERDE */
+                .state-off .state {
+                  color: #4CAF50 !important;
+                  font-weight: 500;
+                }
+                /* Timestamp más visible cuando ON */
+                .state-on .secondary {
+                  color: #FF8A80 !important;
+                  font-weight: 500;
+                }
+                /* unavailable */
+                .state-unavailable {
+                  opacity: 0.4;
+                }
+                .state-unavailable .state {
+                  color: #757575 !important;
+                  font-style: italic;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: VEHÍCULOS 🚗                                       │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "🚗 Detección de Vehículos"
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.entrada_car_occupancy
+                name: "📹 Entrada"
+                icon: mdi:cctv
+                secondary_info: last-changed
+              - entity: binary_sensor.exterior_car_occupancy
+                name: "📹 Exterior"
+                icon: mdi:cctv
+                secondary_info: last-changed
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-top: none;
+                  border-bottom: none;
+                  border-radius: 0;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(255, 152, 0, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #FF9800;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #FF9800;
+                }
+                /* Detectando vehículo = NARANJA */
+                .state-on {
+                  background: rgba(255, 152, 0, 0.2) !important;
+                }
+                .state-on .state {
+                  color: #FF9800 !important;
+                  font-weight: 700;
+                  font-size: 14px;
+                }
+                .state-on .entity-name {
+                  color: #FF9800 !important;
+                  font-weight: 600;
+                }
+                .state-on .state::before {
+                  content: "⚠️ ";
+                }
+                /* No detectando = VERDE */
+                .state-off .state {
+                  color: #4CAF50 !important;
+                  font-weight: 500;
+                }
+                /* Timestamp */
+                .state-on .secondary {
+                  color: #FFB74D !important;
+                  font-weight: 500;
+                }
+                .state-unavailable {
+                  opacity: 0.4;
+                }
+                .state-unavailable .state {
+                  color: #757575 !important;
+                  font-style: italic;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: ANIMALES 🐕 (solo exterior, entrada no soporta)  │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "🐕 Detección de Animales (Solo Exterior)"
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.exterior_dog_occupancy
+                name: "🐕 Perro"
+                icon: mdi:dog
+                secondary_info: last-changed
+              - entity: binary_sensor.exterior_cat_occupancy
+                name: "🐱 Gato"
+                icon: mdi:cat
+                secondary_info: last-changed
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 0 0 12px 12px;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(156, 39, 176, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #9C27B0;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #9C27B0;
+                }
+                /* Detectando animal = PÚRPURA */
+                .state-on {
+                  background: rgba(156, 39, 176, 0.15) !important;
+                }
+                .state-on .state {
+                  color: #BA68C8 !important;
+                  font-weight: 700;
+                  font-size: 14px;
+                }
+                .state-on .entity-name {
+                  color: #BA68C8 !important;
+                  font-weight: 600;
+                }
+                .state-on .state::before {
+                  content: "👀 ";
+                }
+                /* No detectando = VERDE */
+                .state-off .state {
+                  color: #4CAF50 !important;
+                  font-weight: 500;
+                }
+                /* Timestamp */
+                .state-on .secondary {
+                  color: #CE93D8 !important;
+                  font-weight: 500;
+                }
+                .state-unavailable {
+                  opacity: 0.4;
+                }
+                .state-unavailable .state {
+                  color: #757575 !important;
+                  font-style: italic;
+                }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 2: ESCENAS Y CONTROL RÁPIDO
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # Escenas y Control
+        view_layout:
+          grid-column: 1 / -1
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+              margin-top: 24px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ ESCENAS DINÁMICAS - Se generan automáticamente             │
+      # │ Usa auto-entities para crear un botón por cada escena      │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: custom:auto-entities
+        card:
+          type: custom:layout-card
+          layout_type: grid
+          layout:
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))
+            grid-gap: 16px
+        filter:
+          include:
+            - domain: scene
+              options:
+                type: custom:button-card
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  service_data:
+                    entity_id: this.entity_id
+                styles:
+                  card:
+                    - height: 100px
+                    - background: |
+                        [[[
+                          // Asignar colores según el icono o nombre
+                          const icon = entity.attributes.icon || '';
+                          const name = entity.attributes.friendly_name || '';
+
+                          if (icon.includes('sunset-up') || name.toLowerCase().includes('amanecer')) {
+                            return 'linear-gradient(135deg, #F59E0B 0%, #FDB813 100%)';
+                          } else if (icon.includes('sunset-down') || icon.includes('night') || name.toLowerCase().includes('anoch')) {
+                            return 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)';
+                          } else if (icon.includes('bed') || name.toLowerCase().includes('dormir')) {
+                            return 'linear-gradient(135deg, #9333EA 0%, #A855F7 100%)';
+                          } else {
+                            return 'linear-gradient(135deg, #10B981 0%, #34D399 100%)';
+                          }
+                        ]]]
+                    - border: none
+                    - border-radius: 12px
+                    - box-shadow: |
+                        [[[
+                          const icon = entity.attributes.icon || '';
+                          const name = entity.attributes.friendly_name || '';
+
+                          if (icon.includes('sunset-up') || name.toLowerCase().includes('amanecer')) {
+                            return '0 4px 12px rgba(245, 158, 11, 0.3)';
+                          } else if (icon.includes('sunset-down') || icon.includes('night') || name.toLowerCase().includes('anoch')) {
+                            return '0 4px 12px rgba(79, 70, 229, 0.3)';
+                          } else if (icon.includes('bed') || name.toLowerCase().includes('dormir')) {
+                            return '0 4px 12px rgba(147, 51, 234, 0.3)';
+                          } else {
+                            return '0 4px 12px rgba(16, 185, 129, 0.3)';
+                          }
+                        ]]]
+                  icon:
+                    - width: 40px
+                    - color: white
+                  name:
+                    - font-size: 14px
+                    - font-weight: 500
+                    - color: white
+                card_mod:
+                  style: |
+                    ha-card:hover {
+                      transform: translateY(-2px);
+                      transition: all 0.3s ease;
+                    }
+        sort:
+          method: friendly_name
+        show_empty: false
+
+      # ┌─────────────────────────────────────────────────────────────┐
+      # │ CONTROL: Simulación de Presencia ON/OFF                     │
+      # └─────────────────────────────────────────────────────────────┘
+      - type: custom:button-card
+        entity: input_boolean.presence_simulation
+        name: |
+          [[[
+            return entity.state === 'on' ? 'Detener Simulación' : 'Iniciar Simulación';
+          ]]]
+        icon: mdi:home-automation
+        tap_action:
+          action: toggle
+        state:
+          - value: 'on'
+            styles:
+              card:
+                - height: 100px
+                - background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%)
+                - border: 2px solid #DC2626
+                - box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4)
+              icon:
+                - width: 40px
+                - color: white
+                - animation: pulse 2s ease-in-out infinite
+              name:
+                - font-size: 14px
+                - font-weight: 600
+                - color: white
+          - value: 'off'
+            styles:
+              card:
+                - height: 100px
+                - background: linear-gradient(135deg, #059669 0%, #10B981 100%)
+                - border: 2px solid #059669
+                - box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4)
+              icon:
+                - width: 40px
+                - color: white
+              name:
+                - font-size: 14px
+                - font-weight: 600
+                - color: white
+        card_mod:
+          style: |
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+            ha-card:hover {
+              transform: translateY(-2px);
+              transition: all 0.3s ease;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 3: ÁREAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # Áreas
+        view_layout:
+          grid-column: 1 / -1
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+              margin-top: 24px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      - type: custom:button-card
+        name: Ver Todas las Áreas  →
+        icon: mdi:home-city-outline
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-areas/0
+        styles:
+          card:
+            - height: 60px
+            - background: "linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)"
+            - border: none
+            - border-radius: 12px
+            - box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3)
+            - cursor: pointer
+          icon:
+            - width: 28px
+            - height: 28px
+            - color: white
+          name:
+            - font-size: 14px
+            - font-weight: 500
+            - color: white
+            - letter-spacing: 0.5px
+        card_mod:
+          style: |
+            ha-card:hover {
+              background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%) !important;
+              transform: translateY(-2px);
+              box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4) !important;
+              transition: all 0.3s ease;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # SECCIÓN 4: SIMULACIÓN DE PRESENCIA - WIDGET COMPLETO
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # Simulación de Presencia
+        view_layout:
+          grid-column: 1 / -1
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+              margin-top: 24px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      # Widget completo de monitoreo
+      - type: vertical-stack
+        cards:
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: ESTADO Y CONTROL                                   │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "🏠 Estado y Control"
+            show_header_toggle: false
+            entities:
+              - entity: input_boolean.presence_simulation
+                name: "Control Principal"
+                icon: mdi:power
+              - entity: input_boolean.presence_simulation_running
+                name: "Estado Ejecución"
+                icon: mdi:run
+              - entity: input_text.presence_simulation_status
+                name: "Estado Actual"
+                icon: mdi:information-outline
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 12px 12px 0 0;
+                  box-shadow: none;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(66, 165, 245, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #42A5F5;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #42A5F5;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: PROGRESO Y TIEMPO                                  │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "⏱️ Progreso y Tiempo"
+            show_header_toggle: false
+            entities:
+              - entity: sensor.presence_simulation_runtime
+                name: "Tiempo Activo"
+                icon: mdi:timer-outline
+              - entity: sensor.presence_simulation_progress
+                name: "Progreso"
+                icon: mdi:progress-clock
+              - entity: input_number.presence_simulation_loop_counter
+                name: "Loop Actual"
+                icon: mdi:counter
+              - entity: input_number.presence_simulation_loop_total
+                name: "Loops Totales"
+                icon: mdi:format-list-numbered
+              - entity: sensor.presence_simulation_time_remaining
+                name: "Tiempo Restante"
+                icon: mdi:timer-sand
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-top: none;
+                  border-radius: 0;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(255, 152, 0, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #FF9800;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #FF9800;
+                }
+
+          # ┌─────────────────────────────────────────────────────────────┐
+          # │ SECCIÓN: LUCES ACTIVAS                                      │
+          # └─────────────────────────────────────────────────────────────┘
+          - type: entities
+            title: "💡 Luces Activas"
+            show_header_toggle: false
+            entities:
+              - entity: input_number.presence_simulation_lights_on_count
+                name: "Cantidad de Luces"
+                icon: mdi:lightbulb-multiple
+              - entity: input_text.presence_simulation_active_lights
+                name: "Dispositivos"
+                icon: mdi:format-list-bulleted
+              - entity: input_text.presence_simulation_last_light_on
+                name: "Última Encendida"
+                icon: mdi:lightbulb-on
+              - entity: input_text.presence_simulation_last_light_off
+                name: "Última Apagada"
+                icon: mdi:lightbulb-off
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 0 0 12px 12px;
+                  box-shadow: none;
+                  margin-top: -1px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(76, 175, 80, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #4CAF50;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #4CAF50;
+                }
+
+  # ══════════════════════════════════════════════════════════════════════
+  # VISTA 3: SISTEMA DE RIEGO INTELIGENTE
+  # ══════════════════════════════════════════════════════════════════════
+  - title: Riego
+    path: riego
+    icon: mdi:sprinkler-variant
+    theme: maui_dark
+    badges: []
+    cards:
+      # ═══════════════════════════════════════════════════════════════════
+      # WIDGET PRINCIPAL DE RIEGO - ZONA 1
+      # ═══════════════════════════════════════════════════════════════════
+      - !include widgets/widget_riego_z1.yaml
+
+      # ═══════════════════════════════════════════════════════════════════
+      # TÍTULO: INFORMACIÓN DEL SISTEMA
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # 📡 Información del Sistema
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-top: 24px;
+              margin-bottom: -12px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              padding: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # INFORMACIÓN DEL ESP32
+      # ═══════════════════════════════════════════════════════════════════
+      - type: entities
+        title: ESP32 - Riego Z1
+        show_header_toggle: false
+        entities:
+          - entity: binary_sensor.riego_z1_estado_conexion
+            name: Estado Conexión
+            icon: mdi:wifi
+          - entity: sensor.riego_z1_wifi_signal
+            name: Señal WiFi
+            icon: mdi:wifi-strength-4
+          - entity: button.riego_z1_reiniciar_esp32
+            name: Reiniciar ESP32
+            icon: mdi:restart
+        card_mod:
+          style: |
+            ha-card {
+              background: #1A1A1A;
+              border: 1px solid #2A2A2A;
+              border-radius: 12px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+

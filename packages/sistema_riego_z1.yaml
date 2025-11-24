@@ -1,0 +1,450 @@
+# ════════════════════════════════════════════════════════════════════════════
+# PACKAGE: SISTEMA DE RIEGO INTELIGENTE - ZONA 1
+# ════════════════════════════════════════════════════════════════════════════
+# Versión: 3.2
+# Descripción: Package completo y autocontenido para sistema de riego automático
+# Hardware: ESP32 + Sensores (humedad, nivel, temp, luz, presencia) + Bombas
+# 
+# INSTALACIÓN:
+# 1. Copia este archivo a: /config/packages/sistema_riego_z1.yaml
+# 2. Agrega a configuration.yaml:
+#    homeassistant:
+#      packages: !include_dir_named packages
+# 3. Reinicia Home Assistant
+# 4. Configura las entidades del ESP32 (debe estar ya flasheado)
+# 
+# CONTENIDO:
+# - Helpers (modo manual, contador, timestamps)
+# - Scripts (riego manual, test, emergencia)
+# - Sensors templates (estado del sistema, tiempo desde último riego)
+# - Automatización completa de riego
+# ════════════════════════════════════════════════════════════════════════════
+
+# ════════════════════════════════════════════════════════════════════════════
+# HELPERS - Control y Estado
+# ════════════════════════════════════════════════════════════════════════════
+
+input_boolean:
+  riego_z1_manual:
+    name: "Riego Z1 - Modo Manual"
+    icon: mdi:hand-back-right
+    initial: false
+
+input_datetime:
+  riego_z1_ultimo:
+    name: "Riego Z1 - Último Riego"
+    has_date: true
+    has_time: true
+    icon: mdi:calendar-clock
+
+input_number:
+  riego_z1_contador:
+    name: "Riego Z1 - Contador de Ciclos"
+    min: 0
+    max: 10000
+    step: 1
+    mode: box
+    icon: mdi:counter
+
+  riego_z1_duracion_custom:
+    name: "Riego Z1 - Duración Custom"
+    min: 1
+    max: 60
+    step: 1
+    unit_of_measurement: "min"
+    mode: slider
+    icon: mdi:timer-outline
+
+# ════════════════════════════════════════════════════════════════════════════
+# SENSORS TEMPLATES - Estado Derivado
+# ════════════════════════════════════════════════════════════════════════════
+
+template:
+  - sensor:
+      # Tiempo desde último riego
+      - name: "Riego Z1 - Tiempo desde Último Riego"
+        unique_id: riego_z1_tiempo_desde_ultimo
+        icon: mdi:clock-outline
+        state: >
+          {% set ultimo = states('input_datetime.riego_z1_ultimo') %}
+          {% if ultimo not in ['unknown', 'unavailable', ''] %}
+            {% set ultimo_dt = strptime(ultimo, '%Y-%m-%d %H:%M:%S') %}
+            {% set diff = now() - ultimo_dt %}
+            {% set hours = (diff.total_seconds() / 3600) | int %}
+            {% if hours < 1 %}
+              {{ (diff.total_seconds() / 60) | int }} minutos
+            {% elif hours < 24 %}
+              {{ hours }} horas
+            {% else %}
+              {{ (hours / 24) | int }} días
+            {% endif %}
+          {% else %}
+            Nunca
+          {% endif %}
+      
+      # Estado del sistema
+      - name: "Riego Z1 - Estado del Sistema"
+        unique_id: riego_z1_estado_sistema
+        icon: mdi:state-machine
+        state: >
+          {% set manual = is_state('input_boolean.riego_z1_manual', 'on') %}
+          {% set bomba_a = is_state('switch.riego_z1_bomba_z1a', 'on') %}
+          {% set bomba_b = is_state('switch.riego_z1_bomba_z1b', 'on') %}
+          {% set humedad = states('sensor.riego_z1_humedad_suelo_z1') | float(100) %}
+          {% set tanque = states('sensor.riego_z1_nivel_tanque') | float(0) %}
+          
+          {% if bomba_a or bomba_b %}
+            Regando
+          {% elif manual %}
+            Modo Manual
+          {% elif tanque < 20 %}
+            Tanque Bajo
+          {% elif humedad < 30 %}
+            Suelo Seco (Esperando)
+          {% else %}
+            Normal
+          {% endif %}
+
+  - binary_sensor:
+      # ¿Necesita riego?
+      - name: "Riego Z1 - Necesita Riego"
+        unique_id: riego_z1_necesita_riego
+        icon: mdi:water-alert
+        device_class: moisture
+        state: >
+          {% set humedad = states('sensor.riego_z1_humedad_suelo_z1') | float(100) %}
+          {% set tanque = states('sensor.riego_z1_nivel_tanque') | float(0) %}
+          {{ humedad < 30 and tanque > 20 }}
+
+# ════════════════════════════════════════════════════════════════════════════
+# SCRIPTS - Control Manual
+# ════════════════════════════════════════════════════════════════════════════
+
+script:
+  # Riego Manual 5 minutos
+  riego_manual_5min:
+    alias: "Riego Manual 5 minutos - Z1"
+    description: "Activa riego manual en Zona 1 durante 5 minutos"
+    icon: mdi:timer-10
+    mode: single
+    sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - service: persistent_notification.create
+        data:
+          title: "🚰 Riego Manual Iniciado"
+          message: "Riego manual de 5 minutos en Zona 1"
+      
+      - delay:
+          minutes: 5
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - service: persistent_notification.create
+        data:
+          title: "✅ Riego Manual Completado"
+          message: "Riego manual de 5 minutos finalizado"
+      
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # Riego Manual 10 minutos
+  riego_manual_10min:
+    alias: "Riego Manual 10 minutos - Z1"
+    description: "Activa riego manual en Zona 1 durante 10 minutos"
+    icon: mdi:timer-outline
+    mode: single
+    sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - service: persistent_notification.create
+        data:
+          title: "🚰 Riego Manual Iniciado"
+          message: "Riego manual de 10 minutos en Zona 1"
+      
+      - delay:
+          minutes: 10
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - service: persistent_notification.create
+        data:
+          title: "✅ Riego Manual Completado"
+          message: "Riego manual de 10 minutos finalizado"
+      
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # Detener todas las bombas
+  detener_todas_bombas:
+    alias: "Detener Todas las Bombas"
+    description: "Apaga todas las bombas de riego inmediatamente"
+    icon: mdi:stop-circle
+    mode: single
+    sequence:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.riego_z1_bomba_z1b
+      
+      - service: persistent_notification.create
+        data:
+          title: "⛔ Bombas Detenidas"
+          message: "Todas las bombas han sido apagadas manualmente"
+
+  # Test de bombas
+  test_bombas_z1:
+    alias: "Test de Bombas - Z1"
+    description: "Prueba cada bomba durante 10 segundos"
+    icon: mdi:test-tube
+    mode: single
+    sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      - service: persistent_notification.create
+        data:
+          title: "🧪 Test: Bomba Z1A"
+          message: "Probando Bomba Z1A durante 10 segundos"
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - delay:
+          seconds: 10
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - delay:
+          seconds: 2
+      
+      - service: persistent_notification.create
+        data:
+          title: "🧪 Test: Bomba Z1B"
+          message: "Probando Bomba Z1B durante 10 segundos"
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.riego_z1_bomba_z1b
+      
+      - delay:
+          seconds: 10
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.riego_z1_bomba_z1b
+      
+      - service: persistent_notification.create
+        data:
+          title: "✅ Test Completado"
+          message: "Test de bombas finalizado"
+      
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # Riego de emergencia
+  riego_emergencia_z1:
+    alias: "Riego de Emergencia - Z1"
+    description: "Riega hasta alcanzar 60% de humedad o 15 min máximo"
+    icon: mdi:water-alert
+    mode: single
+    sequence:
+      - condition: numeric_state
+        entity_id: sensor.riego_z1_nivel_tanque
+        above: 20
+      
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      - service: persistent_notification.create
+        data:
+          title: "🚨 Riego de Emergencia"
+          message: "Iniciando riego de emergencia en Zona 1"
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - wait_template: "{{ states('sensor.riego_z1_humedad_suelo_z1') | float(0) >= 60 }}"
+        timeout:
+          minutes: 15
+        continue_on_timeout: true
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.riego_z1_bomba_z1a
+      
+      - service: persistent_notification.create
+        data:
+          title: "✅ Riego de Emergencia Completado"
+          message: >
+            Humedad final: {{ states('sensor.riego_z1_humedad_suelo_z1') }}%
+            Tanque restante: {{ states('sensor.riego_z1_nivel_tanque') }}%
+      
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # Registrar riego
+  registrar_riego_z1:
+    alias: "Registrar Riego Manual - Z1"
+    description: "Actualiza contador y timestamp de último riego"
+    icon: mdi:counter
+    mode: single
+    sequence:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.riego_z1_ultimo
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      
+      - service: input_number.increment
+        target:
+          entity_id: input_number.riego_z1_contador
+
+# ════════════════════════════════════════════════════════════════════════════
+# AUTOMATIZACIÓN - Riego Inteligente
+# ════════════════════════════════════════════════════════════════════════════
+
+automation:
+  - id: riego_automatico_zona_1
+    alias: "Riego Automático - Zona 1"
+    description: "Control automático de riego basado en humedad y nivel de tanque"
+    mode: single
+    
+    trigger:
+      # Trigger 1: Humedad baja
+      - platform: numeric_state
+        entity_id: sensor.riego_z1_humedad_suelo_z1
+        below: 30
+        for:
+          minutes: 5
+        id: humedad_baja
+      
+      # Trigger 2: Verificación periódica
+      - platform: time_pattern
+        hours: "/1"
+        id: verificacion_periodica
+      
+      # Trigger 3: Tanque bajo (para alertas)
+      - platform: numeric_state
+        entity_id: sensor.riego_z1_nivel_tanque
+        below: 20
+        id: tanque_bajo
+    
+    condition:
+      # Solo si modo automático está activo
+      - condition: state
+        entity_id: input_boolean.riego_z1_manual
+        state: 'off'
+    
+    action:
+      - choose:
+          # CASO 1: Alerta de tanque bajo
+          - conditions:
+              - condition: trigger
+                id: tanque_bajo
+            sequence:
+              - service: persistent_notification.create
+                data:
+                  title: "⚠️ Tanque de Agua Bajo"
+                  message: >
+                    El nivel del tanque está en {{ states('sensor.riego_z1_nivel_tanque') }}%.
+                    El riego automático está deshabilitado hasta que se llene.
+                  notification_id: tanque_bajo
+          
+          # CASO 2: Iniciar riego
+          - conditions:
+              - or:
+                  - condition: trigger
+                    id: humedad_baja
+                  - condition: trigger
+                    id: verificacion_periodica
+              # Humedad baja
+              - condition: numeric_state
+                entity_id: sensor.riego_z1_humedad_suelo_z1
+                below: 30
+              # Tanque suficiente
+              - condition: numeric_state
+                entity_id: sensor.riego_z1_nivel_tanque
+                above: 20
+              # Horario permitido
+              - condition: time
+                after: "06:00:00"
+                before: "22:00:00"
+              # Bomba apagada
+              - condition: state
+                entity_id: switch.riego_z1_bomba_z1a
+                state: 'off'
+            sequence:
+              # Activar bomba
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.riego_z1_bomba_z1a
+              
+              # Notificar inicio
+              - service: persistent_notification.create
+                data:
+                  title: "🚰 Riego Iniciado - Zona 1"
+                  message: >
+                    Humedad actual: {{ states('sensor.riego_z1_humedad_suelo_z1') }}%
+                    Nivel tanque: {{ states('sensor.riego_z1_nivel_tanque') }}%
+                    Duración máxima: 10 minutos
+                  notification_id: riego_activo
+              
+              # Esperar hasta 60% de humedad o 10 min máximo
+              - wait_template: >
+                  {{ states('sensor.riego_z1_humedad_suelo_z1') | float(0) >= 60 or
+                     is_state('switch.riego_z1_bomba_z1a', 'off') }}
+                timeout:
+                  minutes: 10
+                continue_on_timeout: true
+              
+              # Apagar bomba
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.riego_z1_bomba_z1a
+              
+              # Registrar riego
+              - service: script.registrar_riego_z1
+              
+              # Notificar fin
+              - service: persistent_notification.create
+                data:
+                  title: "✅ Riego Completado - Zona 1"
+                  message: >
+                    Humedad final: {{ states('sensor.riego_z1_humedad_suelo_z1') }}%
+                    Nivel tanque: {{ states('sensor.riego_z1_nivel_tanque') }}%
+                  notification_id: riego_completado
+
+# ════════════════════════════════════════════════════════════════════════════
+# FIN DEL PACKAGE
+# ════════════════════════════════════════════════════════════════════════════
+

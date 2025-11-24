@@ -88,9 +88,9 @@ Automatizaciones avanzadas reutilizables.
 
 ---
 
-### 🚰 [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md) ⭐ NEW v2.1
+### 🚰 [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md) ⭐ NEW v3.2
 
-Blueprint completo para automatización de riego con ESP32 + ESPHome.
+Sistema completo de riego automático con ESP32 + ESPHome. **Instalación en 1 solo archivo.**
 
 **Características:**
 - ✅ Control automático por humedad del suelo
@@ -100,6 +100,7 @@ Blueprint completo para automatización de riego con ESP32 + ESPHome.
 - ✅ Notificaciones de inicio/fin de riego
 - ✅ Modo manual y automático
 - ✅ Múltiples zonas independientes
+- ✨ **Package unificado** - Helpers, scripts, automatización en 1 archivo (v3.2)
 - ✨ **Widget especializado para dashboard** (v2.1)
 - ✨ **Scripts de control rápido** (v2.1)
 
@@ -108,17 +109,24 @@ Blueprint completo para automatización de riego con ESP32 + ESPHome.
 - Bombas de agua 5V + relés de 6 canales
 - Integración completa con Home Assistant
 
+**Instalación Rápida:**
+```yaml
+# 1. Copia el package a: /config/packages/sistema_riego_z1.yaml
+# 2. Reinicia HA
+# ¡Listo! Helpers, scripts y automatización se crean automáticamente
+```
+
 **Archivos:**
-- [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml) - Blueprint principal
+- 📦 [`packages/sistema_riego_z1.yaml`](packages/sistema_riego_z1.yaml) - **Package completo (RECOMENDADO)** ⭐
+- [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml) - Blueprint alternativo
 - [`esphome/riego_z1.yaml`](esphome/riego_z1.yaml) - Firmware ESP32
-- [`dashboards/maui_dashboard.yaml`](dashboards/maui_dashboard.yaml) - Dashboard con vista de riego ⭐
+- [`dashboards/maui_dashboard.yaml`](dashboards/maui_dashboard.yaml) - Dashboard con vista de riego
 - [`dashboards/widgets/widget_riego_z1.yaml`](dashboards/widgets/widget_riego_z1.yaml) - Widget completo
-- [`dashboards/widgets/widget_riego_z1_basico.yaml`](dashboards/widgets/widget_riego_z1_basico.yaml) - Widget básico
-- [`examples/scripts/riego_scripts.yaml`](examples/scripts/riego_scripts.yaml) - 6 Scripts auxiliares
+- [`examples/scripts/riego_scripts.yaml`](examples/scripts/riego_scripts.yaml) - Scripts auxiliares (ya incluidos en package)
+- [📖 Instalación del Package](docs/automatizaciones/INSTALACION_PACKAGE_RIEGO.md) - **Guía completa**
 - [Documentación completa](docs/automatizaciones/RIEGO_INTELIGENTE.md)
+- [🔧 Troubleshooting DHT11](docs/automatizaciones/TROUBLESHOOTING_DHT11.md)
 - [Documentación del Widget](docs/widgets/WIDGET_RIEGO.md)
-- [Corrección de Entidades](docs/automatizaciones/CORRECCION_ENTIDADES.md)
-- [Instalación Rápida](INSTALACION_RIEGO_RAPIDA.md)
 
 ---
 
@@ -133,22 +141,31 @@ Blueprint completo para automatización de riego con ESP32 + ESPHome.
 
 ```
 home-assistant-blueprints/
+├── packages/                # 📦 Packages autocontenidos (RECOMENDADO)
+│   └── sistema_riego_z1.yaml     # Package completo de riego
 ├── blueprints/              # Blueprints reutilizables
 │   ├── pezaustral_presence_simulation.yaml
 │   ├── tuya_sonoff_sync.yaml
 │   └── sistema_riego_inteligente.yaml
 ├── esphome/                 # Firmware ESP32/ESPHome
 │   ├── riego_z1.yaml        # ESP32 - Sistema de riego Zona 1
+│   ├── test_dht11_simple.yaml    # Firmware de prueba DHT11
 │   └── secrets.yaml
 ├── examples/                # Configuraciones de ejemplo
 │   ├── presence_simulation_config.yaml
 │   ├── presence_simulation_helpers.yaml
+│   ├── scripts/
+│   │   └── riego_scripts.yaml
+│   ├── helpers/
+│   │   └── riego_helpers.yaml
 │   ├── frigate/
 │   └── automatizaciones/
 │       ├── riego_z1_auto.yaml
 │       └── atardecer_inteligente.yaml
 ├── dashboards/              # Dashboards personalizados
-│   ├── maui_dashboard_v3.1.yaml
+│   ├── maui_dashboard.yaml  # Dashboard principal (v3.2)
+│   ├── widgets/
+│   │   └── widget_riego_z1.yaml
 │   ├── maui_templates/
 │   └── maui_views/
 ├── docs/                    # Documentación organizada por proyecto
@@ -158,9 +175,12 @@ home-assistant-blueprints/
 │   ├── beacons/
 │   ├── dashboard/
 │   └── automatizaciones/
-│       └── RIEGO_INTELIGENTE.md
+│       ├── RIEGO_INTELIGENTE.md
+│       ├── INSTALACION_PACKAGE_RIEGO.md  # 📖 Guía de packages
+│       └── TROUBLESHOOTING_DHT11.md       # 🔧 Troubleshooting
 ├── utils/                   # Utilidades y scripts
 │   ├── ha_manager.py
+│   ├── crear_helpers_riego.sh
 │   ├── verify_installation.sh
 │   └── verify_presence_simulation.sh
 ├── themes/                  # Temas personalizados
@@ -266,19 +286,22 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
   - Widget con nombres de entidades corregidos
   - Documentación consolidada y organizada
   - Estructura profesional para versionado con git
-  
+
 - ✨ **Dashboard v3.2**
   - Nueva vista dedicada para Sistema de Riego
   - Widget integrado con estilo consistente
   - Información del ESP32 y controles
-  
+
 - ✅ **Sistema de Riego Inteligente** completo con ESP32 + ESPHome
+  - 📦 **Package unificado** (`packages/sistema_riego_z1.yaml`) - Autocontenido y reutilizable
   - Blueprint de automatización con control por humedad
   - Firmware ESPHome para ESP32 con múltiples sensores
   - Integración con LD2410C (presencia mmWave)
   - Widget especializado con nombres correctos
-  - 6 Scripts auxiliares funcionales
+  - 6 Scripts auxiliares incluidos en el package
+  - Helpers automáticos (sin creación manual)
   - Documentación completa consolidada
+  - Troubleshooting detallado para DHT11
 
 ### v2.1 (2025-11-24)
 - ✅ Primer release del Sistema de Riego Inteligente

@@ -47,7 +47,7 @@ sensor:
       filters:
         - offset: 0.0  # Sin corrección
     update_interval: 5s  # Cada 5 segundos
-    
+
 # LED para debug
 light:
   - platform: status_led
