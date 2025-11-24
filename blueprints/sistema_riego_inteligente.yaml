@@ -1,4 +1,4 @@
-blueprint:
+crblueprint:
   name: Sistema de Riego Inteligente
   description: |
     Automatización completa para sistema de riego con control de zonas,
@@ -183,6 +183,9 @@ variables:
   servicio_notify: !input servicio_notificacion
   modo_manual_helper: !input input_boolean_modo_manual
   zona: !input zona_nombre
+  permitir_riego_nocturno: !input permitir_riego_nocturno
+  notificar_inicio_riego: !input notificar_inicio_riego
+  notificar_tanque_bajo: !input notificar_tanque_bajo
 
 # ============================================
 # TRIGGERS
