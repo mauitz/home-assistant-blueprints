@@ -88,7 +88,7 @@ Automatizaciones avanzadas reutilizables.
 
 ---
 
-### 🚰 [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md)
+### 🚰 [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md) ⭐ NEW v2.1
 
 Blueprint completo para automatización de riego con ESP32 + ESPHome.
 
@@ -100,6 +100,8 @@ Blueprint completo para automatización de riego con ESP32 + ESPHome.
 - ✅ Notificaciones de inicio/fin de riego
 - ✅ Modo manual y automático
 - ✅ Múltiples zonas independientes
+- ✨ **Widget especializado para dashboard** (v2.1)
+- ✨ **Scripts de control rápido** (v2.1)
 
 **Hardware:**
 - ESP32 con sensores (humedad, nivel, temperatura, luz, presencia)
@@ -109,7 +111,11 @@ Blueprint completo para automatización de riego con ESP32 + ESPHome.
 **Archivos:**
 - [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml)
 - [`esphome/riego_z1.yaml`](esphome/riego_z1.yaml) - Firmware ESP32
+- [`dashboards/widgets/widget_riego_z1.yaml`](dashboards/widgets/widget_riego_z1.yaml) - Widget completo (v2.1)
+- [`dashboards/widgets/widget_riego_z1_basico.yaml`](dashboards/widgets/widget_riego_z1_basico.yaml) - Widget básico (v2.1)
+- [`examples/scripts/riego_scripts.yaml`](examples/scripts/riego_scripts.yaml) - Scripts auxiliares (v2.1)
 - [Documentación completa](docs/automatizaciones/RIEGO_INTELIGENTE.md)
+- [Documentación del Widget](docs/widgets/WIDGET_RIEGO.md) (v2.1)
 - [Ejemplo de configuración](examples/automatizaciones/riego_z1_auto.yaml)
 
 ---
@@ -256,9 +262,14 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
   - Blueprint de automatización con control por humedad
   - Firmware ESPHome para ESP32 con múltiples sensores
   - Integración con LD2410C (presencia mmWave)
+  - **Widget especializado para dashboard** (completo y básico)
+  - **5 Scripts auxiliares** (riego manual, test, emergencia)
+  - Documentación completa del widget
   - Documentación completa y ejemplos
 - ✅ Gestión de múltiples zonas de riego
 - ✅ Protección de nivel de tanque
+- ✅ Interfaz visual moderna con Mushroom Cards
+- ✅ Versión básica sin dependencias de custom cards
 
 ### v2.0 (2025-11-18)
 - ✅ Blueprint de simulación de presencia completamente reescrito

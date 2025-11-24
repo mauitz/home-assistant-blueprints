@@ -1,0 +1,256 @@
+# ============================================
+# SCRIPTS AUXILIARES PARA SISTEMA DE RIEGO
+# ============================================
+# Scripts de utilidad para control manual del riego
+#
+# INSTALACIÓN:
+# Copia este contenido a tu configuration.yaml
+# bajo la sección "script:" o en un archivo separado
+# incluido con "script: !include scripts.yaml"
+# ============================================
+
+script:
+  # ==========================================
+  # Riego Manual - 5 Minutos
+  # ==========================================
+  riego_manual_5min:
+    alias: "Riego Manual 5 minutos - Z1"
+    description: "Activa riego manual en Zona 1 durante 5 minutos"
+    icon: mdi:timer-10
+    mode: single
+    sequence:
+      # Activar modo manual
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      # Activar bomba Z1A
+      - service: switch.turn_on
+        target:
+          entity_id: switch.bomba_z1a
+      
+      # Notificar inicio
+      - service: persistent_notification.create
+        data:
+          title: "🚰 Riego Manual Iniciado"
+          message: "Riego manual de 5 minutos en Zona 1"
+      
+      # Esperar 5 minutos
+      - delay:
+          minutes: 5
+      
+      # Apagar bomba
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bomba_z1a
+      
+      # Notificar fin
+      - service: persistent_notification.create
+        data:
+          title: "✅ Riego Manual Completado"
+          message: "Riego manual de 5 minutos finalizado"
+      
+      # Desactivar modo manual
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # ==========================================
+  # Riego Manual - 10 Minutos
+  # ==========================================
+  riego_manual_10min:
+    alias: "Riego Manual 10 minutos - Z1"
+    description: "Activa riego manual en Zona 1 durante 10 minutos"
+    icon: mdi:timer-outline
+    mode: single
+    sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.bomba_z1a
+      
+      - service: persistent_notification.create
+        data:
+          title: "🚰 Riego Manual Iniciado"
+          message: "Riego manual de 10 minutos en Zona 1"
+      
+      - delay:
+          minutes: 10
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bomba_z1a
+      
+      - service: persistent_notification.create
+        data:
+          title: "✅ Riego Manual Completado"
+          message: "Riego manual de 10 minutos finalizado"
+      
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # ==========================================
+  # Detener Todas las Bombas
+  # ==========================================
+  detener_todas_bombas:
+    alias: "Detener Todas las Bombas"
+    description: "Apaga todas las bombas de riego inmediatamente"
+    icon: mdi:stop-circle
+    mode: single
+    sequence:
+      # Apagar bomba Z1A
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bomba_z1a
+      
+      # Apagar bomba Z1B
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bomba_z1b
+      
+      # Notificar
+      - service: persistent_notification.create
+        data:
+          title: "⛔ Bombas Detenidas"
+          message: "Todas las bombas han sido apagadas manualmente"
+
+  # ==========================================
+  # Test de Bombas
+  # ==========================================
+  test_bombas_z1:
+    alias: "Test de Bombas - Z1"
+    description: "Prueba cada bomba durante 10 segundos"
+    icon: mdi:test-tube
+    mode: single
+    sequence:
+      # Activar modo manual
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      # Test Bomba A
+      - service: persistent_notification.create
+        data:
+          title: "🧪 Test: Bomba Z1A"
+          message: "Probando Bomba Z1A durante 10 segundos"
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.bomba_z1a
+      
+      - delay:
+          seconds: 10
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bomba_z1a
+      
+      - delay:
+          seconds: 2
+      
+      # Test Bomba B
+      - service: persistent_notification.create
+        data:
+          title: "🧪 Test: Bomba Z1B"
+          message: "Probando Bomba Z1B durante 10 segundos"
+      
+      - service: switch.turn_on
+        target:
+          entity_id: switch.bomba_z1b
+      
+      - delay:
+          seconds: 10
+      
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bomba_z1b
+      
+      # Finalizar
+      - service: persistent_notification.create
+        data:
+          title: "✅ Test Completado"
+          message: "Test de bombas finalizado"
+      
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # ==========================================
+  # Riego de Emergencia - Hasta alcanzar 60%
+  # ==========================================
+  riego_emergencia_z1:
+    alias: "Riego de Emergencia - Z1"
+    description: "Riega hasta alcanzar 60% de humedad o 15 min máximo"
+    icon: mdi:water-alert
+    mode: single
+    sequence:
+      # Verificar tanque
+      - condition: numeric_state
+        entity_id: sensor.nivel_tanque
+        above: 20
+      
+      # Activar modo manual
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.riego_z1_manual
+      
+      # Notificar
+      - service: persistent_notification.create
+        data:
+          title: "🚨 Riego de Emergencia"
+          message: "Iniciando riego de emergencia en Zona 1"
+      
+      # Activar bomba
+      - service: switch.turn_on
+        target:
+          entity_id: switch.bomba_z1a
+      
+      # Esperar hasta 60% o 15 min
+      - wait_template: "{{ states('sensor.humedad_suelo_z1') | float(0) >= 60 }}"
+        timeout:
+          minutes: 15
+        continue_on_timeout: true
+      
+      # Apagar bomba
+      - service: switch.turn_off
+        target:
+          entity_id: switch.bomba_z1a
+      
+      # Notificar resultado
+      - service: persistent_notification.create
+        data:
+          title: "✅ Riego de Emergencia Completado"
+          message: >
+            Humedad final: {{ states('sensor.humedad_suelo_z1') }}%
+            Tanque restante: {{ states('sensor.nivel_tanque') }}%
+      
+      # Desactivar modo manual
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.riego_z1_manual
+
+  # ==========================================
+  # Registrar Riego Manual
+  # ==========================================
+  registrar_riego_z1:
+    alias: "Registrar Riego Manual - Z1"
+    description: "Actualiza contador y timestamp de último riego"
+    icon: mdi:counter
+    mode: single
+    sequence:
+      # Actualizar timestamp
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.riego_z1_ultimo
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      
+      # Incrementar contador
+      - service: input_number.increment
+        target:
+          entity_id: input_number.riego_z1_contador
+

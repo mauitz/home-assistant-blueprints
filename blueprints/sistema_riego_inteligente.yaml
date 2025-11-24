@@ -167,7 +167,7 @@ blueprint:
       default: "none"
       selector:
         entity:
-          domain: 
+          domain:
             - input_boolean
           multiple: false
 

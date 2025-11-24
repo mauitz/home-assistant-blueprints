@@ -1,0 +1,135 @@
+# ============================================
+# WIDGET DE RIEGO INTELIGENTE - VERSIÓN BÁSICA
+# ============================================
+# Widget sin dependencias de custom cards
+# Compatible con instalación vanilla de Home Assistant
+# ============================================
+
+type: vertical-stack
+cards:
+  # ==========================================
+  # CABECERA CON ESTADO
+  # ==========================================
+  - type: glance
+    title: 🚰 Sistema de Riego - Zona 1
+    show_name: true
+    show_state: true
+    show_icon: true
+    columns: 3
+    entities:
+      - entity: sensor.humedad_suelo_z1
+        name: Humedad Suelo
+      - entity: sensor.nivel_tanque
+        name: Tanque
+      - entity: sensor.luz_ambiente
+        name: Luz
+
+  # ==========================================
+  # GRÁFICO DE HUMEDAD
+  # ==========================================
+  - type: history-graph
+    title: 📊 Humedad del Suelo (24h)
+    hours_to_show: 24
+    refresh_interval: 60
+    entities:
+      - entity: sensor.humedad_suelo_z1
+        name: Humedad Suelo
+
+  # ==========================================
+  # CONTROLES
+  # ==========================================
+  - type: entities
+    title: 💧 Control de Bombas
+    show_header_toggle: false
+    entities:
+      - entity: switch.bomba_z1a
+        name: Bomba Z1A
+        icon: mdi:water-pump
+        secondary_info: last-changed
+      
+      - entity: switch.bomba_z1b
+        name: Bomba Z1B
+        icon: mdi:water-pump
+        secondary_info: last-changed
+      
+      - entity: light.led_bomba
+        name: LED Indicador
+        icon: mdi:led-on
+
+  # ==========================================
+  # SENSORES AMBIENTALES
+  # ==========================================
+  - type: entities
+    title: 🌡️ Ambiente
+    show_header_toggle: false
+    entities:
+      - entity: sensor.temperatura_ambiente
+        name: Temperatura
+        icon: mdi:thermometer
+      
+      - entity: sensor.humedad_ambiente
+        name: Humedad Ambiente
+        icon: mdi:water-percent
+      
+      - entity: binary_sensor.presencia_detectada
+        name: Presencia (LD2410C)
+        icon: mdi:motion-sensor
+
+  # ==========================================
+  # CONFIGURACIÓN
+  # ==========================================
+  - type: entities
+    title: ⚙️ Modo y Estado
+    show_header_toggle: false
+    entities:
+      - entity: input_boolean.riego_z1_manual
+        name: Modo Manual
+        icon: mdi:hand-back-right
+      
+      - type: divider
+      
+      - type: button
+        name: Regar 5 minutos
+        icon: mdi:timer-10
+        tap_action:
+          action: call-service
+          service: script.riego_manual_5min
+      
+      - type: button
+        name: Detener Todo
+        icon: mdi:stop
+        tap_action:
+          action: call-service
+          service: script.detener_todas_bombas
+      
+      - type: divider
+      
+      - entity: automation.riego_automatico_zona_1
+        name: Automatización
+        icon: mdi:robot
+
+  # ==========================================
+  # INDICADORES
+  # ==========================================
+  - type: gauge
+    entity: sensor.humedad_suelo_z1
+    name: Humedad del Suelo
+    min: 0
+    max: 100
+    needle: true
+    severity:
+      green: 60
+      yellow: 40
+      red: 0
+
+  - type: gauge
+    entity: sensor.nivel_tanque
+    name: Nivel del Tanque
+    min: 0
+    max: 100
+    needle: true
+    severity:
+      green: 50
+      yellow: 30
+      red: 0
+
