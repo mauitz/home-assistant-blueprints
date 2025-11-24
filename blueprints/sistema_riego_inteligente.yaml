@@ -1,4 +1,4 @@
-crblueprint:
+blueprint:
   name: Sistema de Riego Inteligente
   description: |
     Automatización completa para sistema de riego con control de zonas,
@@ -262,7 +262,8 @@ action:
             entity_id: !input sensor_nivel_tanque
             above: !input nivel_minimo_tanque
           - or:
-              - "{{ permitir_riego_nocturno }}"
+              - condition: template
+                value_template: "{{ permitir_riego_nocturno }}"
               - condition: time
                 after: !input hora_inicio_permitido
                 before: !input hora_fin_permitido
