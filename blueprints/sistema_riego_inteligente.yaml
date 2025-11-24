@@ -140,7 +140,7 @@ blueprint:
     servicio_notificacion:
       name: Servicio de Notificación (Opcional)
       description: Servicio para enviar notificaciones (ej. notify.mobile_app_tu_telefono)
-      default: ""
+      default: "none"
       selector:
         text:
 
@@ -164,10 +164,12 @@ blueprint:
     input_boolean_modo_manual:
       name: Helper Modo Manual (Opcional)
       description: Input Boolean para habilitar/deshabilitar el modo automático
-      default: ""
+      default: "none"
       selector:
         entity:
-          domain: input_boolean
+          domain: 
+            - input_boolean
+          multiple: false
 
 # ============================================
 # VARIABLES
@@ -217,7 +219,7 @@ condition:
   - condition: template
     value_template: >
       {% set modo_manual = modo_manual_helper %}
-      {{ modo_manual == '' or is_state(modo_manual, 'off') }}
+      {{ modo_manual in ['', 'none'] or is_state(modo_manual, 'off') }}
     alias: "Modo automático activado"
 
 # ============================================
@@ -234,7 +236,7 @@ action:
           - condition: template
             value_template: "{{ notificar_tanque_bajo }}"
           - condition: template
-            value_template: "{{ servicio_notify != '' }}"
+            value_template: "{{ servicio_notify not in ['', 'none'] }}"
         sequence:
           - service: "{{ servicio_notify }}"
             data:
@@ -279,7 +281,7 @@ action:
           # Notificar inicio de riego
           - if:
               - condition: template
-                value_template: "{{ notificar_inicio_riego and servicio_notify != '' }}"
+                value_template: "{{ notificar_inicio_riego and servicio_notify not in ['', 'none'] }}"
             then:
               - service: "{{ servicio_notify }}"
                 data:
@@ -307,7 +309,7 @@ action:
           # Notificar fin de riego
           - if:
               - condition: template
-                value_template: "{{ servicio_notify != '' }}"
+                value_template: "{{ servicio_notify not in ['', 'none'] }}"
             then:
               - service: "{{ servicio_notify }}"
                 data:
