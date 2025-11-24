@@ -109,14 +109,16 @@ Blueprint completo para automatización de riego con ESP32 + ESPHome.
 - Integración completa con Home Assistant
 
 **Archivos:**
-- [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml)
+- [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml) - Blueprint principal
 - [`esphome/riego_z1.yaml`](esphome/riego_z1.yaml) - Firmware ESP32
-- [`dashboards/widgets/widget_riego_z1.yaml`](dashboards/widgets/widget_riego_z1.yaml) - Widget completo (v2.1)
-- [`dashboards/widgets/widget_riego_z1_basico.yaml`](dashboards/widgets/widget_riego_z1_basico.yaml) - Widget básico (v2.1)
-- [`examples/scripts/riego_scripts.yaml`](examples/scripts/riego_scripts.yaml) - Scripts auxiliares (v2.1)
+- [`dashboards/maui_dashboard.yaml`](dashboards/maui_dashboard.yaml) - Dashboard con vista de riego ⭐
+- [`dashboards/widgets/widget_riego_z1.yaml`](dashboards/widgets/widget_riego_z1.yaml) - Widget completo
+- [`dashboards/widgets/widget_riego_z1_basico.yaml`](dashboards/widgets/widget_riego_z1_basico.yaml) - Widget básico
+- [`examples/scripts/riego_scripts.yaml`](examples/scripts/riego_scripts.yaml) - 6 Scripts auxiliares
 - [Documentación completa](docs/automatizaciones/RIEGO_INTELIGENTE.md)
-- [Documentación del Widget](docs/widgets/WIDGET_RIEGO.md) (v2.1)
-- [Ejemplo de configuración](examples/automatizaciones/riego_z1_auto.yaml)
+- [Documentación del Widget](docs/widgets/WIDGET_RIEGO.md)
+- [Corrección de Entidades](docs/automatizaciones/CORRECCION_ENTIDADES.md)
+- [Instalación Rápida](INSTALACION_RIEGO_RAPIDA.md)
 
 ---
 
@@ -257,19 +259,30 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
 
 ## 📝 Changelog
 
-### v2.1 (2025-11-24)
+### v3.2 (2025-11-24)
+- 🧹 **Limpieza y Profesionalización del Proyecto**
+  - Eliminados archivos temporales y duplicados
+  - Dashboard sin versionado en nombre (`maui_dashboard.yaml`)
+  - Widget con nombres de entidades corregidos
+  - Documentación consolidada y organizada
+  - Estructura profesional para versionado con git
+  
+- ✨ **Dashboard v3.2**
+  - Nueva vista dedicada para Sistema de Riego
+  - Widget integrado con estilo consistente
+  - Información del ESP32 y controles
+  
 - ✅ **Sistema de Riego Inteligente** completo con ESP32 + ESPHome
   - Blueprint de automatización con control por humedad
   - Firmware ESPHome para ESP32 con múltiples sensores
   - Integración con LD2410C (presencia mmWave)
-  - **Widget especializado para dashboard** (completo y básico)
-  - **5 Scripts auxiliares** (riego manual, test, emergencia)
-  - Documentación completa del widget
-  - Documentación completa y ejemplos
-- ✅ Gestión de múltiples zonas de riego
-- ✅ Protección de nivel de tanque
-- ✅ Interfaz visual moderna con Mushroom Cards
-- ✅ Versión básica sin dependencias de custom cards
+  - Widget especializado con nombres correctos
+  - 6 Scripts auxiliares funcionales
+  - Documentación completa consolidada
+
+### v2.1 (2025-11-24)
+- ✅ Primer release del Sistema de Riego Inteligente
+- ✅ Widget especializado y scripts auxiliares
 
 ### v2.0 (2025-11-18)
 - ✅ Blueprint de simulación de presencia completamente reescrito
