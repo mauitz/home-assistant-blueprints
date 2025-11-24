@@ -318,7 +318,7 @@ Si algunas entidades no existen en tu sistema:
      title: Zona 1
      cards:
        # Widget Z1
-   
+
    - type: vertical-stack
      title: Zona 2
      cards:

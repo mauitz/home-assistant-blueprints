@@ -1,16 +1,8 @@
 # ============================================
-# WIDGET DE RIEGO INTELIGENTE - ZONA 1
+# WIDGET DE RIEGO ZONA 1 - VERSIÓN CORREGIDA
 # ============================================
-# Widget especializado para monitorear y controlar
-# el sistema de riego automático de la Zona 1
-#
-# Características:
-# - Estado de sensores en tiempo real
-# - Control de bombas con un toque
-# - Gráfico de humedad histórico
-# - Indicadores visuales de estado
-# - Temporizador de riego activo
-# - Modo manual/automático
+# Widget con nombres de entidades correctos para ESP32
+# Prefijo: riego_z1_
 # ============================================
 
 type: vertical-stack
@@ -18,429 +10,190 @@ cards:
   # ==========================================
   # CABECERA - Estado General
   # ==========================================
-  - type: custom:mushroom-template-card
-    primary: "🚰 Sistema de Riego - Zona 1"
-    secondary: >
-      {% set humedad = states('sensor.humedad_suelo_z1') | float(0) %}
-      {% set tanque = states('sensor.nivel_tanque') | float(0) %}
-      {% set bomba_a = is_state('switch.bomba_z1a', 'on') %}
-      {% set bomba_b = is_state('switch.bomba_z1b', 'on') %}
-      
-      {% if bomba_a or bomba_b %}
-        💧 Regando ahora | Humedad: {{ humedad }}%
-      {% elif tanque < 20 %}
-        ⚠️ Tanque Bajo ({{ tanque }}%) | Sistema detenido
-      {% elif humedad < 30 %}
-        🌵 Suelo seco ({{ humedad }}%) | Esperando horario
-      {% else %}
-        ✅ Sistema OK | Humedad: {{ humedad }}% | Tanque: {{ tanque }}%
-      {% endif %}
-    icon: >
-      {% set bomba_a = is_state('switch.bomba_z1a', 'on') %}
-      {% set bomba_b = is_state('switch.bomba_z1b', 'on') %}
-      {% if bomba_a or bomba_b %}
-        mdi:water-pump
-      {% else %}
-        mdi:sprinkler-variant
-      {% endif %}
-    icon_color: >
-      {% set bomba_a = is_state('switch.bomba_z1a', 'on') %}
-      {% set bomba_b = is_state('switch.bomba_z1b', 'on') %}
-      {% set humedad = states('sensor.humedad_suelo_z1') | float(100) %}
-      {% set tanque = states('sensor.nivel_tanque') | float(0) %}
-      
-      {% if bomba_a or bomba_b %}
-        blue
-      {% elif tanque < 20 %}
-        red
-      {% elif humedad < 30 %}
-        orange
-      {% else %}
-        green
-      {% endif %}
-    tap_action:
-      action: more-info
-      entity: sensor.humedad_suelo_z1
-    badge_icon: >
-      {% if is_state('input_boolean.riego_z1_manual', 'on') %}
-        mdi:hand-back-right
-      {% endif %}
-    badge_color: amber
+  - type: glance
+    title: 🚰 Sistema de Riego - Zona 1
+    show_name: true
+    show_state: true
+    columns: 3
+    entities:
+      - entity: sensor.riego_z1_humedad_suelo_z1
+        name: Humedad
+      - entity: sensor.riego_z1_nivel_tanque
+        name: Tanque
+      - entity: sensor.riego_z1_luz_ambiente
+        name: Luz
 
   # ==========================================
-  # SENSORES PRINCIPALES
+  # ESTADO DEL SISTEMA
   # ==========================================
-  - type: horizontal-stack
-    cards:
-      # Humedad del Suelo
-      - type: custom:mushroom-entity-card
-        entity: sensor.humedad_suelo_z1
-        name: Humedad Suelo
-        icon: mdi:water-percent
-        icon_color: >
-          {% set humedad = states('sensor.humedad_suelo_z1') | float(0) %}
-          {% if humedad < 30 %}
-            red
-          {% elif humedad < 50 %}
-            orange
-          {% elif humedad < 70 %}
-            green
-          {% else %}
-            blue
-          {% endif %}
-        tap_action:
-          action: more-info
-        card_mod:
-          style: |
-            ha-card {
-              background: rgba(var(--rgb-primary-text-color), 0.03);
-            }
-      
-      # Nivel del Tanque
-      - type: custom:mushroom-entity-card
-        entity: sensor.nivel_tanque
-        name: Tanque
-        icon: mdi:water-well
-        icon_color: >
-          {% set tanque = states('sensor.nivel_tanque') | float(0) %}
-          {% if tanque < 20 %}
-            red
-          {% elif tanque < 50 %}
-            orange
-          {% else %}
-            green
-          {% endif %}
-        tap_action:
-          action: more-info
-        card_mod:
-          style: |
-            ha-card {
-              background: rgba(var(--rgb-primary-text-color), 0.03);
-            }
-      
-      # Luz Ambiente
-      - type: custom:mushroom-entity-card
-        entity: sensor.luz_ambiente
-        name: Luz
-        icon: mdi:weather-sunny
-        icon_color: >
-          {% set luz = states('sensor.luz_ambiente') | float(0) %}
-          {% if luz < 10 %}
-            grey
-          {% elif luz < 50 %}
-            amber
-          {% else %}
-            yellow
-          {% endif %}
-        tap_action:
-          action: more-info
-        card_mod:
-          style: |
-            ha-card {
-              background: rgba(var(--rgb-primary-text-color), 0.03);
-            }
+  - type: markdown
+    content: >
+      {% set humedad = states('sensor.riego_z1_humedad_suelo_z1') | float(0) %}
+      {% set tanque = states('sensor.riego_z1_nivel_tanque') | float(0) %}
+      {% set bomba_a = is_state('switch.riego_z1_bomba_z1a', 'on') %}
+      {% set bomba_b = is_state('switch.riego_z1_bomba_z1b', 'on') %}
+
+      {% if bomba_a or bomba_b %}
+        ### 💧 **Regando Ahora**
+        - Humedad actual: **{{ humedad }}%**
+        - Nivel tanque: **{{ tanque }}%**
+      {% elif tanque < 20 %}
+        ### ⚠️ **Tanque Bajo**
+        - Tanque: **{{ tanque }}%**
+        - Sistema detenido hasta rellenar
+      {% elif humedad < 30 %}
+        ### 🌵 **Suelo Seco**
+        - Humedad: **{{ humedad }}%**
+        - Esperando horario de riego
+      {% else %}
+        ### ✅ **Sistema OK**
+        - Humedad: **{{ humedad }}%**
+        - Tanque: **{{ tanque }}%**
+        - Sistema automático activo
+      {% endif %}
 
   # ==========================================
   # GRÁFICO DE HUMEDAD
   # ==========================================
-  - type: custom:mini-graph-card
-    entities:
-      - entity: sensor.humedad_suelo_z1
-        name: Humedad Suelo
-        color: '#03a9f4'
-        show_state: true
-        show_indicator: true
-    name: 📊 Humedad de las últimas 24 horas
+  - type: history-graph
+    title: 📊 Humedad del Suelo (24h)
     hours_to_show: 24
-    points_per_hour: 2
-    line_width: 3
-    font_size: 75
-    animate: true
-    show:
-      labels: true
-      labels_secondary: true
-      fill: fade
-      icon: false
-      name: true
-      state: true
-    color_thresholds:
-      - value: 0
-        color: "#f44336"
-      - value: 30
-        color: "#ff9800"
-      - value: 50
-        color: "#4caf50"
-      - value: 70
-        color: "#03a9f4"
+    refresh_interval: 60
+    entities:
+      - entity: sensor.riego_z1_humedad_suelo_z1
+        name: Humedad Suelo
 
   # ==========================================
   # CONTROLES DE BOMBAS
   # ==========================================
-  - type: horizontal-stack
-    cards:
-      # Bomba Z1A
-      - type: custom:mushroom-entity-card
-        entity: switch.bomba_z1a
+  - type: entities
+    title: 💧 Control de Bombas
+    show_header_toggle: false
+    entities:
+      - entity: switch.riego_z1_bomba_z1a
         name: Bomba Z1A
         icon: mdi:water-pump
-        icon_color: blue
-        tap_action:
-          action: toggle
-        hold_action:
-          action: more-info
-        card_mod:
-          style: |
-            ha-card {
-              background: {% if is_state('switch.bomba_z1a', 'on') %}
-                rgba(3, 169, 244, 0.15)
-              {% else %}
-                rgba(var(--rgb-primary-text-color), 0.03)
-              {% endif %};
-            }
-      
-      # Bomba Z1B
-      - type: custom:mushroom-entity-card
-        entity: switch.bomba_z1b
+        secondary_info: last-changed
+
+      - entity: switch.riego_z1_bomba_z1b
         name: Bomba Z1B
         icon: mdi:water-pump
-        icon_color: blue
-        tap_action:
-          action: toggle
-        hold_action:
-          action: more-info
-        card_mod:
-          style: |
-            ha-card {
-              background: {% if is_state('switch.bomba_z1b', 'on') %}
-                rgba(3, 169, 244, 0.15)
-              {% else %}
-                rgba(var(--rgb-primary-text-color), 0.03)
-              {% endif %};
-            }
-      
-      # LED Indicador
-      - type: custom:mushroom-entity-card
-        entity: light.led_bomba
-        name: LED Bomba
+        secondary_info: last-changed
+
+      - type: divider
+
+      - entity: light.riego_z1_led_bomba_activa
+        name: LED Indicador
         icon: mdi:led-on
-        icon_color: amber
-        tap_action:
-          action: none
-        card_mod:
-          style: |
-            ha-card {
-              background: {% if is_state('light.led_bomba', 'on') %}
-                rgba(255, 193, 7, 0.15)
-              {% else %}
-                rgba(var(--rgb-primary-text-color), 0.03)
-              {% endif %};
-            }
 
   # ==========================================
-  # INFORMACIÓN DE SENSORES AMBIENTALES
-  # ==========================================
-  - type: horizontal-stack
-    cards:
-      # Temperatura Ambiente
-      - type: custom:mushroom-entity-card
-        entity: sensor.temperatura_ambiente
-        name: Temperatura
-        icon: mdi:thermometer
-        icon_color: >
-          {% set temp = states('sensor.temperatura_ambiente') | float(0) %}
-          {% if temp < 15 %}
-            blue
-          {% elif temp < 25 %}
-            green
-          {% elif temp < 30 %}
-            orange
-          {% else %}
-            red
-          {% endif %}
-        card_mod:
-          style: |
-            ha-card {
-              background: rgba(var(--rgb-primary-text-color), 0.03);
-            }
-      
-      # Humedad Ambiente
-      - type: custom:mushroom-entity-card
-        entity: sensor.humedad_ambiente
-        name: H. Ambiente
-        icon: mdi:water-percent
-        icon_color: blue
-        card_mod:
-          style: |
-            ha-card {
-              background: rgba(var(--rgb-primary-text-color), 0.03);
-            }
-      
-      # Presencia
-      - type: custom:mushroom-entity-card
-        entity: binary_sensor.presencia_detectada
-        name: Presencia
-        icon: mdi:motion-sensor
-        icon_color: >
-          {% if is_state('binary_sensor.presencia_detectada', 'on') %}
-            amber
-          {% else %}
-            grey
-          {% endif %}
-        card_mod:
-          style: |
-            ha-card {
-              background: rgba(var(--rgb-primary-text-color), 0.03);
-            }
-
-  # ==========================================
-  # MODO MANUAL Y CONFIGURACIÓN
+  # SENSORES AMBIENTALES
   # ==========================================
   - type: entities
-    title: ⚙️ Control y Configuración
+    title: 🌡️ Sensores Ambientales
     show_header_toggle: false
-    card_mod:
-      style: |
-        ha-card {
-          background: rgba(var(--rgb-primary-text-color), 0.05);
-          border-radius: 12px;
-        }
+    entities:
+      - entity: sensor.riego_z1_temperatura_ambiente
+        name: Temperatura
+        icon: mdi:thermometer
+
+      - entity: sensor.riego_z1_humedad_ambiente
+        name: Humedad Ambiente
+        icon: mdi:water-percent
+
+      - entity: sensor.riego_z1_luz_ambiente
+        name: Luz Ambiente
+        icon: mdi:weather-sunny
+
+      - entity: binary_sensor.riego_z1_presencia_detectada
+        name: Presencia (LD2410C)
+        icon: mdi:motion-sensor
+
+  # ==========================================
+  # LEDs DE ESTADO
+  # ==========================================
+  - type: entities
+    title: 💡 Indicadores LED
+    show_header_toggle: false
+    entities:
+      - entity: light.riego_z1_led_tanque_lleno
+        name: LED Tanque Lleno
+        icon: mdi:water-check
+
+      - entity: light.riego_z1_led_tanque_medio
+        name: LED Tanque Medio
+        icon: mdi:water-minus
+
+      - entity: light.riego_z1_led_tanque_bajo
+        name: LED Tanque Bajo
+        icon: mdi:water-alert
+
+      - entity: light.riego_z1_led_wifi
+        name: LED WiFi
+        icon: mdi:wifi
+
+  # ==========================================
+  # CONTROL MANUAL Y SCRIPTS
+  # ==========================================
+  - type: entities
+    title: ⚙️ Control Manual
+    show_header_toggle: false
     entities:
       - entity: input_boolean.riego_z1_manual
         name: Modo Manual
         icon: mdi:hand-back-right
-        secondary_info: >
-          {% if is_state('input_boolean.riego_z1_manual', 'on') %}
-            Automatización desactivada
-          {% else %}
-            Riego automático activo
-          {% endif %}
-      
-      - type: divider
-      
-      - entity: sensor.riego_z1_estado_sistema
-        name: Estado del Sistema
-        icon: mdi:state-machine
-      
-      - entity: sensor.riego_z1_tiempo_desde_ultimo
-        name: Último Riego
-        icon: mdi:clock-outline
-      
-      - type: divider
-      
-      - type: custom:mushroom-chips-card
-        chips:
-          # Chip: Riego Manual 5 min
-          - type: action
-            icon: mdi:timer-10
-            icon_color: blue
-            tap_action:
-              action: call-service
-              service: script.riego_manual_5min
-            hold_action:
-              action: none
-          
-          # Chip: Detener Todo
-          - type: action
-            icon: mdi:stop-circle
-            icon_color: red
-            tap_action:
-              action: call-service
-              service: script.detener_todas_bombas
-            hold_action:
-              action: none
-          
-          # Chip: Información
-          - type: template
-            icon: mdi:information
-            icon_color: grey
-            content: >
-              {% set bomba_a = is_state('switch.bomba_z1a', 'on') %}
-              {% set bomba_b = is_state('switch.bomba_z1b', 'on') %}
-              {% if bomba_a or bomba_b %}
-                ON
-              {% else %}
-                OFF
-              {% endif %}
-            tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: "Sistema de Riego Z1"
-                  content:
-                    type: markdown
-                    content: |
-                      ## 📊 Estado Actual
-                      
-                      **Humedad Suelo:** {{ states('sensor.humedad_suelo_z1') }}%
-                      **Nivel Tanque:** {{ states('sensor.nivel_tanque') }}%
-                      **Luz Ambiente:** {{ states('sensor.luz_ambiente') }}%
-                      **Temperatura:** {{ states('sensor.temperatura_ambiente') }}°C
-                      
-                      ---
-                      
-                      ## 💧 Bombas
-                      
-                      **Z1A:** {{ states('switch.bomba_z1a') }}
-                      **Z1B:** {{ states('switch.bomba_z1b') }}
-                      
-                      ---
-                      
-                      ## ⚙️ Configuración
-                      
-                      - Humedad mínima: 30%
-                      - Humedad objetivo: 60%
-                      - Duración máxima: 10 min
-                      - Nivel mínimo tanque: 20%
 
-  # ==========================================
-  # ACCIONES RÁPIDAS
-  # ==========================================
-  - type: custom:mushroom-chips-card
-    chips:
-      # Regar Ahora
-      - type: action
-        icon: mdi:water-pump
-        icon_color: blue
+      - type: divider
+
+      - type: button
+        name: 🚰 Regar 5 minutos
+        icon: mdi:timer-10
         tap_action:
           action: call-service
-          service: switch.turn_on
-          service_data:
-            entity_id: switch.bomba_z1a
-        hold_action:
+          service: script.riego_manual_5min
+
+      - type: button
+        name: 🚰 Regar 10 minutos
+        icon: mdi:timer-outline
+        tap_action:
           action: call-service
-          service: switch.turn_off
-          service_data:
-            entity_id: switch.bomba_z1a
-      
-      # Ver Automatización
-      - type: entity
-        entity: automation.riego_automatico_zona_1
+          service: script.riego_manual_10min
+
+      - type: button
+        name: ⛔ Detener Todo
+        icon: mdi:stop
+        tap_action:
+          action: call-service
+          service: script.detener_todas_bombas
+
+      - type: divider
+
+      - entity: automation.riego_automatico_zona_1
+        name: Automatización
         icon: mdi:robot
-        icon_color: green
-        tap_action:
-          action: more-info
-      
-      # Ver Historia
-      - type: action
-        icon: mdi:history
-        icon_color: grey
-        tap_action:
-          action: navigate
-          navigation_path: /history?entity_id=sensor.humedad_suelo_z1
-      
-      # Configuración
-      - type: action
-        icon: mdi:cog
-        icon_color: grey
-        tap_action:
-          action: navigate
-          navigation_path: /config/automation
 
-card_mod:
-  style: |
-    ha-card {
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
+  # ==========================================
+  # INDICADORES GAUGE
+  # ==========================================
+  - type: gauge
+    entity: sensor.riego_z1_humedad_suelo_z1
+    name: Humedad del Suelo
+    min: 0
+    max: 100
+    needle: true
+    severity:
+      green: 60
+      yellow: 40
+      red: 0
+
+  - type: gauge
+    entity: sensor.riego_z1_nivel_tanque
+    name: Nivel del Tanque
+    min: 0
+    max: 100
+    needle: true
+    severity:
+      green: 50
+      yellow: 30
+      red: 0
 

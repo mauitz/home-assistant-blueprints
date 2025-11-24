@@ -1,8 +1,10 @@
 # ════════════════════════════════════════════════════════════════════════════
-# Dashboard Maui V3.1 - Con Alertas de Cámaras AGRANDADAS
-# Versión: 3.1
+# Dashboard Maui V3.2 - Con Sistema de Riego Inteligente
+# Versión: 3.2
 # Estética: Minimalista, oscura, profesional
-# MEJORA: Widget de cámaras se agranda a 2 columnas cuando hay alerta
+# Características:
+#   - Widget de cámaras se agranda a 2 columnas cuando hay alerta
+#   - Vista dedicada para Sistema de Riego Inteligente
 # ════════════════════════════════════════════════════════════════════════════
 
 title: Maui
@@ -447,67 +449,78 @@ views:
             }
 
       # ┌─────────────────────────────────────────────────────────────┐
-      # │ ESCENA: Amanecer                                            │
+      # │ ESCENAS DINÁMICAS - Se generan automáticamente             │
+      # │ Usa auto-entities para crear un botón por cada escena      │
       # └─────────────────────────────────────────────────────────────┘
-      - type: custom:button-card
-        entity: scene.amanecer
-        name: Amanecer
-        icon: mdi:weather-sunset-up
-        tap_action:
-          action: call-service
-          service: scene.turn_on
-          service_data:
-            entity_id: scene.amanecer
-        styles:
-          card:
-            - height: 100px
-          icon:
-            - width: 40px
-            - color: '#FDB813'
-          name:
-            - font-size: 14px
+      - type: custom:auto-entities
+        card:
+          type: custom:layout-card
+          layout_type: grid
+          layout:
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))
+            grid-gap: 16px
+        filter:
+          include:
+            - domain: scene
+              options:
+                type: custom:button-card
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  service_data:
+                    entity_id: this.entity_id
+                styles:
+                  card:
+                    - height: 100px
+                    - background: |
+                        [[[
+                          // Asignar colores según el icono o nombre
+                          const icon = entity.attributes.icon || '';
+                          const name = entity.attributes.friendly_name || '';
 
-      # ┌─────────────────────────────────────────────────────────────┐
-      # │ ESCENA: Anochecer                                           │
-      # └─────────────────────────────────────────────────────────────┘
-      - type: custom:button-card
-        entity: scene.anocheser
-        name: Anochecer
-        icon: mdi:weather-sunset-down
-        tap_action:
-          action: call-service
-          service: scene.turn_on
-          service_data:
-            entity_id: scene.anocheser
-        styles:
-          card:
-            - height: 100px
-          icon:
-            - width: 40px
-            - color: '#4F46E5'
-          name:
-            - font-size: 14px
+                          if (icon.includes('sunset-up') || name.toLowerCase().includes('amanecer')) {
+                            return 'linear-gradient(135deg, #F59E0B 0%, #FDB813 100%)';
+                          } else if (icon.includes('sunset-down') || icon.includes('night') || name.toLowerCase().includes('anoch')) {
+                            return 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)';
+                          } else if (icon.includes('bed') || name.toLowerCase().includes('dormir')) {
+                            return 'linear-gradient(135deg, #9333EA 0%, #A855F7 100%)';
+                          } else {
+                            return 'linear-gradient(135deg, #10B981 0%, #34D399 100%)';
+                          }
+                        ]]]
+                    - border: none
+                    - border-radius: 12px
+                    - box-shadow: |
+                        [[[
+                          const icon = entity.attributes.icon || '';
+                          const name = entity.attributes.friendly_name || '';
 
-      # ┌─────────────────────────────────────────────────────────────┐
-      # │ ESCENA: A Dormir                                            │
-      # └─────────────────────────────────────────────────────────────┘
-      - type: custom:button-card
-        entity: scene.nueva_escena
-        name: A Dormir
-        icon: mdi:bed
-        tap_action:
-          action: call-service
-          service: scene.turn_on
-          service_data:
-            entity_id: scene.nueva_escena
-        styles:
-          card:
-            - height: 100px
-          icon:
-            - width: 40px
-            - color: '#9333EA'
-          name:
-            - font-size: 14px
+                          if (icon.includes('sunset-up') || name.toLowerCase().includes('amanecer')) {
+                            return '0 4px 12px rgba(245, 158, 11, 0.3)';
+                          } else if (icon.includes('sunset-down') || icon.includes('night') || name.toLowerCase().includes('anoch')) {
+                            return '0 4px 12px rgba(79, 70, 229, 0.3)';
+                          } else if (icon.includes('bed') || name.toLowerCase().includes('dormir')) {
+                            return '0 4px 12px rgba(147, 51, 234, 0.3)';
+                          } else {
+                            return '0 4px 12px rgba(16, 185, 129, 0.3)';
+                          }
+                        ]]]
+                  icon:
+                    - width: 40px
+                    - color: white
+                  name:
+                    - font-size: 14px
+                    - font-weight: 500
+                    - color: white
+                card_mod:
+                  style: |
+                    ha-card:hover {
+                      transform: translateY(-2px);
+                      transition: all 0.3s ease;
+                    }
+        sort:
+          method: friendly_name
+        show_empty: false
 
       # ┌─────────────────────────────────────────────────────────────┐
       # │ CONTROL: Simulación de Presencia ON/OFF                     │
@@ -755,4 +768,66 @@ views:
                   font-weight: 600;
                   color: #4CAF50;
                 }
+
+  # ══════════════════════════════════════════════════════════════════════
+  # VISTA 3: SISTEMA DE RIEGO INTELIGENTE
+  # ══════════════════════════════════════════════════════════════════════
+  - title: Riego
+    path: riego
+    icon: mdi:sprinkler-variant
+    theme: maui_dark
+    badges: []
+    cards:
+      # ═══════════════════════════════════════════════════════════════════
+      # WIDGET PRINCIPAL DE RIEGO - ZONA 1
+      # ═══════════════════════════════════════════════════════════════════
+      - !include widgets/widget_riego_z1.yaml
+
+      # ═══════════════════════════════════════════════════════════════════
+      # TÍTULO: INFORMACIÓN DEL SISTEMA
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        content: |
+          # 📡 Información del Sistema
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-top: 24px;
+              margin-bottom: -12px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              padding: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # INFORMACIÓN DEL ESP32
+      # ═══════════════════════════════════════════════════════════════════
+      - type: entities
+        title: ESP32 - Riego Z1
+        show_header_toggle: false
+        entities:
+          - entity: binary_sensor.riego_z1_estado_conexion
+            name: Estado Conexión
+            icon: mdi:wifi
+          - entity: sensor.riego_z1_wifi_signal
+            name: Señal WiFi
+            icon: mdi:wifi-strength-4
+          - entity: button.riego_z1_reiniciar_esp32
+            name: Reiniciar ESP32
+            icon: mdi:restart
+        card_mod:
+          style: |
+            ha-card {
+              background: #1A1A1A;
+              border: 1px solid #2A2A2A;
+              border-radius: 12px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
 
