@@ -1,0 +1,65 @@
+# ============================================
+# TEST SIMPLE DEL DHT11
+# ============================================
+# Firmware de prueba SOLO para diagnosticar el DHT11
+# Compila y flashea este archivo para probar
+# ============================================
+
+esphome:
+  name: test_dht11
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: "sunsetlabs-2.4GHz"
+  password: "bienvenido"
+
+# Log detallado para ver errores
+logger:
+  level: DEBUG
+  baud_rate: 0
+
+api:
+  encryption:
+    key: "Mkh6eXx4Mpt29udly/rChadRyjl489tgrF0grG6AA+E="
+
+ota:
+  - platform: esphome
+
+# ============================================
+# SENSOR DHT11 - PRUEBA
+# ============================================
+sensor:
+  - platform: dht
+    pin: GPIO27  # ← VERIFICA que esté en GPIO27
+    model: DHT11
+    temperature:
+      name: "Test Temperatura DHT11"
+      id: temp_test
+      filters:
+        - offset: 0.0  # Sin corrección
+    humidity:
+      name: "Test Humedad DHT11"
+      id: hum_test
+      filters:
+        - offset: 0.0  # Sin corrección
+    update_interval: 5s  # Cada 5 segundos
+    
+# LED para debug
+light:
+  - platform: status_led
+    name: "LED Debug DHT11"
+    pin: GPIO2
+    id: led_debug
+
+# Script de prueba
+interval:
+  - interval: 10s
+    then:
+      - logger.log:
+          format: "DHT11 → Temp: %.1f°C, Hum: %.1f%%"
+          args: [ 'id(temp_test).state', 'id(hum_test).state' ]
+
