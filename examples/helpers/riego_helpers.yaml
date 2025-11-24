@@ -1,0 +1,173 @@
+# ============================================
+# HELPERS PARA SISTEMA DE RIEGO
+# ============================================
+# Estos helpers permiten controlar manualmente el sistema
+# y llevar registro de los riegos realizados
+#
+# INSTALACIÓN:
+# 1. Copia este contenido a tu configuration.yaml
+# 2. O créalos manualmente desde la UI:
+#    Configuración → Dispositivos y Servicios → Helpers
+# ============================================
+
+# ============================================
+# INPUT BOOLEAN - Modo Manual/Automático
+# ============================================
+input_boolean:
+  # Zona 1
+  riego_z1_manual:
+    name: "Riego Z1 - Modo Manual"
+    icon: mdi:hand-back-right
+    initial: false
+
+  # Zona 2 (futuro)
+  # riego_z2_manual:
+  #   name: "Riego Z2 - Modo Manual"
+  #   icon: mdi:hand-back-right
+  #   initial: false
+
+# ============================================
+# INPUT DATETIME - Registro de Riegos
+# ============================================
+input_datetime:
+  # Zona 1
+  riego_z1_ultimo:
+    name: "Riego Z1 - Último Riego"
+    has_date: true
+    has_time: true
+    icon: mdi:calendar-clock
+
+  riego_z1_proximo:
+    name: "Riego Z1 - Próximo Riego Estimado"
+    has_date: true
+    has_time: true
+    icon: mdi:calendar-arrow-right
+
+# ============================================
+# INPUT NUMBER - Configuración y Contadores
+# ============================================
+input_number:
+  # Zona 1 - Contador de ciclos
+  riego_z1_contador:
+    name: "Riego Z1 - Contador de Ciclos"
+    min: 0
+    max: 10000
+    step: 1
+    mode: box
+    icon: mdi:counter
+
+  # Zona 1 - Duración personalizada (minutos)
+  riego_z1_duracion_custom:
+    name: "Riego Z1 - Duración Custom"
+    min: 1
+    max: 60
+    step: 1
+    unit_of_measurement: "min"
+    mode: slider
+    icon: mdi:timer-outline
+
+  # Zona 1 - Humedad mínima personalizada
+  riego_z1_humedad_min_custom:
+    name: "Riego Z1 - Humedad Mínima Custom"
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: "%"
+    mode: slider
+    icon: mdi:water-percent
+
+# ============================================
+# INPUT SELECT - Modos de Operación
+# ============================================
+input_select:
+  riego_z1_modo:
+    name: "Riego Z1 - Modo de Operación"
+    options:
+      - "Automático"
+      - "Manual"
+      - "Programado"
+      - "Deshabilitado"
+    initial: "Automático"
+    icon: mdi:cog
+
+# ============================================
+# INPUT TEXT - Notas y Registro
+# ============================================
+input_text:
+  riego_z1_notas:
+    name: "Riego Z1 - Notas"
+    max: 255
+    icon: mdi:note-text
+
+# ============================================
+# TIMER - Para riegos manuales con duración
+# ============================================
+timer:
+  riego_z1_manual:
+    name: "Timer Riego Manual Z1"
+    duration: "00:10:00"  # 10 minutos por defecto
+    icon: mdi:timer-sand
+
+# ============================================
+# SENSORS - Templates útiles
+# ============================================
+# Estos sensors derivan información de los helpers
+# y el estado del sistema
+
+template:
+  - sensor:
+      # Tiempo desde último riego
+      - name: "Riego Z1 - Tiempo desde Último Riego"
+        unique_id: riego_z1_tiempo_desde_ultimo
+        icon: mdi:clock-outline
+        state: >
+          {% set ultimo = states('input_datetime.riego_z1_ultimo') %}
+          {% if ultimo not in ['unknown', 'unavailable', ''] %}
+            {% set ultimo_dt = strptime(ultimo, '%Y-%m-%d %H:%M:%S') %}
+            {% set diff = now() - ultimo_dt %}
+            {% set hours = (diff.total_seconds() / 3600) | int %}
+            {% if hours < 1 %}
+              {{ (diff.total_seconds() / 60) | int }} minutos
+            {% elif hours < 24 %}
+              {{ hours }} horas
+            {% else %}
+              {{ (hours / 24) | int }} días
+            {% endif %}
+          {% else %}
+            Nunca
+          {% endif %}
+
+      # Estado del sistema
+      - name: "Riego Z1 - Estado del Sistema"
+        unique_id: riego_z1_estado_sistema
+        icon: mdi:state-machine
+        state: >
+          {% set manual = is_state('input_boolean.riego_z1_manual', 'on') %}
+          {% set bomba_a = is_state('switch.bomba_z1a', 'on') %}
+          {% set bomba_b = is_state('switch.bomba_z1b', 'on') %}
+          {% set humedad = states('sensor.humedad_suelo_z1') | float(100) %}
+          {% set tanque = states('sensor.nivel_tanque') | float(0) %}
+
+          {% if bomba_a or bomba_b %}
+            Regando
+          {% elif manual %}
+            Modo Manual
+          {% elif tanque < 20 %}
+            Tanque Bajo
+          {% elif humedad < 30 %}
+            Suelo Seco (Esperando)
+          {% else %}
+            Normal
+          {% endif %}
+
+  - binary_sensor:
+      # ¿Es necesario regar?
+      - name: "Riego Z1 - Necesita Riego"
+        unique_id: riego_z1_necesita_riego
+        icon: mdi:water-alert
+        device_class: moisture
+        state: >
+          {% set humedad = states('sensor.humedad_suelo_z1') | float(100) %}
+          {% set tanque = states('sensor.nivel_tanque') | float(0) %}
+          {{ humedad < 30 and tanque > 20 }}
+

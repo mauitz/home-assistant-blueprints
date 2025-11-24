@@ -1,0 +1,263 @@
+esphome:
+  name: riego_z1_test
+  on_boot:
+    priority: -100
+    then:
+      - logger.log: "⚡ ESP32 ARRANCADO - Modo de Prueba Hardware"
+      - logger.log: "📋 Se ejecutará secuencia de prueba en 5 segundos..."
+      - delay: 5s
+      - script.execute: test_sequence
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# WIFI DESACTIVADO PARA PRUEBAS
+# wifi:
+#   ssid: "sunsetlabs-2.4GHz"
+#   password: "bienvenido"
+
+# Logging activado
+logger:
+  level: INFO
+
+# ============================================
+# SENSORES
+# ============================================
+
+sensor:
+  # Sensor de humedad del suelo - Zona 1
+  - platform: adc
+    pin: GPIO34
+    name: "Test Humedad Suelo Z1"
+    id: humedad_z1
+    attenuation: 12db
+    update_interval: 2s
+    filters:
+      - multiply: 100.0  # Convertir a porcentaje aproximado
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - logger.log:
+            format: "📊 Humedad Suelo: %.1f%%"
+            args: [ 'x' ]
+
+  # Sensor ultrasónico - Nivel del tanque
+  - platform: ultrasonic
+    trigger_pin: GPIO13
+    echo_pin: GPIO14
+    name: "Test Distancia Tanque"
+    id: distancia_tanque
+    update_interval: 3s
+    timeout: 2.0m
+    filters:
+      - multiply: 100.0  # metros a cm
+    unit_of_measurement: "cm"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - logger.log:
+            format: "📏 Distancia Tanque: %.1f cm"
+            args: [ 'x' ]
+
+  # Sensor DHT11 - Temperatura
+  - platform: dht
+    pin: GPIO27
+    model: DHT11
+    temperature:
+      name: "Test Temperatura"
+      id: temperatura
+      on_value:
+        then:
+          - logger.log:
+              format: "🌡️ Temperatura: %.1f°C"
+              args: [ 'x' ]
+    humidity:
+      name: "Test Humedad Ambiente"
+      id: humedad_ambiente
+      on_value:
+        then:
+          - logger.log:
+              format: "💧 Humedad Ambiente: %.1f%%"
+              args: [ 'x' ]
+    update_interval: 5s
+
+  # LDR - Luz ambiente
+  - platform: adc
+    pin: GPIO35
+    name: "Test Luz Ambiente"
+    id: luz_raw
+    attenuation: 12db
+    update_interval: 2s
+    filters:
+      - multiply: 303.03  # Convertir a porcentaje (100/3.3)
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    on_value:
+      then:
+        - logger.log:
+            format: "☀️ Luz Ambiente: %.0f%%"
+            args: [ 'x' ]
+
+# ============================================
+# SWITCHES (BOMBAS)
+# ============================================
+
+switch:
+  # Bomba Zona 1A
+  - platform: gpio
+    pin: GPIO23
+    name: "Test Bomba Z1A"
+    id: bomba_z1a
+    inverted: false
+    restore_mode: ALWAYS_OFF
+
+  # Bomba Zona 1B
+  - platform: gpio
+    pin: GPIO22
+    name: "Test Bomba Z1B"
+    id: bomba_z1b
+    inverted: false
+    restore_mode: ALWAYS_OFF
+
+# ============================================
+# OUTPUTS (LEDs)
+# ============================================
+
+output:
+  - platform: gpio
+    pin: GPIO26
+    id: led_tanque_lleno_output
+
+  - platform: gpio
+    pin: GPIO25
+    id: led_tanque_medio_output
+
+  - platform: gpio
+    pin: GPIO4
+    id: led_tanque_bajo_output
+
+  - platform: gpio
+    pin: GPIO2
+    id: led_bomba_output
+
+  - platform: gpio
+    pin: GPIO15
+    id: led_wifi_output
+
+# ============================================
+# LIGHTS (LEDs)
+# ============================================
+
+light:
+  - platform: binary
+    name: "Test LED Verde (Tanque Lleno)"
+    id: led_verde
+    output: led_tanque_lleno_output
+
+  - platform: binary
+    name: "Test LED Amarillo (Tanque Medio)"
+    id: led_amarillo
+    output: led_tanque_medio_output
+
+  - platform: binary
+    name: "Test LED Rojo (Tanque Bajo)"
+    id: led_rojo
+    output: led_tanque_bajo_output
+
+  - platform: binary
+    name: "Test LED Bomba"
+    id: led_bomba
+    output: led_bomba_output
+
+  - platform: binary
+    name: "Test LED WiFi"
+    id: led_wifi
+    output: led_wifi_output
+
+# ============================================
+# SCRIPT DE PRUEBA AUTOMÁTICA
+# ============================================
+
+script:
+  - id: test_sequence
+    then:
+      # Mensaje de inicio
+      - logger.log: "🚀 ========== INICIANDO PRUEBA DE HARDWARE =========="
+      - delay: 2s
+
+      # PRUEBA 1: LEDs
+      - logger.log: "💡 TEST 1: Probando LEDs..."
+      - logger.log: "🟢 LED VERDE ON"
+      - light.turn_on: led_verde
+      - delay: 1s
+      - light.turn_off: led_verde
+
+      - logger.log: "🟡 LED AMARILLO ON"
+      - light.turn_on: led_amarillo
+      - delay: 1s
+      - light.turn_off: led_amarillo
+
+      - logger.log: "🔴 LED ROJO ON"
+      - light.turn_on: led_rojo
+      - delay: 1s
+      - light.turn_off: led_rojo
+
+      - logger.log: "🔵 LED BOMBA ON"
+      - light.turn_on: led_bomba
+      - delay: 1s
+      - light.turn_off: led_bomba
+
+      - logger.log: "⚪ LED WIFI ON"
+      - light.turn_on: led_wifi
+      - delay: 1s
+      - light.turn_off: led_wifi
+
+      - logger.log: "✅ Test LEDs completado"
+      - delay: 2s
+
+      # PRUEBA 2: Relés (sin bombas conectadas)
+      - logger.log: "🔌 TEST 2: Probando Relés (escucha el CLICK)..."
+      - logger.log: "🚰 RELÉ 1 (Bomba Z1A) ON"
+      - switch.turn_on: bomba_z1a
+      - delay: 2s
+      - switch.turn_off: bomba_z1a
+      - logger.log: "🚰 RELÉ 1 OFF"
+      - delay: 1s
+
+      - logger.log: "🚰 RELÉ 2 (Bomba Z1B) ON"
+      - switch.turn_on: bomba_z1b
+      - delay: 2s
+      - switch.turn_off: bomba_z1b
+      - logger.log: "🚰 RELÉ 2 OFF"
+
+      - logger.log: "✅ Test Relés completado"
+      - delay: 2s
+
+      # PRUEBA 3: Todos los LEDs juntos
+      - logger.log: "🎆 TEST 3: Todos los LEDs juntos..."
+      - light.turn_on: led_verde
+      - light.turn_on: led_amarillo
+      - light.turn_on: led_rojo
+      - light.turn_on: led_bomba
+      - light.turn_on: led_wifi
+      - delay: 3s
+      - light.turn_off: led_verde
+      - light.turn_off: led_amarillo
+      - light.turn_off: led_rojo
+      - light.turn_off: led_bomba
+      - light.turn_off: led_wifi
+
+      - logger.log: "🎉 ========== PRUEBA COMPLETA FINALIZADA =========="
+      - logger.log: "♻️  Repitiendo en 10 segundos..."
+      - delay: 10s
+
+      # Repetir la secuencia
+      - script.execute: test_sequence
+
+# ============================================
+# La prueba se ejecuta automáticamente al arrancar (on_boot)
+# ============================================
+

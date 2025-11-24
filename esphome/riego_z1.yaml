@@ -1,0 +1,360 @@
+esphome:
+  name: riego_z1
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: "sunsetlabs-2.4GHz"
+  password: "bienvenido"
+
+  # Red de respaldo si no puede conectar al WiFi principal
+  ap:
+    ssid: "riego_z1_fallback"
+    password: "12345678"
+
+# Activar logging para debug
+logger:
+  level: INFO
+  baud_rate: 0  # Desactivar logging por serial para usar UART
+
+# UART para sensor LD2410C (usando UART2)
+uart:
+  id: uart_bus
+  tx_pin: GPIO17  # TX2 del ESP32 → conectado a RX del LD2410C
+  rx_pin: GPIO16  # RX2 del ESP32 → conectado a TX del LD2410C
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+
+# Sensor LD2410C - Presencia por Radar mmWave
+ld2410:
+
+# API para Home Assistant
+api:
+  encryption:
+    key: "P5uO8V1Onj/Ti2PJ2TzerS9iNL6wk2S8Yq05uFV+lw4="
+
+# Actualización Over-The-Air
+ota:
+  - platform: esphome
+    password: !secret riego_z1_ota_password
+
+# ============================================
+# SENSORES
+# ============================================
+
+sensor:
+  # Sensor de humedad del suelo - Zona 1
+  - platform: adc
+    pin: GPIO34
+    name: "Humedad Suelo Z1"
+    id: humedad_z1
+    attenuation: 11db
+    update_interval: 5s
+    filters:
+      # Convertir lectura ADC a porcentaje (calibrar según tu sensor)
+      - calibrate_linear:
+          - 0.0 -> 100.0  # Valor mínimo ADC = 100% humedad (ajustar)
+          - 3.3 -> 0.0    # Valor máximo ADC = 0% humedad (ajustar)
+      - lambda: |-
+          if (x < 0) return 0;
+          if (x > 100) return 100;
+          return x;
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+
+  # Sensor ultrasónico - Nivel del tanque
+  - platform: ultrasonic
+    trigger_pin: GPIO13
+    echo_pin: GPIO14
+    name: "Distancia Tanque (cm)"
+    id: distancia_tanque
+    update_interval: 2s
+    timeout: 2.0m
+    filters:
+      - multiply: 100.0  # Convertir metros a centímetros
+    unit_of_measurement: "cm"
+    accuracy_decimals: 1
+
+  # Sensor de nivel del tanque en porcentaje
+  - platform: template
+    name: "Nivel Tanque"
+    id: nivel_tanque_pct
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      // Altura total del tanque en cm (ajustar según tu tanque)
+      float altura_tanque = 100.0;
+      // Distancia del sensor al agua
+      float distancia = id(distancia_tanque).state;
+      // Calcular porcentaje (invertido porque a mayor distancia, menor nivel)
+      float nivel = ((altura_tanque - distancia) / altura_tanque) * 100.0;
+      if (nivel < 0) return 0;
+      if (nivel > 100) return 100;
+      return nivel;
+    update_interval: 2s
+
+  # Sensor DHT11 - Temperatura
+  - platform: dht
+    pin: GPIO27
+    model: DHT11
+    temperature:
+      name: "Temperatura Ambiente"
+      id: temperatura
+    humidity:
+      name: "Humedad Ambiente"
+      id: humedad_ambiente
+    update_interval: 10s
+
+  # LDR - Luz ambiente
+  - platform: adc
+    pin: GPIO35
+    name: "Luz Ambiente (raw)"
+    id: luz_raw
+    attenuation: 11db
+    update_interval: 5s
+    internal: true  # No mostrar en HA
+
+  # Luz ambiente en porcentaje
+  - platform: template
+    name: "Luz Ambiente"
+    id: luz_ambiente
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    lambda: |-
+      float raw = id(luz_raw).state;
+      // Convertir voltaje a porcentaje (0V=oscuro, 3.3V=brillante)
+      float pct = (raw / 3.3) * 100.0;
+      if (pct < 0) return 0;
+      if (pct > 100) return 100;
+      return pct;
+    update_interval: 5s
+
+  # WiFi Signal Strength
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+
+  # LD2410C - Distancia de detección de movimiento
+  - platform: ld2410
+    moving_distance:
+      name: "Distancia Movimiento"
+    still_distance:
+      name: "Distancia Quieto"
+    moving_energy:
+      name: "Energía Movimiento"
+    still_energy:
+      name: "Energía Quieto"
+    detection_distance:
+      name: "Distancia Detección"
+    g0:
+      move_energy:
+        name: "g0 Energía Movimiento"
+      still_energy:
+        name: "g0 Energía Quieto"
+    g1:
+      move_energy:
+        name: "g1 Energía Movimiento"
+      still_energy:
+        name: "g1 Energía Quieto"
+    g2:
+      move_energy:
+        name: "g2 Energía Movimiento"
+      still_energy:
+        name: "g2 Energía Quieto"
+    g3:
+      move_energy:
+        name: "g3 Energía Movimiento"
+      still_energy:
+        name: "g3 Energía Quieto"
+    g4:
+      move_energy:
+        name: "g4 Energía Movimiento"
+      still_energy:
+        name: "g4 Energía Quieto"
+    g5:
+      move_energy:
+        name: "g5 Energía Movimiento"
+      still_energy:
+        name: "g5 Energía Quieto"
+    g6:
+      move_energy:
+        name: "g6 Energía Movimiento"
+      still_energy:
+        name: "g6 Energía Quieto"
+    g7:
+      move_energy:
+        name: "g7 Energía Movimiento"
+      still_energy:
+        name: "g7 Energía Quieto"
+    g8:
+      move_energy:
+        name: "g8 Energía Movimiento"
+      still_energy:
+        name: "g8 Energía Quieto"
+
+# ============================================
+# SWITCHES (BOMBAS)
+# ============================================
+
+switch:
+  # Bomba Zona 1A
+  - platform: gpio
+    pin: GPIO23
+    name: "Bomba Z1A"
+    id: bomba_z1a
+    inverted: false
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - light.turn_on: led_bomba
+    on_turn_off:
+      - if:
+          condition:
+            and:
+              - switch.is_off: bomba_z1a
+              - switch.is_off: bomba_z1b
+          then:
+            - light.turn_off: led_bomba
+
+  # Bomba Zona 1B
+  - platform: gpio
+    pin: GPIO22
+    name: "Bomba Z1B"
+    id: bomba_z1b
+    inverted: false
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - light.turn_on: led_bomba
+    on_turn_off:
+      - if:
+          condition:
+            and:
+              - switch.is_off: bomba_z1a
+              - switch.is_off: bomba_z1b
+          then:
+            - light.turn_off: led_bomba
+
+# ============================================
+# OUTPUTS (LEDs)
+# ============================================
+
+output:
+  - platform: gpio
+    pin: GPIO26
+    id: led_tanque_lleno_output
+
+  - platform: gpio
+    pin: GPIO25
+    id: led_tanque_medio_output
+
+  - platform: gpio
+    pin: GPIO4
+    id: led_tanque_bajo_output
+
+  - platform: gpio
+    pin: GPIO2
+    id: led_bomba_output
+
+  - platform: gpio
+    pin: GPIO15
+    id: led_wifi_output
+
+# ============================================
+# LIGHTS (Control visual de LEDs)
+# ============================================
+
+light:
+  - platform: binary
+    name: "LED Tanque Lleno"
+    id: led_tanque_lleno
+    output: led_tanque_lleno_output
+
+  - platform: binary
+    name: "LED Tanque Medio"
+    id: led_tanque_medio
+    output: led_tanque_medio_output
+
+  - platform: binary
+    name: "LED Tanque Bajo"
+    id: led_tanque_bajo
+    output: led_tanque_bajo_output
+
+  - platform: binary
+    name: "LED Bomba Activa"
+    id: led_bomba
+    output: led_bomba_output
+
+  - platform: binary
+    name: "LED WiFi"
+    id: led_wifi
+    output: led_wifi_output
+
+# ============================================
+# INTERVAL - Lógica automática de LEDs
+# ============================================
+
+interval:
+  # Actualizar LEDs del tanque cada 2 segundos
+  - interval: 2s
+    then:
+      - lambda: |-
+          float nivel = id(nivel_tanque_pct).state;
+
+          // Apagar todos primero
+          id(led_tanque_lleno).turn_off();
+          id(led_tanque_medio).turn_off();
+          id(led_tanque_bajo).turn_off();
+
+          // Encender según nivel
+          if (nivel >= 75) {
+            id(led_tanque_lleno).turn_on();
+          } else if (nivel >= 30) {
+            id(led_tanque_medio).turn_on();
+          } else {
+            id(led_tanque_bajo).turn_on();
+          }
+
+# ============================================
+# BINARY SENSOR - Estado WiFi
+# ============================================
+
+binary_sensor:
+  - platform: status
+    name: "Estado Conexión"
+    id: status_conexion
+    on_press:
+      # WiFi conectado
+      - light.turn_on: led_wifi
+    on_release:
+      # WiFi desconectado
+      - light.turn_off: led_wifi
+
+  # LD2410C - Sensores de presencia
+  - platform: ld2410
+    has_target:
+      name: "Presencia Detectada"
+    has_moving_target:
+      name: "Objetivo en Movimiento"
+    has_still_target:
+      name: "Objetivo Quieto"
+    out_pin_presence_status:
+      name: "Estado Pin OUT"
+
+  # Pin OUT del LD2410C como sensor binario directo
+  - platform: gpio
+    pin: GPIO12
+    name: "LD2410C OUT Digital"
+    device_class: occupancy
+
+# ============================================
+# BOTÓN RESTART
+# ============================================
+
+button:
+  - platform: restart
+    name: "Reiniciar ESP32"
+
+

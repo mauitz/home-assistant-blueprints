@@ -1,0 +1,81 @@
+# ============================================
+# AUTOMATIZACIÓN DE RIEGO ZONA 1
+# ============================================
+# Este archivo es un ejemplo de cómo usar el blueprint
+# "Sistema de Riego Inteligente" para la Zona 1
+#
+# INSTALACIÓN:
+# 1. Copia el blueprint a: config/blueprints/automation/mauitz/
+# 2. Crea esta automatización desde la UI de Home Assistant:
+#    Configuración → Automatizaciones → Añadir → Usar Blueprint
+# 3. O copia este código a config/automations.yaml
+# ============================================
+
+automation:
+  - alias: "Riego Automático - Zona 1"
+    description: |
+      Control automático de riego para Zona 1 basado en:
+      - Humedad del suelo (mínimo 30%, objetivo 60%)
+      - Nivel de tanque (mínimo 20%)
+      - Horario permitido (6:00 - 22:00)
+      - Duración máxima: 10 minutos
+
+    use_blueprint:
+      path: mauitz/sistema_riego_inteligente.yaml
+      input:
+        # Identificación de la zona
+        zona_nombre: "Zona 1 - Jardín Principal"
+
+        # Dispositivos
+        bomba_switch: switch.bomba_z1a  # O switch.bomba_z1b
+        sensor_humedad: sensor.humedad_suelo_z1
+        sensor_nivel_tanque: sensor.nivel_tanque
+
+        # Umbrales de humedad
+        humedad_minima: 30  # Riega cuando baje de 30%
+        humedad_objetivo: 60  # Detiene cuando llegue a 60%
+
+        # Nivel del tanque
+        nivel_minimo_tanque: 20  # No riega si tanque < 20%
+
+        # Duración y frecuencia
+        duracion_riego: 10  # Máximo 10 minutos
+        intervalo_minimo: 4  # Mínimo 4 horas entre riegos
+
+        # Horarios
+        permitir_riego_nocturno: false  # No regar de noche
+        hora_inicio_permitido: "06:00:00"  # Desde las 6 AM
+        hora_fin_permitido: "22:00:00"  # Hasta las 10 PM
+
+        # Notificaciones (opcional)
+        servicio_notificacion: ""  # ej: "notify.mobile_app_iphone"
+        notificar_inicio_riego: true
+        notificar_tanque_bajo: true
+
+        # Modo manual (opcional)
+        input_boolean_modo_manual: ""  # ej: "input_boolean.riego_z1_manual"
+
+# ============================================
+# HELPERS RECOMENDADOS (crear en HA)
+# ============================================
+# Para controlar el modo manual/automático:
+#
+# input_boolean:
+#   riego_z1_manual:
+#     name: "Riego Z1 - Modo Manual"
+#     icon: mdi:hand-back-right
+#
+# input_datetime:
+#   riego_z1_ultimo:
+#     name: "Riego Z1 - Último Riego"
+#     has_date: true
+#     has_time: true
+#
+# input_number:
+#   riego_z1_contador:
+#     name: "Riego Z1 - Contador de Ciclos"
+#     min: 0
+#     max: 1000
+#     step: 1
+#     mode: box
+

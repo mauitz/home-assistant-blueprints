@@ -1,0 +1,322 @@
+blueprint:
+  name: Sistema de Riego Inteligente
+  description: |
+    Automatización completa para sistema de riego con control de zonas,
+    monitoreo de nivel de tanque, sensores de humedad y horarios programables.
+
+    Características:
+    - Riego automático basado en humedad del suelo
+    - Protección contra tanque bajo
+    - Horarios de riego configurables
+    - Control de duración por zona
+    - Alertas y notificaciones
+    - Modo manual y automático
+
+  domain: automation
+
+  input:
+    # ============================================
+    # ZONA DE RIEGO
+    # ============================================
+    zona_nombre:
+      name: Nombre de la Zona
+      description: Nombre identificativo de la zona de riego (ej. "Zona 1 - Jardín")
+      default: "Zona 1"
+      selector:
+        text:
+
+    bomba_switch:
+      name: Bomba de Riego
+      description: Switch que controla la bomba de esta zona
+      selector:
+        entity:
+          domain: switch
+
+    sensor_humedad:
+      name: Sensor de Humedad del Suelo
+      description: Sensor que mide la humedad del suelo de esta zona
+      selector:
+        entity:
+          domain: sensor
+
+    # ============================================
+    # NIVEL DEL TANQUE
+    # ============================================
+    sensor_nivel_tanque:
+      name: Sensor de Nivel del Tanque
+      description: Sensor que indica el nivel del tanque de agua (en %)
+      selector:
+        entity:
+          domain: sensor
+
+    nivel_minimo_tanque:
+      name: Nivel Mínimo del Tanque
+      description: Nivel mínimo del tanque para permitir riego (%)
+      default: 20
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+
+    # ============================================
+    # UMBRALES DE HUMEDAD
+    # ============================================
+    humedad_minima:
+      name: Humedad Mínima para Riego
+      description: Si la humedad está por debajo de este valor, se activará el riego
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+
+    humedad_objetivo:
+      name: Humedad Objetivo
+      description: El riego se detendrá al alcanzar este nivel de humedad
+      default: 60
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+
+    # ============================================
+    # DURACIÓN Y FRECUENCIA
+    # ============================================
+    duracion_riego:
+      name: Duración Máxima del Riego
+      description: Tiempo máximo que puede durar un ciclo de riego (minutos)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: "min"
+          mode: slider
+
+    intervalo_minimo:
+      name: Intervalo Mínimo entre Riegos
+      description: Tiempo mínimo que debe pasar entre dos riegos (horas)
+      default: 4
+      selector:
+        number:
+          min: 1
+          max: 24
+          unit_of_measurement: "h"
+          mode: slider
+
+    # ============================================
+    # HORARIOS
+    # ============================================
+    permitir_riego_nocturno:
+      name: Permitir Riego Nocturno
+      description: Activar para permitir riego durante la noche
+      default: false
+      selector:
+        boolean:
+
+    hora_inicio_permitido:
+      name: Hora de Inicio Permitida
+      description: Hora a partir de la cual se permite el riego automático
+      default: "06:00:00"
+      selector:
+        time:
+
+    hora_fin_permitido:
+      name: Hora Final Permitida
+      description: Hora hasta la cual se permite el riego automático
+      default: "22:00:00"
+      selector:
+        time:
+
+    # ============================================
+    # NOTIFICACIONES
+    # ============================================
+    servicio_notificacion:
+      name: Servicio de Notificación (Opcional)
+      description: Servicio para enviar notificaciones (ej. notify.mobile_app_tu_telefono)
+      default: ""
+      selector:
+        text:
+
+    notificar_inicio_riego:
+      name: Notificar Inicio de Riego
+      description: Enviar notificación cuando comienza el riego
+      default: true
+      selector:
+        boolean:
+
+    notificar_tanque_bajo:
+      name: Notificar Tanque Bajo
+      description: Enviar notificación cuando el tanque está bajo
+      default: true
+      selector:
+        boolean:
+
+    # ============================================
+    # MODO MANUAL
+    # ============================================
+    input_boolean_modo_manual:
+      name: Helper Modo Manual (Opcional)
+      description: Input Boolean para habilitar/deshabilitar el modo automático
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+# ============================================
+# VARIABLES
+# ============================================
+variables:
+  bomba: !input bomba_switch
+  sensor_hum: !input sensor_humedad
+  sensor_tanque: !input sensor_nivel_tanque
+  humedad_min: !input humedad_minima
+  humedad_max: !input humedad_objetivo
+  nivel_min: !input nivel_minimo_tanque
+  duracion: !input duracion_riego
+  servicio_notify: !input servicio_notificacion
+  modo_manual_helper: !input input_boolean_modo_manual
+  zona: !input zona_nombre
+
+# ============================================
+# TRIGGERS
+# ============================================
+trigger:
+  # Trigger 1: Humedad del suelo baja
+  - platform: numeric_state
+    entity_id: !input sensor_humedad
+    below: !input humedad_minima
+    for:
+      minutes: 5
+    id: humedad_baja
+
+  # Trigger 2: Verificación periódica (cada hora)
+  - platform: time_pattern
+    hours: "/1"
+    id: verificacion_periodica
+
+  # Trigger 3: Nivel del tanque bajo (para alertas)
+  - platform: numeric_state
+    entity_id: !input sensor_nivel_tanque
+    below: !input nivel_minimo_tanque
+    id: tanque_bajo
+
+# ============================================
+# CONDICIONES GENERALES
+# ============================================
+condition:
+  - condition: template
+    value_template: >
+      {% set modo_manual = modo_manual_helper %}
+      {{ modo_manual == '' or is_state(modo_manual, 'off') }}
+    alias: "Modo automático activado"
+
+# ============================================
+# ACCIONES
+# ============================================
+action:
+  - choose:
+      # ==========================================
+      # CASO 1: ALERTA DE TANQUE BAJO
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: tanque_bajo
+          - condition: template
+            value_template: "{{ notificar_tanque_bajo }}"
+          - condition: template
+            value_template: "{{ servicio_notify != '' }}"
+        sequence:
+          - service: "{{ servicio_notify }}"
+            data:
+              title: "⚠️ Tanque de Agua Bajo"
+              message: >
+                El nivel del tanque está en {{ states(sensor_tanque) }}%.
+                El riego automático está deshabilitado hasta que se llene.
+              data:
+                priority: high
+                tag: tanque_bajo
+
+      # ==========================================
+      # CASO 2: INICIAR RIEGO (Humedad baja o verificación)
+      # ==========================================
+      - conditions:
+          - or:
+              - condition: trigger
+                id: humedad_baja
+              - condition: trigger
+                id: verificacion_periodica
+          - condition: numeric_state
+            entity_id: !input sensor_humedad
+            below: !input humedad_minima
+          - condition: numeric_state
+            entity_id: !input sensor_nivel_tanque
+            above: !input nivel_minimo_tanque
+          - or:
+              - "{{ permitir_riego_nocturno }}"
+              - condition: time
+                after: !input hora_inicio_permitido
+                before: !input hora_fin_permitido
+          - condition: state
+            entity_id: !input bomba_switch
+            state: 'off'
+        sequence:
+          # Verificar intervalo mínimo usando input_datetime o simplemente regar
+          - service: switch.turn_on
+            target:
+              entity_id: !input bomba_switch
+
+          # Notificar inicio de riego
+          - if:
+              - condition: template
+                value_template: "{{ notificar_inicio_riego and servicio_notify != '' }}"
+            then:
+              - service: "{{ servicio_notify }}"
+                data:
+                  title: "🚰 Riego Iniciado - {{ zona }}"
+                  message: >
+                    Humedad actual: {{ states(sensor_hum) }}%
+                    Nivel tanque: {{ states(sensor_tanque) }}%
+                    Duración máxima: {{ duracion }} minutos
+                  data:
+                    tag: riego_{{ zona }}
+
+          # Esperar duración máxima O hasta alcanzar humedad objetivo
+          - wait_template: >
+              {{ states(sensor_hum) | float(0) >= humedad_max or
+                 is_state(bomba, 'off') }}
+            timeout:
+              minutes: !input duracion_riego
+            continue_on_timeout: true
+
+          # Detener bomba
+          - service: switch.turn_off
+            target:
+              entity_id: !input bomba_switch
+
+          # Notificar fin de riego
+          - if:
+              - condition: template
+                value_template: "{{ servicio_notify != '' }}"
+            then:
+              - service: "{{ servicio_notify }}"
+                data:
+                  title: "✅ Riego Completado - {{ zona }}"
+                  message: >
+                    Humedad final: {{ states(sensor_hum) }}%
+                    Nivel tanque: {{ states(sensor_tanque) }}%
+                  data:
+                    tag: riego_{{ zona }}
+
+# ============================================
+# MODO
+# ============================================
+mode: single
+max_exceeded: silent
+

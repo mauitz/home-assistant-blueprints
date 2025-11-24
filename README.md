@@ -1,4 +1,4 @@
-a# 🏠 Home Assistant Blueprints & Configurations
+a# 🏠 Home Assistant BlueprintsConfigurations
 
 Colección de blueprints, automatizaciones y configuraciones para Home Assistant optimizadas para domótica inteligente.
 
@@ -88,6 +88,32 @@ Automatizaciones avanzadas reutilizables.
 
 ---
 
+### 🚰 [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md)
+
+Blueprint completo para automatización de riego con ESP32 + ESPHome.
+
+**Características:**
+- ✅ Control automático por humedad del suelo
+- ✅ Protección de nivel de tanque bajo
+- ✅ Horarios de riego configurables
+- ✅ Duración máxima y objetivos de humedad
+- ✅ Notificaciones de inicio/fin de riego
+- ✅ Modo manual y automático
+- ✅ Múltiples zonas independientes
+
+**Hardware:**
+- ESP32 con sensores (humedad, nivel, temperatura, luz, presencia)
+- Bombas de agua 5V + relés de 6 canales
+- Integración completa con Home Assistant
+
+**Archivos:**
+- [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml)
+- [`esphome/riego_z1.yaml`](esphome/riego_z1.yaml) - Firmware ESP32
+- [Documentación completa](docs/automatizaciones/RIEGO_INTELIGENTE.md)
+- [Ejemplo de configuración](examples/automatizaciones/riego_z1_auto.yaml)
+
+---
+
 ### 🔧 Otros Blueprints
 
 - **Tuya-Sonoff Sync**: [`blueprints/tuya_sonoff_sync.yaml`](blueprints/tuya_sonoff_sync.yaml)
@@ -101,12 +127,18 @@ Automatizaciones avanzadas reutilizables.
 home-assistant-blueprints/
 ├── blueprints/              # Blueprints reutilizables
 │   ├── pezaustral_presence_simulation.yaml
-│   └── tuya_sonoff_sync.yaml
+│   ├── tuya_sonoff_sync.yaml
+│   └── sistema_riego_inteligente.yaml
+├── esphome/                 # Firmware ESP32/ESPHome
+│   ├── riego_z1.yaml        # ESP32 - Sistema de riego Zona 1
+│   └── secrets.yaml
 ├── examples/                # Configuraciones de ejemplo
 │   ├── presence_simulation_config.yaml
 │   ├── presence_simulation_helpers.yaml
 │   ├── frigate/
 │   └── automatizaciones/
+│       ├── riego_z1_auto.yaml
+│       └── atardecer_inteligente.yaml
 ├── dashboards/              # Dashboards personalizados
 │   ├── maui_dashboard_v3.1.yaml
 │   ├── maui_templates/
@@ -118,6 +150,7 @@ home-assistant-blueprints/
 │   ├── beacons/
 │   ├── dashboard/
 │   └── automatizaciones/
+│       └── RIEGO_INTELIGENTE.md
 ├── utils/                   # Utilidades y scripts
 │   ├── ha_manager.py
 │   ├── verify_installation.sh
@@ -200,6 +233,7 @@ Toda la documentación está organizada por proyectos en la carpeta [`docs/`](do
 - [**Beacons BLE**](docs/beacons/) - Presencia con ESP32
 - [**Dashboard**](docs/dashboard/) - Widgets y UI
 - [**Automatizaciones**](docs/automatizaciones/) - Guías de automatizaciones avanzadas
+  - [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md) - ESP32 + ESPHome
 
 ---
 
@@ -216,6 +250,15 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
 ---
 
 ## 📝 Changelog
+
+### v2.1 (2025-11-24)
+- ✅ **Sistema de Riego Inteligente** completo con ESP32 + ESPHome
+  - Blueprint de automatización con control por humedad
+  - Firmware ESPHome para ESP32 con múltiples sensores
+  - Integración con LD2410C (presencia mmWave)
+  - Documentación completa y ejemplos
+- ✅ Gestión de múltiples zonas de riego
+- ✅ Protección de nivel de tanque
 
 ### v2.0 (2025-11-18)
 - ✅ Blueprint de simulación de presencia completamente reescrito
