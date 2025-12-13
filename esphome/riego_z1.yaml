@@ -23,8 +23,8 @@ logger:
 # UART para sensor LD2410C (usando UART2)
 uart:
   id: uart_bus
-  tx_pin: GPIO17  # TX2 del ESP32 → conectado a RX del LD2410C
-  rx_pin: GPIO16  # RX2 del ESP32 → conectado a TX del LD2410C
+  tx_pin: GPIO33  # GPIO33 del ESP32 → conectado a RX del LD2410C (30-pin compatible)
+  rx_pin: GPIO32  # GPIO32 del ESP32 → conectado a TX del LD2410C (30-pin compatible)
   baud_rate: 256000
   parity: NONE
   stop_bits: 1
