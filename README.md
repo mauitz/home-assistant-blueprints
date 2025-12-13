@@ -107,9 +107,11 @@ Sistema completo de riego automático con ESP32 + ESPHome. **Instalación en 1 s
 **Hardware:**
 - ESP32 con sensores (humedad, nivel, temperatura, luz, presencia)
 - Bombas de agua 5V + relés de 6 canales
+- PCB 8×12 cm (fibra de vidrio)
 - Integración completa con Home Assistant
-- 🏗️ [Arquitectura Física del Módulo](docs/hardware/ARQUITECTURA_FISICA_MODULO.md) - **Guía de construcción**
-- 📌 [Diagrama Pinout ESP32](docs/hardware/DIAGRAMA_PINOUT_ESP32.md) - Conexiones detalladas
+- 🏗️ **[Arquitectura PCB 8×12 cm](docs/hardware/ARQUITECTURA_PCB_8x12cm.md)** - **Guía DEFINITIVA de construcción**
+- 📌 [Pinout ESP32 30-pin](docs/hardware/PINOUT_ESP32_30PIN.md) - Conexiones detalladas
+- ✅ [Validación Hardware](docs/hardware/VALIDACION_PLACA_30PIN.md) - Compatibilidad verificada
 
 **Instalación Rápida:**
 ```yaml
