@@ -61,3 +61,4 @@ echo "✅ Helpers creados!"
 echo ""
 echo "📋 Verifica en: Configuración → Dispositivos y Servicios → Helpers"
 
+

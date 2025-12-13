@@ -56,7 +56,7 @@ homeassistant:
   latitude: -34.xxx
   longitude: -58.xxx
   # ... otras configuraciones ...
-  
+
   # Agregar esta línea
   packages: !include_dir_named packages
 ```
@@ -202,11 +202,11 @@ Para agregar el widget al dashboard, copia este código en tu `maui_dashboard.ya
           entity: sensor.riego_z1_estado_del_sistema
           name: Estado
           icon: mdi:state-machine
-        
+
         - type: entity
           entity: binary_sensor.riego_z1_necesita_riego
           name: Necesita Riego
-    
+
     # Sensores
     - type: entities
       title: "📊 Sensores"
@@ -214,19 +214,19 @@ Para agregar el widget al dashboard, copia este código en tu `maui_dashboard.ya
         - entity: sensor.riego_z1_humedad_suelo_z1
           name: "Humedad Suelo"
           icon: mdi:water-percent
-        
+
         - entity: sensor.riego_z1_nivel_tanque
           name: "Nivel Tanque"
           icon: mdi:water-well
-        
+
         - entity: sensor.riego_z1_temperatura_ambiente
           name: "Temperatura"
           icon: mdi:thermometer
-        
+
         - entity: sensor.riego_z1_humedad_ambiente
           name: "Humedad Ambiente"
           icon: mdi:water-percent
-    
+
     # Control de Bombas
     - type: entities
       title: "💧 Control"
@@ -234,15 +234,15 @@ Para agregar el widget al dashboard, copia este código en tu `maui_dashboard.ya
         - entity: input_boolean.riego_z1_manual
           name: "Modo Manual"
           icon: mdi:hand-back-right
-        
+
         - entity: switch.riego_z1_bomba_z1a
           name: "Bomba Z1A"
           icon: mdi:water-pump
-        
+
         - entity: switch.riego_z1_bomba_z1b
           name: "Bomba Z1B"
           icon: mdi:water-pump
-    
+
     # Scripts Rápidos
     - type: horizontal-stack
       cards:
@@ -252,21 +252,21 @@ Para agregar el widget al dashboard, copia este código en tu `maui_dashboard.ya
           tap_action:
             action: call-service
             service: script.riego_manual_5min
-        
+
         - type: button
           name: "Regar 10 min"
           icon: mdi:timer-outline
           tap_action:
             action: call-service
             service: script.riego_manual_10min
-        
+
         - type: button
           name: "STOP"
           icon: mdi:stop-circle
           tap_action:
             action: call-service
             service: script.detener_todas_bombas
-    
+
     # Estadísticas
     - type: entities
       title: "📈 Estadísticas"
@@ -274,11 +274,11 @@ Para agregar el widget al dashboard, copia este código en tu `maui_dashboard.ya
         - entity: input_number.riego_z1_contador
           name: "Ciclos de Riego"
           icon: mdi:counter
-        
+
         - entity: sensor.riego_z1_tiempo_desde_ultimo_riego
           name: "Último Riego"
           icon: mdi:clock-outline
-        
+
         - entity: input_datetime.riego_z1_ultimo
           name: "Fecha/Hora Último Riego"
 ```
@@ -400,7 +400,8 @@ Si tienes problemas:
 
 ---
 
-**Versión**: 3.2  
-**Última actualización**: Noviembre 2024  
+**Versión**: 3.2
+**Última actualización**: Noviembre 2024
 **Autor**: @mauitz
+
 

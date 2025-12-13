@@ -264,3 +264,4 @@ Los demás son opcionales.
 
 **¿Quieres que revisemos los logs del ESP32 juntos para ver exactamente qué está fallando?**
 
+

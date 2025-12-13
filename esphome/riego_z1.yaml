@@ -99,7 +99,7 @@ sensor:
 
   # Sensor DHT11 - Temperatura y Humedad Ambiente
   - platform: dht
-    pin: 
+    pin:
       number: GPIO27
       mode:
         input: true

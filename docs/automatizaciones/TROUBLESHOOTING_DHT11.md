@@ -105,7 +105,7 @@ Edita `esphome/riego_z1.yaml`:
 ```yaml
 sensor:
   - platform: dht
-    pin: 
+    pin:
       number: GPIO27
       mode:
         input: true
@@ -225,7 +225,7 @@ Después de las pruebas, usa esta configuración en `riego_z1.yaml`:
 sensor:
   # DHT11 - Temperatura y Humedad Ambiente
   - platform: dht
-    pin: 
+    pin:
       number: GPIO27
       mode:
         input: true
@@ -358,6 +358,7 @@ Si todas las verificaciones pasan y aún no funciona → **Sensor DHT11 defectuo
 
 ---
 
-**Versión**: 1.0  
+**Versión**: 1.0
 **Autor**: @mauitz
+
 

@@ -4,7 +4,7 @@
 # Versión: 3.2
 # Descripción: Package completo y autocontenido para sistema de riego automático
 # Hardware: ESP32 + Sensores (humedad, nivel, temp, luz, presencia) + Bombas
-# 
+#
 # INSTALACIÓN:
 # 1. Copia este archivo a: /config/packages/sistema_riego_z1.yaml
 # 2. Agrega a configuration.yaml:
@@ -12,7 +12,7 @@
 #      packages: !include_dir_named packages
 # 3. Reinicia Home Assistant
 # 4. Configura las entidades del ESP32 (debe estar ya flasheado)
-# 
+#
 # CONTENIDO:
 # - Helpers (modo manual, contador, timestamps)
 # - Scripts (riego manual, test, emergencia)
@@ -81,7 +81,7 @@ template:
           {% else %}
             Nunca
           {% endif %}
-      
+
       # Estado del sistema
       - name: "Riego Z1 - Estado del Sistema"
         unique_id: riego_z1_estado_sistema
@@ -92,7 +92,7 @@ template:
           {% set bomba_b = is_state('switch.riego_z1_bomba_z1b', 'on') %}
           {% set humedad = states('sensor.riego_z1_humedad_suelo_z1') | float(100) %}
           {% set tanque = states('sensor.riego_z1_nivel_tanque') | float(0) %}
-          
+
           {% if bomba_a or bomba_b %}
             Regando
           {% elif manual %}
@@ -131,28 +131,28 @@ script:
       - service: input_boolean.turn_on
         target:
           entity_id: input_boolean.riego_z1_manual
-      
+
       - service: switch.turn_on
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - service: persistent_notification.create
         data:
           title: "🚰 Riego Manual Iniciado"
           message: "Riego manual de 5 minutos en Zona 1"
-      
+
       - delay:
           minutes: 5
-      
+
       - service: switch.turn_off
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - service: persistent_notification.create
         data:
           title: "✅ Riego Manual Completado"
           message: "Riego manual de 5 minutos finalizado"
-      
+
       - service: input_boolean.turn_off
         target:
           entity_id: input_boolean.riego_z1_manual
@@ -167,28 +167,28 @@ script:
       - service: input_boolean.turn_on
         target:
           entity_id: input_boolean.riego_z1_manual
-      
+
       - service: switch.turn_on
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - service: persistent_notification.create
         data:
           title: "🚰 Riego Manual Iniciado"
           message: "Riego manual de 10 minutos en Zona 1"
-      
+
       - delay:
           minutes: 10
-      
+
       - service: switch.turn_off
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - service: persistent_notification.create
         data:
           title: "✅ Riego Manual Completado"
           message: "Riego manual de 10 minutos finalizado"
-      
+
       - service: input_boolean.turn_off
         target:
           entity_id: input_boolean.riego_z1_manual
@@ -203,11 +203,11 @@ script:
       - service: switch.turn_off
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - service: switch.turn_off
         target:
           entity_id: switch.riego_z1_bomba_z1b
-      
+
       - service: persistent_notification.create
         data:
           title: "⛔ Bombas Detenidas"
@@ -223,47 +223,47 @@ script:
       - service: input_boolean.turn_on
         target:
           entity_id: input_boolean.riego_z1_manual
-      
+
       - service: persistent_notification.create
         data:
           title: "🧪 Test: Bomba Z1A"
           message: "Probando Bomba Z1A durante 10 segundos"
-      
+
       - service: switch.turn_on
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - delay:
           seconds: 10
-      
+
       - service: switch.turn_off
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - delay:
           seconds: 2
-      
+
       - service: persistent_notification.create
         data:
           title: "🧪 Test: Bomba Z1B"
           message: "Probando Bomba Z1B durante 10 segundos"
-      
+
       - service: switch.turn_on
         target:
           entity_id: switch.riego_z1_bomba_z1b
-      
+
       - delay:
           seconds: 10
-      
+
       - service: switch.turn_off
         target:
           entity_id: switch.riego_z1_bomba_z1b
-      
+
       - service: persistent_notification.create
         data:
           title: "✅ Test Completado"
           message: "Test de bombas finalizado"
-      
+
       - service: input_boolean.turn_off
         target:
           entity_id: input_boolean.riego_z1_manual
@@ -278,36 +278,36 @@ script:
       - condition: numeric_state
         entity_id: sensor.riego_z1_nivel_tanque
         above: 20
-      
+
       - service: input_boolean.turn_on
         target:
           entity_id: input_boolean.riego_z1_manual
-      
+
       - service: persistent_notification.create
         data:
           title: "🚨 Riego de Emergencia"
           message: "Iniciando riego de emergencia en Zona 1"
-      
+
       - service: switch.turn_on
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - wait_template: "{{ states('sensor.riego_z1_humedad_suelo_z1') | float(0) >= 60 }}"
         timeout:
           minutes: 15
         continue_on_timeout: true
-      
+
       - service: switch.turn_off
         target:
           entity_id: switch.riego_z1_bomba_z1a
-      
+
       - service: persistent_notification.create
         data:
           title: "✅ Riego de Emergencia Completado"
           message: >
             Humedad final: {{ states('sensor.riego_z1_humedad_suelo_z1') }}%
             Tanque restante: {{ states('sensor.riego_z1_nivel_tanque') }}%
-      
+
       - service: input_boolean.turn_off
         target:
           entity_id: input_boolean.riego_z1_manual
@@ -324,7 +324,7 @@ script:
           entity_id: input_datetime.riego_z1_ultimo
         data:
           datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-      
+
       - service: input_number.increment
         target:
           entity_id: input_number.riego_z1_contador
@@ -338,7 +338,7 @@ automation:
     alias: "Riego Automático - Zona 1"
     description: "Control automático de riego basado en humedad y nivel de tanque"
     mode: single
-    
+
     trigger:
       # Trigger 1: Humedad baja
       - platform: numeric_state
@@ -347,24 +347,24 @@ automation:
         for:
           minutes: 5
         id: humedad_baja
-      
+
       # Trigger 2: Verificación periódica
       - platform: time_pattern
         hours: "/1"
         id: verificacion_periodica
-      
+
       # Trigger 3: Tanque bajo (para alertas)
       - platform: numeric_state
         entity_id: sensor.riego_z1_nivel_tanque
         below: 20
         id: tanque_bajo
-    
+
     condition:
       # Solo si modo automático está activo
       - condition: state
         entity_id: input_boolean.riego_z1_manual
         state: 'off'
-    
+
     action:
       - choose:
           # CASO 1: Alerta de tanque bajo
@@ -379,7 +379,7 @@ automation:
                     El nivel del tanque está en {{ states('sensor.riego_z1_nivel_tanque') }}%.
                     El riego automático está deshabilitado hasta que se llene.
                   notification_id: tanque_bajo
-          
+
           # CASO 2: Iniciar riego
           - conditions:
               - or:
@@ -408,7 +408,7 @@ automation:
               - service: switch.turn_on
                 target:
                   entity_id: switch.riego_z1_bomba_z1a
-              
+
               # Notificar inicio
               - service: persistent_notification.create
                 data:
@@ -418,7 +418,7 @@ automation:
                     Nivel tanque: {{ states('sensor.riego_z1_nivel_tanque') }}%
                     Duración máxima: 10 minutos
                   notification_id: riego_activo
-              
+
               # Esperar hasta 60% de humedad o 10 min máximo
               - wait_template: >
                   {{ states('sensor.riego_z1_humedad_suelo_z1') | float(0) >= 60 or
@@ -426,15 +426,15 @@ automation:
                 timeout:
                   minutes: 10
                 continue_on_timeout: true
-              
+
               # Apagar bomba
               - service: switch.turn_off
                 target:
                   entity_id: switch.riego_z1_bomba_z1a
-              
+
               # Registrar riego
               - service: script.registrar_riego_z1
-              
+
               # Notificar fin
               - service: persistent_notification.create
                 data:
@@ -447,4 +447,5 @@ automation:
 # ════════════════════════════════════════════════════════════════════════════
 # FIN DEL PACKAGE
 # ════════════════════════════════════════════════════════════════════════════
+
 

@@ -2,7 +2,7 @@
 
 ## 🎯 ¿Qué se hizo?
 
-Has solicitado **unificar TODO el sistema de riego en 1 solo archivo reutilizable**. 
+Has solicitado **unificar TODO el sistema de riego en 1 solo archivo reutilizable**.
 
 En Home Assistant, esto se llama **PACKAGE**, y es la forma profesional de encapsular sistemas completos.
 
@@ -132,7 +132,7 @@ He mejorado la configuración del DHT11 en `esphome/riego_z1.yaml`:
 ```yaml
 sensor:
   - platform: dht
-    pin: 
+    pin:
       number: GPIO27
       mode:
         input: true
@@ -153,7 +153,7 @@ sensor:
 
 ### ¿Por qué estos cambios?
 
-1. **Pull-up interno**: El DHT11 necesita una resistencia pull-up de 10kΩ. 
+1. **Pull-up interno**: El DHT11 necesita una resistencia pull-up de 10kΩ.
    - Si tu módulo ya la tiene (módulos con PCB), no afecta.
    - Si no la tiene (DHT11 "crudo"), ahora funciona sin resistencia externa.
 
@@ -219,11 +219,11 @@ Para agregar el widget al dashboard, edita `maui_dashboard.yaml` y agrega:
         - type: entity
           entity: sensor.riego_z1_estado_del_sistema
           name: Estado
-        
+
         - type: entity
           entity: binary_sensor.riego_z1_necesita_riego
           name: Necesita Riego
-    
+
     # Sensores
     - type: entities
       title: "📊 Sensores"
@@ -232,7 +232,7 @@ Para agregar el widget al dashboard, edita `maui_dashboard.yaml` y agrega:
         - sensor.riego_z1_nivel_tanque
         - sensor.riego_z1_temperatura_ambiente
         - sensor.riego_z1_humedad_ambiente
-    
+
     # Control
     - type: entities
       title: "💧 Control"
@@ -240,7 +240,7 @@ Para agregar el widget al dashboard, edita `maui_dashboard.yaml` y agrega:
         - input_boolean.riego_z1_manual
         - switch.riego_z1_bomba_z1a
         - switch.riego_z1_bomba_z1b
-    
+
     # Botones
     - type: horizontal-stack
       cards:
@@ -249,13 +249,13 @@ Para agregar el widget al dashboard, edita `maui_dashboard.yaml` y agrega:
           tap_action:
             action: call-service
             service: script.riego_manual_5min
-        
+
         - type: button
           name: "10 min"
           tap_action:
             action: call-service
             service: script.riego_manual_10min
-        
+
         - type: button
           name: "STOP"
           tap_action:
@@ -325,8 +325,8 @@ Edita `maui_dashboard.yaml` con el código del widget.
 
 ---
 
-**Versión**: 3.2  
-**Fecha**: Noviembre 2024  
+**Versión**: 3.2
+**Fecha**: Noviembre 2024
 **Autor**: @mauitz
 
 ---
@@ -344,4 +344,5 @@ Ahora tienes un **sistema completo de riego encapsulado en 1 solo archivo**, por
 - ✅ Mantenimiento simple (1 archivo)
 
 **🚀 Instala el package y disfruta de tu sistema de riego inteligente!**
+
 
