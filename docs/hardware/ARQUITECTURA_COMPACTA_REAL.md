@@ -2,8 +2,8 @@
 
 ## 📐 Diseño Actualizado con Tu Protoboard Real
 
-**Protoboard:** ~9x15 cm (la que tienes)  
-**Caja Stanco:** 13x19x10 cm (bordes redondeados)  
+**Protoboard:** ~9x15 cm (la que tienes)
+**Caja Stanco:** 13x19x10 cm (bordes redondeados)
 **Principio:** Protoboard = Solo electrónica central, Sensores = Montados en caja
 
 ---
@@ -194,7 +194,7 @@ NOTA: NO hay espacio para módulo relés en la protoboard
 ```
 EXTERIOR CAJA          INTERIOR CAJA
 =============          =============
-                       
+
    [Aire]              ┌──────────┐
      ↓                 │  DHT11   │
   ┌─────┐              │  módulo  │
@@ -234,9 +234,9 @@ GND   → Negro → Pin 3 (GND)
 ```
 EXTERIOR CAJA          INTERIOR CAJA
 =============          =============
-                       
-   [Luz solar]         
-     ↓                 
+
+   [Luz solar]
+     ↓
   ┌──────┐             [Resistor 10kΩ]
   │  ○   │ ← LDR         en protoboard
   │      │   visible         ↑
@@ -295,7 +295,7 @@ Riel 3.3V ━━━┬━━━━━━━ (riel)
 ```
 EXTERIOR CAJA          INTERIOR CAJA
 =============          =============
-                       
+
    [Persona]           ┌───────────┐
      ↓                 │  LD2410C  │
   ┌─────────┐          │  📡       │
@@ -529,7 +529,7 @@ Exterior           Interior Caja
 
 [Fuente 5V]
   +  -
-   ││              
+   ││
    ││ ──→ [Prensaestopa]──→ [Bornera 5V]
    ││                           │
 Cable DC 2 hilos            Protoboard
@@ -746,18 +746,18 @@ Con tanque lleno:
 
 ## 📊 VENTAJAS DE ESTE DISEÑO
 
-✅ **Compacto:** Aprovecha toda la protoboard  
-✅ **Modular:** Sensores desconectables vía borneras  
-✅ **Accesible:** ESP32 removible (headers)  
-✅ **Profesional:** Componentes en ubicaciones óptimas  
-✅ **Mantenible:** Fácil acceso a todo sin desoldar  
-✅ **Robusto:** Sellado IP65, protección contra humedad  
-✅ **Preciso:** Sensores en ubicaciones correctas (DHT11 con aire, LDR con luz)  
+✅ **Compacto:** Aprovecha toda la protoboard
+✅ **Modular:** Sensores desconectables vía borneras
+✅ **Accesible:** ESP32 removible (headers)
+✅ **Profesional:** Componentes en ubicaciones óptimas
+✅ **Mantenible:** Fácil acceso a todo sin desoldar
+✅ **Robusto:** Sellado IP65, protección contra humedad
+✅ **Preciso:** Sensores en ubicaciones correctas (DHT11 con aire, LDR con luz)
 
 ---
 
-**Versión:** 2.0 (Diseño Compacto Real)  
-**Fecha:** Diciembre 2024  
-**Hardware:** Protoboard 9x15cm + Caja 13x19x10cm  
+**Versión:** 2.0 (Diseño Compacto Real)
+**Fecha:** Diciembre 2024
+**Hardware:** Protoboard 9x15cm + Caja 13x19x10cm
 **Autor:** @mauitz
 
