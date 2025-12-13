@@ -2,16 +2,16 @@
 
 ## 🎯 Tu Placa Identificada
 
-**Placa:** ESP-WROOM-32 en DevKit 30 pines (compacto)  
-**USB:** Micro USB  
-**Chip:** ESP-WROOM-32  
+**Placa:** ESP-WROOM-32 en DevKit 30 pines (compacto)
+**USB:** Micro USB
+**Chip:** ESP-WROOM-32
 
 ---
 
 ## ✅ VALIDACIÓN COMPLETA: Todos los componentes son compatibles
 
 ### **Resumen:**
-✅ **Todos los pines necesarios están disponibles en tu placa de 30 pines**  
+✅ **Todos los pines necesarios están disponibles en tu placa de 30 pines**
 ⚠️ **1 ajuste menor necesario:** Cambiar GPIO16/17 a GPIO32/33 para LD2410C (más seguro)
 
 ---
@@ -130,7 +130,7 @@ La arquitectura física propuesta en `ARQUITECTURA_FISICA_MODULO.md` **sigue sie
 │  ┌─────────┐  ┌─────────┐  ┌──────────────┐       │
 │  │ ZONA 1  │  │ ZONA 2  │  │ ZONA 3       │       │
 │  │ ALIMENT.│  │ ESP32   │  │ RELÉS 6CH    │       │
-│  │ 5V→3.3V │  │30-pin   │  │              │       │ ← Único cambio: 
+│  │ 5V→3.3V │  │30-pin   │  │              │       │ ← Único cambio:
 │  └─────────┘  └─────────┘  └──────────────┘       │   Tu ESP32 es 30-pin
 │                                                     │   (no 38-pin)
 │  [Resto de zonas sin cambios]                      │
@@ -211,11 +211,11 @@ En lugar de 2x19 pines, soldarás:
 Basándome en la imagen que compartiste:
 
 ### **Confirmado:**
-✅ ESP-WROOM-32 (visible en la etiqueta)  
-✅ 30 pines (15 por lado)  
-✅ Micro USB (inferior)  
-✅ Pines soldados a ambos lados  
-✅ Chip metálico blindado (WiFi/BT)  
+✅ ESP-WROOM-32 (visible en la etiqueta)
+✅ 30 pines (15 por lado)
+✅ Micro USB (inferior)
+✅ Pines soldados a ambos lados
+✅ Chip metálico blindado (WiFi/BT)
 
 ### **Pines visibles en tu placa:**
 Puedo ver que tiene etiquetas en el borde. Los GPIOs críticos que necesitamos (23, 22, 21, 19, 18, 5, 27, 34, 35, 13, 14, 26, 25, 4, 2, 15) **están todos presentes** en placas de 30 pines estándar.
@@ -277,8 +277,8 @@ python3 -m esphome run riego_z1.yaml --device /dev/cu.usbserial-0001
 
 ---
 
-**Versión**: 1.0  
-**Fecha**: Diciembre 2024  
-**Placa validada**: ESP-WROOM-32 30-pin DevKit  
+**Versión**: 1.0
+**Fecha**: Diciembre 2024
+**Placa validada**: ESP-WROOM-32 30-pin DevKit
 **Autor**: @mauitz
 
