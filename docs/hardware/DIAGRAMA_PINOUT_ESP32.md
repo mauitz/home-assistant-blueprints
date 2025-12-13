@@ -221,7 +221,7 @@ sensor:
     pin: GPIO34
     name: "Test Humedad Suelo (GPIO34)"
     update_interval: 2s
-  
+
   - platform: adc
     pin: GPIO35
     name: "Test LDR (GPIO35)"
@@ -318,7 +318,7 @@ Antes de encender:
 
 ---
 
-**Versión**: 1.0  
-**Fecha**: Diciembre 2024  
+**Versión**: 1.0
+**Fecha**: Diciembre 2024
 **Autor**: @mauitz
 
