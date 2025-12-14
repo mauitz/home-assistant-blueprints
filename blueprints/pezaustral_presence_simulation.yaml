@@ -246,8 +246,9 @@ action:
         # ────────────────────────────────────────────────────────────────────
         # VERIFICAR SI SE DETUVO
         # ────────────────────────────────────────────────────────────────────
-        - condition: template
-          value_template: "{{ is_state(automation_control_entity, 'on') }}"
+        - condition: state
+          entity_id: !input automation_control_entity
+          state: "on"
 
         # Actualizar contador de loop
         - choose:
@@ -280,8 +281,9 @@ action:
             for_each: "{{ lights }}"
             sequence:
               # Verificar si se detuvo
-              - condition: template
-                value_template: "{{ is_state(automation_control_entity, 'on') }}"
+              - condition: state
+                entity_id: !input automation_control_entity
+                state: "on"
 
               - variables:
                   current_light: "{{ repeat.item }}"
@@ -387,8 +389,9 @@ action:
               # Si se detuvo durante el wait, marcar y salir
               - choose:
                   - conditions:
-                      - condition: template
-                        value_template: "{{ is_state(automation_control_entity, 'off') }}"
+                      - condition: state
+                        entity_id: !input automation_control_entity
+                        state: "off"
                     sequence:
                       - variables:
                           detener_manualmente: true

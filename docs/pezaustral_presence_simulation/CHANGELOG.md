@@ -48,6 +48,12 @@
   - Removido parámetro `entity_id` de llamadas a `logbook.log`
   - Los logs siguen funcionando normalmente sin asociación a entidad específica
 
+- ✅ **Condiciones de verificación fallando** (2025-12-14)
+  - Corregido error: Automatización terminaba inmediatamente sin encender luces
+  - Problema: `is_state(automation_control_entity, 'on')` no evaluaba correctamente la variable
+  - Solución: Cambiadas condiciones template por condiciones state directas usando `!input`
+  - Afecta líneas 250-251, 285-287, y 393-398
+
 ### ⚠️ Breaking Changes
 
 Ninguno. Compatible con configuraciones existentes de v1.3.
