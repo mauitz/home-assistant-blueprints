@@ -41,6 +41,13 @@
 - ✅ Changelog consolidado
 - ✅ Troubleshooting actualizado
 
+### 🐛 Bugs Corregidos
+
+- ✅ **Error de entity_id en logbook.log** (2025-12-14)
+  - Corregido error: `Entity ID ['input_boolean.presence_simulation'] is an invalid entity ID`
+  - Removido parámetro `entity_id` de llamadas a `logbook.log`
+  - Los logs siguen funcionando normalmente sin asociación a entidad específica
+
 ### ⚠️ Breaking Changes
 
 Ninguno. Compatible con configuraciones existentes de v1.3.

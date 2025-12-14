@@ -236,7 +236,6 @@ action:
     data:
       name: "🏠 Presence Simulation"
       message: "Iniciando - {{ lights | length }} dispositivos, {{ loop_count }} loops"
-      entity_id: "{{ automation_control_entity }}"
 
   # ════════════════════════════════════════════════════════════════════════════
   # LOOP PRINCIPAL (con try-catch simulado)
@@ -273,7 +272,6 @@ action:
           data:
             name: "🔄 Presence Simulation"
             message: "Loop {{ repeat.index }}/{{ loop_count }}"
-            entity_id: "{{ automation_control_entity }}"
 
         # ────────────────────────────────────────────────────────────────────
         # PROCESAR CADA LUZ
@@ -352,7 +350,6 @@ action:
                 data:
                   name: "💡 Presence Simulation"
                   message: "Encendida: {{ state_attr(current_light, 'friendly_name') or current_light }}"
-                  entity_id: "{{ current_light }}"
 
               # Agregar a lista
               - variables:
@@ -451,7 +448,6 @@ action:
             data:
               name: "🧹 Presence Simulation"
               message: "Limpieza: {{ lights_currently_on | length }} luz(es)"
-              entity_id: "{{ automation_control_entity }}"
 
           - repeat:
               for_each: "{{ lights_currently_on }}"
@@ -517,7 +513,6 @@ action:
             data:
               name: "🎬 Presence Simulation"
               message: "Escena de emergencia: {{ emergency_scene }}"
-              entity_id: "{{ automation_control_entity }}"
 
           - service: scene.turn_on
             target:
@@ -532,7 +527,6 @@ action:
             data:
               name: "🎬 Presence Simulation"
               message: "Escena de salida: {{ exit_scene }}"
-              entity_id: "{{ automation_control_entity }}"
 
           - service: scene.turn_on
             target:
@@ -543,5 +537,4 @@ action:
     data:
       name: "✅ Presence Simulation"
       message: "Finalizada - Todas las luces apagadas"
-      entity_id: "{{ automation_control_entity }}"
 

@@ -1,9 +1,32 @@
 # 🏠 PezAustral Presence Simulation
 
-**Versión:** 1.1 (Fixed - Nov 2025)  
+## 📌 Estado en HA Pezaustral
+
+**Versión instalada en HA (192.168.1.100:8123):** v1.3 ✅ OPERATIVA
+**Versión en repositorio local:** v2.0 (disponible para actualizar)
 **Blueprint para Home Assistant**
 
 Simulación avanzada de presencia con control de lámparas simultáneas, loops configurables y detención inmediata.
+
+---
+
+## 🆕 Diferencias de Versiones
+
+### Instalada en HA: v1.3
+- ✅ Monitoreo integrado (helpers actualizados automáticamente)
+- ✅ Logging detallado en Logbook
+- ✅ Detención inmediata
+- ✅ Cleanup inteligente con automatización separada
+- ✅ Tracking de luces activas
+
+### Disponible en Repo: v2.0
+- Todo lo de v1.3 +
+- ✅ Cleanup automático sin automatizaciones extras
+- ✅ Monitoreo más robusto
+- ✅ Sin necesidad de automatizaciones adicionales
+- ✅ Bug de entity_id corregido (14-12-2025)
+
+> **Recomendación:** La v1.3 funciona perfectamente. Actualizar a v2.0 solo si deseas simplificar (eliminar automatización de cleanup)
 
 ---
 
@@ -20,22 +43,42 @@ Simulación avanzada de presencia con control de lámparas simultáneas, loops c
 
 ---
 
-## 🆕 Versión 1.1 - Cambios Críticos
+## 📊 Estado Actual en Pezaustral
 
-### ✅ Corregido: Problema de No Detención
+### Automatizaciones Activas:
+1. **Presence Simulation** - ✅ ON (v1.3)
+   - 6 switches configurados
+   - Máximo 2 luces simultáneas
+   - 10 loops configurados
+   - Monitoreo integrado habilitado
 
-**Antes (v1.0):**
-- ❌ `mode: restart` - No se podía detener
-- ❌ Sin verificación durante ejecución
-- ❌ Loop sin escape
+2. **Presence Simulation - Cleanup Inteligente** - ✅ ON
+   - Apaga todas las luces al detener
+   - Actualiza contadores
 
-**Ahora (v1.1):**
-- ✅ `mode: single` - Detención limpia
-- ✅ Verificación continua del estado
-- ✅ Se detiene en < 5 segundos
-- ✅ Escena de parada de emergencia
+3. **Atardecer Inteligente** - ✅ ON
+   - Inicia simulación si no estás en casa
 
-**Si vienes de v1.0**: Solo actualiza el blueprint desde el repositorio.
+4. **Regreso a Casa - Desactivar Simulación** - ✅ ON
+   - Desactiva al detectar llegada
+
+### Automatizaciones con Problemas:
+⚠️ 5 automatizaciones de monitoreo en estado "unavailable" (obsoletas con v1.3)
+
+---
+
+## 🆕 Evolución de Versiones
+
+### v1.3 (Instalada) ✅
+- ✅ Monitoreo integrado en el blueprint
+- ✅ Actualización automática de helpers
+- ✅ Logging detallado
+- ⚠️ Requiere automatización de cleanup separada
+
+### v2.0 (Disponible en repo) 🎯
+- Todo lo de v1.3 +
+- ✅ Cleanup integrado (sin automatización extra)
+- ✅ Un solo blueprint hace todo
 
 ---
 
