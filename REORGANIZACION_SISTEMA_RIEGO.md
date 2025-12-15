@@ -1,4 +1,4 @@
-# 📦 Reorganización del Sistema de Riego v3.3
+# 📦 Reorganización del Irrigation System v3.3
 
 **Fecha:** 14 de diciembre de 2024
 
@@ -6,14 +6,19 @@
 
 ## 🎯 Objetivo
 
-Encapsular **todo el sistema de riego** en una carpeta dedicada (`sistema_riego/`) para mantener el proyecto organizado, modular y profesional.
+Encapsular **todo el sistema de riego** en una carpeta dedicada (`irrigation/`) siguiendo la convención del proyecto:
+- **Código y nombres:** Inglés (irrigation, como presence_simulation)
+- **Documentación:** Español
+- **UX de Home Assistant:** Español
+
+Mantener el proyecto organizado, modular y profesional.
 
 ---
 
 ## 📁 Nueva Estructura
 
 ```
-sistema_riego/
+irrigation/
 ├── README.md                    # Documentación principal con índice completo
 ├── RESUMEN_PACKAGE_RIEGO.md    # Resumen del package v3.2
 │
@@ -149,7 +154,7 @@ sistema_riego/
 
 ### 1. **Navegar al sistema de riego:**
 ```bash
-cd sistema_riego/
+cd irrigation/
 ```
 
 ### 2. **Ver el índice completo:**
@@ -197,14 +202,23 @@ El README principal ha sido actualizado:
 ### Enlaces actualizados:
 ```markdown
 Antes: docs/automatizaciones/RIEGO_INTELIGENTE.md
-Ahora: sistema_riego/docs/RIEGO_INTELIGENTE.md
+Ahora: irrigation/docs/RIEGO_INTELIGENTE.md
 
 Antes: docs/hardware/ARQUITECTURA_PCB_8x12cm.md
-Ahora: sistema_riego/hardware/ARQUITECTURA_PCB_8x12cm.md
+Ahora: irrigation/hardware/ARQUITECTURA_PCB_8x12cm.md
 
 Antes: dashboards/widgets/widget_riego_z1.yaml
-Ahora: sistema_riego/widgets/widget_riego_z1.yaml
+Ahora: irrigation/widgets/widget_riego_z1.yaml
 ```
+
+## 🌍 Convención de Nomenclatura
+
+**v3.3+:** Siguiendo la convención del proyecto (como `pezaustral_presence_simulation`):
+- **Carpetas y código:** Inglés (`irrigation/`)
+- **Documentación:** Español (toda la documentación dentro de `docs/`)
+- **UX de Home Assistant:** Español (nombres de entidades, helpers, etc.)
+
+Esto mantiene consistencia con otros proyectos del repositorio.
 
 ---
 
@@ -212,13 +226,14 @@ Ahora: sistema_riego/widgets/widget_riego_z1.yaml
 
 ### Estructura verificada:
 ```
-✅ sistema_riego/README.md existe
-✅ sistema_riego/docs/ contiene 7 archivos
-✅ sistema_riego/hardware/ contiene 8 archivos (5 .md + 3 .jpg)
-✅ sistema_riego/widgets/ contiene 3 archivos
-✅ sistema_riego/examples/ contiene 6 archivos
+✅ irrigation/README.md existe
+✅ irrigation/docs/ contiene 7 archivos
+✅ irrigation/hardware/ contiene 8 archivos (5 .md + 3 .jpg)
+✅ irrigation/widgets/ contiene 3 archivos
+✅ irrigation/examples/ contiene 6 archivos
 ✅ README.md principal actualizado
 ✅ Carpetas vacías eliminadas
+✅ Nomenclatura en inglés aplicada (v3.3+)
 ```
 
 ### Archivos principales intactos:
@@ -254,8 +269,8 @@ Ahora: sistema_riego/widgets/widget_riego_z1.yaml
 ## 📚 Documentación Relacionada
 
 - [README Principal](../README.md)
-- [Sistema de Riego - README](sistema_riego/README.md)
-- [Sistema de Riego - Documentación Completa](sistema_riego/docs/RIEGO_INTELIGENTE.md)
+- [Irrigation System - README](irrigation/README.md)
+- [Irrigation System - Documentación Completa](irrigation/docs/RIEGO_INTELIGENTE.md)
 - [Package del Sistema](../packages/sistema_riego_z1.yaml)
 
 ---

@@ -1,13 +1,15 @@
-# 🚰 Sistema de Riego Inteligente
+# 🚰 Irrigation System (Sistema de Riego Inteligente)
 
 Sistema completo de riego automático con ESP32 + ESPHome integrado con Home Assistant.
+
+> **Convención del proyecto:** Código y nombres en inglés, documentación en español.
 
 ---
 
 ## 📦 Estructura del Proyecto
 
 ```
-sistema_riego/
+irrigation/
 ├── README.md                    # Este archivo
 ├── RESUMEN_PACKAGE_RIEGO.md    # Resumen del package v3.2
 │
@@ -245,6 +247,8 @@ El package incluye 6 scripts listos para usar:
 ## 🤝 Contribuir
 
 Este sistema es parte del proyecto [home-assistant-blueprints](../).
+
+**Convención:** Código en inglés, documentación en español (siguiendo el patrón del proyecto).
 
 Reporta problemas o sugiere mejoras en [GitHub Issues](https://github.com/mauitz/home-assistant-blueprints/issues).
 

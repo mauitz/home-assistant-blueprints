@@ -114,7 +114,7 @@ Automatizaciones avanzadas reutilizables.
 
 ---
 
-### 🚰 [Sistema de Riego Inteligente](sistema_riego/) ⭐ NEW v3.2
+### 🚰 [Irrigation System (Sistema de Riego Inteligente)](irrigation/) ⭐ NEW v3.2
 
 Sistema completo de riego automático con ESP32 + ESPHome. **Instalación en 1 solo archivo.**
 
@@ -141,15 +141,15 @@ Sistema completo de riego automático con ESP32 + ESPHome. **Instalación en 1 s
 - 📦 [`packages/sistema_riego_z1.yaml`](packages/sistema_riego_z1.yaml) - **Package completo (RECOMENDADO)** ⭐
 - [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml) - Blueprint alternativo
 - [`esphome/riego_z1.yaml`](esphome/riego_z1.yaml) - Firmware ESP32
-- [`sistema_riego/`](sistema_riego/) - **Todo el sistema encapsulado**
+- [`irrigation/`](irrigation/) - **Todo el sistema encapsulado**
 
 **Documentación:**
-- 📖 [README del Sistema](sistema_riego/README.md) - Índice completo
-- 📖 [Instalación del Package](sistema_riego/docs/INSTALACION_PACKAGE_RIEGO.md) - Guía completa
-- 📚 [Documentación completa](sistema_riego/docs/RIEGO_INTELIGENTE.md)
-- 🏗️ [Hardware y Construcción](sistema_riego/hardware/) - Guías de construcción
-- 🔧 [Troubleshooting DHT11](sistema_riego/docs/TROUBLESHOOTING_DHT11.md)
-- 🎨 [Widgets](sistema_riego/widgets/) - Widgets para dashboard
+- 📖 [README del Sistema](irrigation/README.md) - Índice completo
+- 📖 [Instalación del Package](irrigation/docs/INSTALACION_PACKAGE_RIEGO.md) - Guía completa
+- 📚 [Documentación completa](irrigation/docs/RIEGO_INTELIGENTE.md)
+- 🏗️ [Hardware y Construcción](irrigation/hardware/) - Guías de construcción
+- 🔧 [Troubleshooting DHT11](irrigation/docs/TROUBLESHOOTING_DHT11.md)
+- 🎨 [Widgets](irrigation/widgets/) - Widgets para dashboard
 
 ---
 
@@ -174,7 +174,7 @@ home-assistant-blueprints/
 │   ├── riego_z1.yaml        # ESP32 - Sistema de riego Zona 1
 │   ├── test_dht11_simple.yaml    # Firmware de prueba DHT11
 │   └── secrets.yaml
-├── sistema_riego/           # 🚰 Sistema de Riego (TODO encapsulado)
+├── irrigation/              # 🚰 Irrigation System (TODO encapsulado)
 │   ├── README.md            # Documentación principal del sistema
 │   ├── RESUMEN_PACKAGE_RIEGO.md
 │   ├── docs/                # Documentación detallada
@@ -293,8 +293,8 @@ Toda la documentación está organizada por proyectos en la carpeta [`docs/`](do
 
 ### Proyectos Principales
 
-- [**Sistema de Riego Inteligente**](sistema_riego/) - Sistema completo ESP32 + ESPHome ⭐
-- [**Simulación de Presencia**](docs/pezaustral_presence_simulation/) - Blueprint completo con changelog y troubleshooting
+- [**Irrigation System**](irrigation/) - Sistema completo ESP32 + ESPHome ⭐
+- [**Presence Simulation**](docs/pezaustral_presence_simulation/) - Blueprint completo con changelog y troubleshooting
 - [**Frigate**](docs/frigate/) - NVR con detección de objetos
 - [**Cámaras**](docs/camaras/) - Integración Tapo y Xiaomi
 - [**Beacons BLE**](docs/beacons/) - Presencia con ESP32
@@ -318,8 +318,9 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
 ## 📝 Changelog
 
 ### v3.3 (Diciembre 2024)
-- 📦 **Reorganización completa del Sistema de Riego**
-  - Todo el sistema encapsulado en carpeta `sistema_riego/`
+- 📦 **Reorganización completa del Irrigation System**
+  - Todo el sistema encapsulado en carpeta `irrigation/`
+  - Nomenclatura en inglés (código) con documentación en español
   - Documentación, hardware, widgets y ejemplos organizados
   - README dedicado con índice completo
   - Estructura modular y profesional
