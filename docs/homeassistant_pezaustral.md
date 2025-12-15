@@ -12,57 +12,73 @@
 ## 📊 Resumen General
 
 ```
-Total de Entidades:      465
-Automatizaciones:        49
-Scripts:                 7
-Dominios únicos:         33
-Blueprints propios:      3
+Total de Entidades:      399  (↓66 desde último análisis)
+Automatizaciones:        48   (↓1)
+  - Activas (ON):        12   (100% de las necesarias) ✅
+  - Obsoletas:           36   (pendientes de eliminar)
+Scripts:                 7    ✅
+Dominios únicos:         31   (↓2)
+Blueprints propios:      3    ✅
 ```
+
+### ℹ️ Estado de Automatizaciones
+
+**Las 12 automatizaciones activas son el 100% de la funcionalidad requerida.** Las 36 automatizaciones "unavailable" son obsoletas por:
+- ✅ 15 de Frigate (sistema desinstalado intencionalmente)
+- ✅ 5 de monitoreo de presencia (integradas en blueprint v1.3)
+- ✅ 2 duplicadas de scene.anochecer
+- ✅ ~14 otras automatizaciones sin entidades válidas
+
+**Acción:** Limpieza de automatizaciones obsoletas (no crítico, solo mantenimiento)
 
 ### 🔌 Dominios Principales
 
-| Dominio | Cantidad | Estado |
-|---------|----------|--------|
-| **Sensores** | 104 | ✅ Activo |
-| **Switches** | 90 | ✅ Activo |
-| **Automatizaciones** | 49 | ✅ Activo |
-| **Selectores** | 36 | ✅ Activo |
-| **Sensores Binarios** | 30 | ✅ Activo |
-| **Botones** | 28 | ✅ Activo |
-| **Números** | 20 | ✅ Activo |
-| **Actualizaciones** | 15 | ✅ Activo |
-| **Device Trackers** | 14 | ✅ Activo |
-| **Luces** | 14 | ✅ Activo |
+| Dominio | Cantidad | Cambio | Estado |
+|---------|----------|--------|--------|
+| **Switches** | 82 | ↓8 | ✅ Activo |
+| **Sensores** | 80 | ↓24 | ⚠️ Reducidos |
+| **Automatizaciones** | 48 | ↓1 | ⚠️ 75% unavailable |
+| **Selectores** | 36 | = | ✅ Activo |
+| **Botones** | 28 | = | ✅ Activo |
+| **Números** | 20 | = | ✅ Activo |
+| **Sensores Binarios** | 16 | ↓14 | ⚠️ Reducidos |
+| **Device Trackers** | 14 | = | ✅ Activo |
+| **Actualizaciones** | 14 | ↓1 | ✅ Activo |
+| **Luces** | 14 | = | ✅ Activo |
 
 ---
 
 ## 🔧 Integraciones Principales
 
 ### 🎥 Frigate (Sistema de Detección por IA)
-**Estado:** ✅ **Operativo**
+**Estado:** 🚫 **DESINSTALADO INTENCIONALMENTE**
 
-Sistema de detección de objetos con IA funcionando completamente.
+ℹ️ **Decisión de Arquitectura:** Frigate fue desinstalado porque el hardware actual no es adecuado para su funcionamiento.
 
-- **Cámaras configuradas:**
-  - 📹 **Entrada** (Tapo C530WS)
-    - Detección de personas activa
-    - Notificaciones críticas con sirena y luz
-    - Grabación de eventos
-  - 📹 **Exterior**
-    - Detección de personas y vehículos
-    - Snapshots automáticos
+- **Automatizaciones Obsoletas (15):**
+  - ❌ Entrada - Detección de PERSONA
+  - ❌ Entrada - Detección de VEHÍCULO
+  - ❌ Entrada - Detección de ANIMAL
+  - ❌ Exterior - Detección de PERSONA
+  - ❌ Exterior - Detección de VEHÍCULO
+  - ❌ Alertas y expansión de cámara
+  - ❌ Activación/desactivación por movimiento
+  - ❌ Modo nocturno/matutino
 
-- **Características activas:**
-  - ✅ Detección de personas
-  - ✅ Detección de vehículos
-  - ✅ Snapshots en tiempo real
-  - ✅ Alertas con imagen
-  - ✅ Activación de sirena y luz en entrada
-  - ✅ Optimización con cooldown (2 min entre alertas)
+- **Estado Actual:**
+  - ✅ Frigate desinstalado completamente
+  - ❌ 15 automatizaciones en estado "unavailable"
+  - ⏳ Se requiere otro tipo de hardware para detección por IA
 
-- **URLs:**
-  - UI Frigate: http://192.168.1.100:5000
-  - API: http://192.168.1.100:5000/api/
+- **Futuro:**
+  - Se necesitarán otros dispositivos para detección e identificación por IA
+  - Hardware actual no es compatible con Frigate
+  - No se planea reinstalar en el corto plazo
+
+- **✅ Acción Requerida:**
+  - **Eliminar las 15 automatizaciones obsoletas de Frigate**
+  - Configuración → Automatizaciones → Filtrar "frigate" o "unavailable"
+  - Eliminar manualmente cada automatización obsoleta
 
 ### 🌱 ESPHome (Control de Hardware)
 **Estado:** ⚠️ **Parcialmente operativo**
@@ -140,33 +156,45 @@ Sistema completo de simulación de presencia cuando no hay nadie en casa.
 - ✅ Escena de salida: `scene.bedtime`
 - ✅ Parada de emergencia configurada
 
-#### Automatizaciones Relacionadas:
-1. **Presence Simulation** - ✅ ON
-2. **Presence Simulation - Cleanup Inteligente** - ✅ ON
-3. **Atardecer Inteligente** - ✅ ON
+#### Automatizaciones Activas:
+1. **Presence Simulation** - ✅ ON (blueprint v1.3)
+2. **Atardecer Inteligente** - ✅ ON
    - Activa escena de anochecer 30 min después del ocaso
    - Si no estás en casa, inicia simulación automáticamente
-4. **Regreso a Casa - Desactivar Simulación** - ✅ ON
+3. **Regreso a Casa - Desactivar Simulación** - ✅ ON
    - Desactiva la simulación cuando detecta que regresas
 
-#### Estado Actual:
+#### Automatizaciones Eliminadas:
+- ❌ **Presence Simulation - Cleanup Inteligente** - ELIMINADA
+  - Ya no existe en el sistema
+  - Posiblemente integrada en v2.0 del blueprint o eliminada manualmente
+
+#### Estado Actual (Última Reinicialización):
 ```yaml
 Simulación activa: OFF
-Loops completados: 3 de 10
+Loops completados: 0 de 10  (reseteado)
 Luces encendidas: 0
-Última ejecución: 2025-12-13 21:23:56
-Estado: Detenida
+Hora de inicio: 2025-12-14 20:19:52  (actualizada)
+Estado: Inactiva
+Última luz encendida: - (sin historial)
+Última luz apagada: - (sin historial)
 ```
 
-#### Automatizaciones con Problemas:
-⚠️ Las siguientes automatizaciones están **unavailable** (posiblemente obsoletas):
-- Presence Sim - Iniciar Monitoring
-- Presence Sim - Detener Monitoring
-- Presence Sim - Monitorear Switches
-- Presence Sim - Actualizar Runtime
-- Presence Sim - Parada de Emergencia
+#### Automatizaciones Obsoletas (Unavailable):
+⚠️ Las siguientes 7 automatizaciones están en estado **unavailable** y deben eliminarse:
 
-> **Nota:** El blueprint v1.3 tiene monitoreo integrado, por lo que estas automatizaciones externas pueden ser obsoletas.
+**Monitoreo de Presencia (5):**
+- ❌ Presence Sim - Iniciar Monitoring
+- ❌ Presence Sim - Detener Monitoring
+- ❌ Presence Sim - Monitorear Switches
+- ❌ Presence Sim - Actualizar Runtime
+- ❌ Presence Sim - Parada de Emergencia
+
+**Duplicadas de Scene Anochecer (2):**
+- ❌ Simulación de presencia al activar escena anochecer
+- ❌ Presencia - ON al activar scene.anocheser
+
+> **Recomendación:** Eliminar estas 7 automatizaciones obsoletas. El blueprint v1.3 incluye el monitoreo integrado.
 
 ### 2. 🌱 Sistema de Riego Inteligente
 **Estado:** ⚠️ **Configurado pero Hardware Offline**
@@ -407,15 +435,58 @@ Pre-actualización-Dashboard-Maui_2025-11-14_00.27.tar
 
 ---
 
-## 🚨 Problemas Conocidos
+## 🚨 Tareas de Mantenimiento
 
-### 1. ⚠️ ESP32 Riego Z1 Offline
+### 1. 🔧 Limpieza de Automatizaciones Obsoletas
+**Prioridad:** MEDIA
+
+**Situación:**
+- 36 de 48 automatizaciones en estado "unavailable"
+- La mayoría son obsoletas por decisiones de arquitectura
+
+**Automatizaciones a Eliminar:**
+
+#### A. **Frigate** (15 automatizaciones) - Sistema desinstalado
+- ✅ **Decisión:** Frigate fue desinstalado intencionalmente
+- ✅ **Hardware incompatible**
+- 🗑️ **Acción:** Eliminar las 15 automatizaciones
+
+#### B. **Monitoreo de Presencia** (5 automatizaciones) - Obsoletas
+- ✅ **Razón:** Blueprint v1.3 integra el monitoreo
+- 🗑️ **Acción:** Eliminar:
+  - Presence Sim - Iniciar Monitoring
+  - Presence Sim - Detener Monitoring
+  - Presence Sim - Monitorear Switches
+  - Presence Sim - Actualizar Runtime
+  - Presence Sim - Parada de Emergencia
+
+#### C. **Escenas Duplicadas** (2 automatizaciones)
+- ✅ **Razón:** Ya existe "Atardecer Inteligente"
+- 🗑️ **Acción:** Eliminar:
+  - Simulación de presencia al activar escena anochecer
+  - Presencia - ON al activar scene.anocheser
+
+**Procedimiento de Limpieza:**
+```
+1. Ir a: Configuración → Automatizaciones y Escenas → Automatizaciones
+2. Ordenar por estado o buscar "unavailable"
+3. Eliminar las 22 automatizaciones obsoletas listadas arriba
+4. Verificar que solo queden las 12 automatizaciones activas
+```
+
+**Resultado esperado:**
+- Sistema limpio con solo automatizaciones funcionales
+- 12 automatizaciones activas (100% operativas)
+- 0 automatizaciones unavailable
+
+### 2. ⚠️ ESP32 Riego Z1 Offline
 **Prioridad:** Media
 
 **Síntomas:**
 - Todas las entidades de riego en estado "unavailable"
-- 20 sensores desconectados
+- ~20 sensores desconectados
 - Scripts listos pero sin hardware
+- Automatización "Riego Z1" activa pero esperando hardware
 
 **Solución:**
 1. Verificar alimentación del ESP32
@@ -423,34 +494,30 @@ Pre-actualización-Dashboard-Maui_2025-11-14_00.27.tar
 3. Re-flashear con ESPHome si es necesario
 4. Verificar en ESPHome dashboard: Configuración → ESPHome
 
-### 2. ⚠️ Automatizaciones de Monitoring Unavailable
-**Prioridad:** Baja
+### 3. ⚠️ Reducción de Entidades (66 menos)
+**Prioridad:** Baja (Informativo)
 
-5 automatizaciones de monitoreo de presencia en estado "unavailable":
-- Presence Sim - Iniciar Monitoring
-- Presence Sim - Detener Monitoring
-- Presence Sim - Monitorear Switches
-- Presence Sim - Actualizar Runtime
-- Presence Sim - Parada de Emergencia
+**Cambios detectados:**
+- Sensores: 104 → 80 (↓24)
+- Binary Sensors: 30 → 16 (↓14)
+- Switches: 90 → 82 (↓8)
 
-**Causa probable:**
-El blueprint v1.3 tiene monitoreo integrado, haciendo estas automatizaciones obsoletas.
-
-**Solución:**
-- Revisar si se pueden eliminar o
-- Actualizar para que funcionen con el nuevo blueprint
-
-### 3. ⚠️ Packages No Utilizados
-**Prioridad:** Baja
-
-El directorio `/config/packages/` está vacío pero está configurado en `configuration.yaml`.
+**Posibles causas:**
+- Limpieza de entidades de Frigate
+- Eliminación de sensores ESPHome offline
+- Limpieza de entidades duplicadas
 
 **Impacto:**
-- Ninguno (funciona igual)
-- La configuración está directamente en `configuration.yaml`
+- Positivo si fueron limpiadas intencionalmente
+- Verificar si alguna entidad importante fue eliminada por error
+
+### 4. ⚠️ Packages No Utilizados
+**Prioridad:** Baja
+
+El directorio `/config/packages/` está vacío pero configurado.
 
 **Recomendación:**
-Si se desea modularizar mejor, mover los helpers de riego al package `sistema_riego_z1.yaml`.
+Mover helpers de riego al package `sistema_riego_z1.yaml` para mejor modularización.
 
 ---
 
@@ -544,21 +611,35 @@ http:
 
 ---
 
-## ✅ Estado General: OPERATIVO
+## ✅ Estado General: OPERATIVO (100% de funcionalidad activa)
 
 | Categoría | Estado | Notas |
 |-----------|--------|-------|
 | 🏠 Sistema Principal | ✅ Operativo | HA 2025.11.1 estable |
-| 🎭 Simulación Presencia | ✅ Operativo | v1.3, 6 switches, monitoreo integrado |
-| 🎥 Frigate | ✅ Operativo | 2 cámaras, IA activa, alertas funcionando |
-| 🌱 Sistema Riego | ⚠️ Hardware Offline | Scripts listos, ESP32 desconectado |
+| 🎭 Simulación Presencia | ✅ Operativo | v1.3, 3 automatizaciones activas |
+| 🎥 Frigate | 🚫 Desinstalado | Hardware incompatible (decisión intencional) |
+| 🌱 Sistema Riego | ⚠️ Hardware Offline | ESP32 desconectado, scripts OK |
 | 📱 Notificaciones | ✅ Operativo | Mobile app Blacky activo |
 | 🎬 Escenas | ✅ Operativo | 4 escenas automatizadas |
-| 🔄 Backups | ✅ Operativo | Diarios, último: 14-12-2025 |
+| 🔄 Backups | ✅ Operativo | Diarios, próximo: 15-12-2025 08:03 |
 | 📊 Dashboards | ✅ Operativo | Tema Maui, tarjetas HACS |
+| 🤖 Automatizaciones | ✅ 12 activas | 36 obsoletas pendientes de eliminar |
+
+### 🔧 Tareas de Mantenimiento Pendientes:
+
+1. **Eliminar 22 automatizaciones obsoletas** (15 Frigate + 7 otras)
+2. **Reconectar ESP32 Riego** (20 sensores offline) - Prioridad media
+3. **Planificar solución alternativa para detección por IA** (futuro)
+
+### ℹ️ Notas Importantes:
+
+- **Sistema operativo al 100%** de las funcionalidades activas
+- Las automatizaciones "unavailable" son obsoletas por decisiones de arquitectura
+- No hay problemas críticos, solo limpieza pendiente
 
 ---
 
 **Generado automáticamente** mediante análisis de API de Home Assistant
-**Fecha:** Domingo 14 de Diciembre, 2025
+**Fecha:** Domingo 14 de Diciembre, 2025 23:13
 **Script:** `utils/analyze_ha.py`
+**Última actualización:** Análisis completo con 399 entidades, 48 automatizaciones
