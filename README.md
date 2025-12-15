@@ -1,6 +1,32 @@
-a# 🏠 Home Assistant BlueprintsConfigurations
+# 🏠 Home Assistant Blueprints & Configurations
 
 Colección de blueprints, automatizaciones y configuraciones para Home Assistant optimizadas para domótica inteligente.
+
+---
+
+## 📊 Estado del Sistema
+
+**🏠 Home Assistant Pezaustral:** [Estado Completo del Sistema](docs/homeassistant_pezaustral.md)
+
+Visión detallada del HA en producción (192.168.1.100:8123):
+- ✅ 465 entidades activas
+- ✅ 49 automatizaciones operativas
+- ✅ Frigate (2 cámaras con IA)
+- ✅ Simulación de Presencia v1.3
+- ⚠️ Sistema de Riego (hardware offline)
+- ✅ Backups diarios automáticos
+
+**Scripts de análisis:**
+```bash
+# Resumen visual del estado del HA
+bash utils/mostrar_resumen_ha.sh
+
+# Análisis completo vía API
+python3 utils/analyze_ha.py
+
+# Estado de simulación de presencia
+python3 utils/ha_manager.py status
+```
 
 ---
 
@@ -88,7 +114,7 @@ Automatizaciones avanzadas reutilizables.
 
 ---
 
-### 🚰 [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md) ⭐ NEW v3.2
+### 🚰 [Sistema de Riego Inteligente](sistema_riego/) ⭐ NEW v3.2
 
 Sistema completo de riego automático con ESP32 + ESPHome. **Instalación en 1 solo archivo.**
 
@@ -104,15 +130,6 @@ Sistema completo de riego automático con ESP32 + ESPHome. **Instalación en 1 s
 - ✨ **Widget especializado para dashboard** (v2.1)
 - ✨ **Scripts de control rápido** (v2.1)
 
-**Hardware:**
-- ESP32 con sensores (humedad, nivel, temperatura, luz, presencia)
-- Bombas de agua 5V + relés de 6 canales
-- PCB 8×12 cm (fibra de vidrio)
-- Integración completa con Home Assistant
-- 🏗️ **[Arquitectura PCB 8×12 cm](docs/hardware/ARQUITECTURA_PCB_8x12cm.md)** - **Guía DEFINITIVA de construcción**
-- 📌 [Pinout ESP32 30-pin](docs/hardware/PINOUT_ESP32_30PIN.md) - Conexiones detalladas
-- ✅ [Validación Hardware](docs/hardware/VALIDACION_PLACA_30PIN.md) - Compatibilidad verificada
-
 **Instalación Rápida:**
 ```yaml
 # 1. Copia el package a: /config/packages/sistema_riego_z1.yaml
@@ -120,17 +137,19 @@ Sistema completo de riego automático con ESP32 + ESPHome. **Instalación en 1 s
 # ¡Listo! Helpers, scripts y automatización se crean automáticamente
 ```
 
-**Archivos:**
+**Archivos principales:**
 - 📦 [`packages/sistema_riego_z1.yaml`](packages/sistema_riego_z1.yaml) - **Package completo (RECOMENDADO)** ⭐
 - [`blueprints/sistema_riego_inteligente.yaml`](blueprints/sistema_riego_inteligente.yaml) - Blueprint alternativo
 - [`esphome/riego_z1.yaml`](esphome/riego_z1.yaml) - Firmware ESP32
-- [`dashboards/maui_dashboard.yaml`](dashboards/maui_dashboard.yaml) - Dashboard con vista de riego
-- [`dashboards/widgets/widget_riego_z1.yaml`](dashboards/widgets/widget_riego_z1.yaml) - Widget completo
-- [`examples/scripts/riego_scripts.yaml`](examples/scripts/riego_scripts.yaml) - Scripts auxiliares (ya incluidos en package)
-- [📖 Instalación del Package](docs/automatizaciones/INSTALACION_PACKAGE_RIEGO.md) - **Guía completa**
-- [Documentación completa](docs/automatizaciones/RIEGO_INTELIGENTE.md)
-- [🔧 Troubleshooting DHT11](docs/automatizaciones/TROUBLESHOOTING_DHT11.md)
-- [Documentación del Widget](docs/widgets/WIDGET_RIEGO.md)
+- [`sistema_riego/`](sistema_riego/) - **Todo el sistema encapsulado**
+
+**Documentación:**
+- 📖 [README del Sistema](sistema_riego/README.md) - Índice completo
+- 📖 [Instalación del Package](sistema_riego/docs/INSTALACION_PACKAGE_RIEGO.md) - Guía completa
+- 📚 [Documentación completa](sistema_riego/docs/RIEGO_INTELIGENTE.md)
+- 🏗️ [Hardware y Construcción](sistema_riego/hardware/) - Guías de construcción
+- 🔧 [Troubleshooting DHT11](sistema_riego/docs/TROUBLESHOOTING_DHT11.md)
+- 🎨 [Widgets](sistema_riego/widgets/) - Widgets para dashboard
 
 ---
 
@@ -155,21 +174,38 @@ home-assistant-blueprints/
 │   ├── riego_z1.yaml        # ESP32 - Sistema de riego Zona 1
 │   ├── test_dht11_simple.yaml    # Firmware de prueba DHT11
 │   └── secrets.yaml
-├── examples/                # Configuraciones de ejemplo
+├── sistema_riego/           # 🚰 Sistema de Riego (TODO encapsulado)
+│   ├── README.md            # Documentación principal del sistema
+│   ├── RESUMEN_PACKAGE_RIEGO.md
+│   ├── docs/                # Documentación detallada
+│   │   ├── RIEGO_INTELIGENTE.md
+│   │   ├── INSTALACION_PACKAGE_RIEGO.md
+│   │   ├── INSTALACION_RIEGO_RAPIDA.md
+│   │   ├── TROUBLESHOOTING_DHT11.md
+│   │   ├── DIAGNOSTICO_SENSORES.md
+│   │   └── GUIA_RAPIDA_CONSTRUCCION.md
+│   ├── hardware/            # Hardware y construcción
+│   │   ├── ARQUITECTURA_PCB_8x12cm.md
+│   │   ├── PINOUT_ESP32_30PIN.md
+│   │   ├── DIAGRAMA_PINOUT_ESP32.md
+│   │   ├── esp32.jpg
+│   │   └── ...
+│   ├── widgets/             # Widgets para dashboard
+│   │   ├── widget_riego_z1.yaml
+│   │   └── WIDGET_RIEGO.md
+│   └── examples/            # Ejemplos y utilidades
+│       ├── riego_z1_auto.yaml
+│       ├── riego_scripts.yaml
+│       └── ...
+├── examples/                # Configuraciones de ejemplo (otros proyectos)
 │   ├── presence_simulation_config.yaml
 │   ├── presence_simulation_helpers.yaml
-│   ├── scripts/
-│   │   └── riego_scripts.yaml
-│   ├── helpers/
-│   │   └── riego_helpers.yaml
 │   ├── frigate/
 │   └── automatizaciones/
-│       ├── riego_z1_auto.yaml
 │       └── atardecer_inteligente.yaml
 ├── dashboards/              # Dashboards personalizados
 │   ├── maui_dashboard.yaml  # Dashboard principal (v3.2)
-│   ├── widgets/
-│   │   └── widget_riego_z1.yaml
+│   ├── maui_dashboard_v3.1.yaml
 │   ├── maui_templates/
 │   └── maui_views/
 ├── docs/                    # Documentación organizada por proyecto
@@ -178,15 +214,13 @@ home-assistant-blueprints/
 │   ├── camaras/
 │   ├── beacons/
 │   ├── dashboard/
-│   └── automatizaciones/
-│       ├── RIEGO_INTELIGENTE.md
-│       ├── INSTALACION_PACKAGE_RIEGO.md  # 📖 Guía de packages
-│       └── TROUBLESHOOTING_DHT11.md       # 🔧 Troubleshooting
+│   ├── automatizaciones/    # Otras automatizaciones
+│   └── homeassistant_pezaustral.md
 ├── utils/                   # Utilidades y scripts
 │   ├── ha_manager.py
-│   ├── crear_helpers_riego.sh
 │   ├── verify_installation.sh
-│   └── verify_presence_simulation.sh
+│   ├── verify_presence_simulation.sh
+│   └── analyze_ha.py
 ├── themes/                  # Temas personalizados
 │   └── maui_theme.yaml
 └── HA_config_proxy/         # Configuración de Home Assistant de referencia
@@ -259,13 +293,13 @@ Toda la documentación está organizada por proyectos en la carpeta [`docs/`](do
 
 ### Proyectos Principales
 
+- [**Sistema de Riego Inteligente**](sistema_riego/) - Sistema completo ESP32 + ESPHome ⭐
 - [**Simulación de Presencia**](docs/pezaustral_presence_simulation/) - Blueprint completo con changelog y troubleshooting
 - [**Frigate**](docs/frigate/) - NVR con detección de objetos
 - [**Cámaras**](docs/camaras/) - Integración Tapo y Xiaomi
 - [**Beacons BLE**](docs/beacons/) - Presencia con ESP32
 - [**Dashboard**](docs/dashboard/) - Widgets y UI
 - [**Automatizaciones**](docs/automatizaciones/) - Guías de automatizaciones avanzadas
-  - [Sistema de Riego Inteligente](docs/automatizaciones/RIEGO_INTELIGENTE.md) - ESP32 + ESPHome
 
 ---
 
@@ -283,7 +317,15 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
 
 ## 📝 Changelog
 
-### v3.2 (2025-11-24)
+### v3.3 (Diciembre 2024)
+- 📦 **Reorganización completa del Sistema de Riego**
+  - Todo el sistema encapsulado en carpeta `sistema_riego/`
+  - Documentación, hardware, widgets y ejemplos organizados
+  - README dedicado con índice completo
+  - Estructura modular y profesional
+  - Fácil localización de todos los componentes
+
+### v3.2 (Noviembre 2024)
 - 🧹 **Limpieza y Profesionalización del Proyecto**
   - Eliminados archivos temporales y duplicados
   - Dashboard sin versionado en nombre (`maui_dashboard.yaml`)
@@ -356,5 +398,5 @@ Si encuentras problemas:
 
 ---
 
-**Última actualización:** 2025-11-18
-**Versión:** 2.0
+**Última actualización:** 2024-12-14
+**Versión:** 3.3

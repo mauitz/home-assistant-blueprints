@@ -1,5 +1,28 @@
 # 📦 Instalación del Package: Sistema de Riego Inteligente
 
+## ⚠️ ESTADO ACTUAL EN HA PEZAUSTRAL
+
+**IMPORTANTE:** Este package **NO está instalado** en el Home Assistant actual (192.168.1.100:8123).
+
+### Configuración Actual en HA:
+
+El sistema de riego actualmente usa:
+- ✅ Scripts en `/config/scripts.yaml`
+- ✅ Automatización basada en **blueprint** `sistema_riego_inteligente.yaml`
+- ✅ Helpers en `/config/configuration.yaml`
+- ❌ **NO usa** el sistema de packages
+
+### ¿Debo instalar este package?
+
+**Opciones:**
+
+1. **Dejar como está** - El sistema funciona correctamente con la configuración actual
+2. **Instalar el package** - Si prefieres tener todo modularizado en un solo archivo
+
+Este documento explica cómo instalar la **opción 2** (package), pero no es obligatorio.
+
+---
+
 ## 🎯 ¿Qué es un Package?
 
 Un **package** en Home Assistant es un archivo YAML que **encapsula toda la configuración** relacionada con un sistema específico. Es **reutilizable**, **portable** y **autocontenido**.

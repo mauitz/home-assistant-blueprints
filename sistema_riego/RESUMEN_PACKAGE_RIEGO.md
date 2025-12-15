@@ -1,8 +1,35 @@
 # ✅ Sistema de Riego - Package Unificado v3.2
 
-## 🎯 ¿Qué se hizo?
+## ⚠️ ESTADO ACTUAL EN HA PEZAUSTRAL
 
-Has solicitado **unificar TODO el sistema de riego en 1 solo archivo reutilizable**.
+**IMPORTANTE:** Este package **NO está actualmente instalado** en el Home Assistant de pezaustral (192.168.1.100:8123).
+
+### ¿Qué está instalado actualmente?
+
+✅ **Scripts de riego** - En `/config/scripts.yaml`:
+- `riego_manual_5min`
+- `riego_manual_10min`
+- `detener_todas_bombas`
+- `test_bombas_z1`
+- `riego_emergencia_z1`
+- `registrar_riego_z1`
+
+✅ **Automatización de riego** - Basada en **blueprint** `sistema_riego_inteligente.yaml`:
+- Automatización: `automation.riego_z1` (Estado: ON)
+
+✅ **Helpers** - Definidos directamente en `/config/configuration.yaml` (no como package)
+
+❌ **Package** - El directorio `/config/packages/` está **VACÍO**
+
+### ¿Hardware?
+
+⚠️ **ESP32 Riego Z1 está OFFLINE** - Todas las entidades de sensores están en estado "unavailable"
+
+---
+
+## 🎯 ¿Qué es este documento?
+
+Este documento describe cómo **unificar TODO el sistema de riego en 1 solo archivo reutilizable**.
 
 En Home Assistant, esto se llama **PACKAGE**, y es la forma profesional de encapsular sistemas completos.
 
