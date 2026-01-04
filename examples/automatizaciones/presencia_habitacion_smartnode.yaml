@@ -1,0 +1,250 @@
+# Automatizaciones de Presencia con SmartNode1
+# Detecta presencia en la habitación usando el sensor LD2410
+
+# ==============================================
+# AUTOMATIZACIÓN 1: PRESENCIA DETECTADA
+# ==============================================
+# Se activa cuando el smartnode1 detecta presencia en la habitación
+
+- id: 'habitacion_presencia_detectada'
+  alias: Habitación - Presencia Detectada
+  description: 'Se activa cuando el smartnode1 detecta presencia en la habitación'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.presence
+    from: 'off'
+    to: 'on'
+  conditions: []
+  actions:
+  - action: logbook.log
+    data:
+      name: Habitación - Presencia
+      message: "Presencia detectada en la habitación a las {{ now().strftime('%H:%M:%S') }}"
+
+  # Notificación móvil
+  - action: notify.mobile_app_blacky
+    data:
+      title: "🚶 Presencia Detectada"
+      message: "Se detectó presencia en la habitación"
+      data:
+        push:
+          interruption-level: active
+
+  # Ejemplo: Encender luces solo si es de noche
+  # - choose:
+  #   - conditions:
+  #     - condition: sun
+  #       after: sunset
+  #       after_offset: "-01:00:00"
+  #     - condition: sun
+  #       before: sunrise
+  #       before_offset: "01:00:00"
+  #     sequence:
+  #     - action: light.turn_on
+  #       target:
+  #         entity_id: light.habitacion
+  #       data:
+  #         brightness_pct: 60
+  #         transition: 1
+
+  # Ejemplo: Activar escena específica
+  # - action: scene.turn_on
+  #   target:
+  #     entity_id: scene.habitacion_activa
+
+  # Ejemplo: Ajustar temperatura del aire acondicionado
+  # - action: climate.set_temperature
+  #   target:
+  #     entity_id: climate.habitacion
+  #   data:
+  #     temperature: 22
+  #     hvac_mode: cool
+
+  mode: single
+
+# ==============================================
+# AUTOMATIZACIÓN 2: SIN PRESENCIA
+# ==============================================
+# Se activa cuando no hay presencia en la habitación por 5 minutos
+
+- id: 'habitacion_sin_presencia'
+  alias: Habitación - Sin Presencia
+  description: 'Se activa cuando no hay presencia en la habitación por 5 minutos'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.presence
+    from: 'on'
+    to: 'off'
+    for:
+      minutes: 5  # Ajusta este tiempo según tus necesidades
+  conditions: []
+  actions:
+  - action: logbook.log
+    data:
+      name: Habitación - Sin Presencia
+      message: "No hay presencia en la habitación desde hace 5 minutos ({{ now().strftime('%H:%M:%S') }})"
+
+  # Notificación móvil
+  - action: notify.mobile_app_blacky
+    data:
+      title: "🚪 Habitación Vacía"
+      message: "No se detecta presencia en la habitación desde hace 5 minutos"
+      data:
+        push:
+          interruption-level: passive
+
+  # Ejemplo: Apagar luces con transición suave
+  # - action: light.turn_off
+  #   target:
+  #     entity_id: light.habitacion
+  #   data:
+  #     transition: 3
+
+  # Ejemplo: Activar escena de ahorro
+  # - action: scene.turn_on
+  #   target:
+  #     entity_id: scene.habitacion_vacia
+
+  # Ejemplo: Ajustar temperatura a modo eco
+  # - action: climate.set_temperature
+  #   target:
+  #     entity_id: climate.habitacion
+  #   data:
+  #     temperature: 26
+  #     hvac_mode: cool
+
+  mode: restart  # Se reinicia si se detecta movimiento nuevamente
+
+# ==============================================
+# AUTOMATIZACIÓN 3 (AVANZADA): PRESENCIA NOCTURNA
+# ==============================================
+# Enciende luces tenues solo de noche cuando hay presencia
+
+- id: 'habitacion_presencia_nocturna'
+  alias: Habitación - Luz Nocturna Automática
+  description: 'Enciende luces tenues cuando hay presencia durante la noche'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.presence
+    from: 'off'
+    to: 'on'
+  conditions:
+  # Solo actuar entre las 22:00 y las 07:00
+  - condition: time
+    after: '22:00:00'
+    before: '07:00:00'
+  actions:
+  # Luz tenue para no molestar
+  # - action: light.turn_on
+  #   target:
+  #     entity_id: light.habitacion
+  #   data:
+  #     brightness_pct: 15
+  #     kelvin: 2200  # Luz cálida
+  #     transition: 2
+
+  - action: logbook.log
+    data:
+      name: Habitación - Modo Nocturno
+      message: "Luz nocturna activada por presencia"
+
+  mode: single
+
+# ==============================================
+# AUTOMATIZACIÓN 4 (AVANZADA): ALERTAS DE PRESENCIA INESPERADA
+# ==============================================
+# Notifica si hay presencia cuando deberías estar fuera
+
+- id: 'habitacion_presencia_inesperada'
+  alias: Habitación - Alerta Presencia Inesperada
+  description: 'Alerta si hay presencia cuando no deberías estar en casa'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.presence
+    from: 'off'
+    to: 'on'
+  conditions:
+  # Solo si estás fuera de casa
+  - condition: template
+    value_template: '{{ (distance("device_tracker.blacky", "zone.home") | float(0)) > 0.1 }}'
+  # Y no está activa la simulación de presencia
+  - condition: state
+    entity_id: input_boolean.presence_simulation
+    state: 'off'
+  actions:
+  # Notificación de alerta
+  - action: notify.mobile_app_blacky
+    data:
+      title: "⚠️ Alerta: Presencia Detectada"
+      message: "Se detectó presencia en la habitación mientras estás fuera de casa"
+      data:
+        push:
+          interruption-level: critical
+        actions:
+        - action: VIEW_CAMERA
+          title: Ver cámara
+        - action: CALL_POLICE
+          title: Llamar emergencias
+
+  # Registrar en el log
+  - action: logbook.log
+    data:
+      name: Habitación - Alerta Seguridad
+      message: "Presencia detectada con usuario fuera de casa"
+
+  mode: single
+
+# ==============================================
+# AUTOMATIZACIÓN 5 (AVANZADA): ESTADÍSTICAS DE USO
+# ==============================================
+# Registra cuánto tiempo se usa la habitación
+
+- id: 'habitacion_estadisticas_uso'
+  alias: Habitación - Registro de Uso
+  description: 'Registra estadísticas de uso de la habitación'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.presence
+    to: 'on'
+  - trigger: state
+    entity_id: binary_sensor.presence
+    to: 'off'
+    for:
+      minutes: 5
+  actions:
+  - action: logbook.log
+    data:
+      name: Habitación - Estadísticas
+      message: >
+        Estado: {{ states('binary_sensor.presence') }}
+        Temperatura: {{ states('sensor.room_temperature') }}°C
+        Humedad: {{ states('sensor.room_humidity') }}%
+        Luminosidad: {{ states('sensor.room_brightness') }}%
+
+  mode: restart
+
+# ==============================================
+# NOTAS Y PERSONALIZACIONES
+# ==============================================
+
+# SENSORES DISPONIBLES DEL SMARTNODE1:
+# - binary_sensor.presence              -> Presencia general (recomendado)
+# - binary_sensor.moving_target         -> Solo movimiento
+# - binary_sensor.still_target          -> Presencia estática
+# - sensor.room_temperature             -> Temperatura
+# - sensor.room_humidity                -> Humedad
+# - sensor.room_brightness              -> Luminosidad
+# - sensor.detection_distance           -> Distancia de detección
+
+# TIEMPOS RECOMENDADOS PARA "for":
+# - Baño: 3-5 minutos
+# - Habitación: 5-10 minutos
+# - Sala: 10-15 minutos
+# - Cocina: 5-10 minutos
+
+# MODOS DE AUTOMATIZACIÓN:
+# - single: No se reinicia hasta que termine
+# - restart: Se reinicia si se activa nuevamente
+# - queued: Cola las ejecuciones
+# - parallel: Múltiples ejecuciones simultáneas
+

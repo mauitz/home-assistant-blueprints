@@ -1,0 +1,133 @@
+# ============================================================
+# EJEMPLO: AUTOMATIZACIÓN PARA DORMITORIO CON SMARTNODE1
+# ============================================================
+#
+# Esta automatización reemplaza las automatizaciones manuales
+# anteriores (IDs: 1734450000001 y 1734450000002)
+#
+# ANTES DE APLICAR:
+# 1. Eliminar automatizaciones antiguas desde la UI de Home Assistant
+# 2. Verificar los nombres correctos de las entidades
+# 3. Ajustar los parámetros según tus preferencias
+# ============================================================
+
+- id: 'bedroom_smartnode_auto_lighting'
+  alias: Dormitorio - Luz Automática SmartNode
+  description: |
+    Enciende/apaga automáticamente la luz del dormitorio basándose
+    en presencia detectada por SmartNode1 y luminosidad ambiente.
+
+  use_blueprint:
+    path: mauitz/smartnode_presence_lighting.yaml
+    input:
+      # ==================
+      # SENSORES SMARTNODE
+      # ==================
+      presence_sensor: binary_sensor.presence
+      brightness_sensor: sensor.room_brightness
+
+      # ==================
+      # LUZ A CONTROLAR
+      # ==================
+      # Cambiar según tu configuración:
+      # - Para el bedroom_3_switch usa: switch.bedroom_3_switch_switch_1
+      # - Para otro switch específico, ajusta la entidad
+      light_entity: switch.bedroom_3_switch_switch_1
+
+      # ==================
+      # CONFIGURACIÓN LUZ
+      # ==================
+      brightness_level: 80  # % de brillo (solo si el switch soporta dimmer)
+      transition_time: 1    # Transición suave de 1 segundo
+
+      # ==================
+      # UMBRALES Y DELAYS
+      # ==================
+      brightness_threshold: 30   # Enciende si la luz ambiente está < 30%
+      turn_on_delay: 0           # Encender inmediatamente al detectar presencia
+      turn_off_delay: 5          # Apagar 5 segundos después de salir
+
+      # ==================
+      # OPCIONES AVANZADAS
+      # ==================
+      enable_manual_override: true    # Respetar encendido/apagado manual
+      enable_notifications: false     # Cambiar a true para debug
+      notify_device: ""               # ID del dispositivo móvil (opcional)
+
+
+# ============================================================
+# CONFIGURACIÓN ALTERNATIVA: MODO NOCTURNO
+# ============================================================
+# Si quieres una luz más tenue de noche, puedes crear
+# una segunda automatización para el horario nocturno:
+
+# - id: 'bedroom_smartnode_night_mode'
+#   alias: Dormitorio - Luz Nocturna SmartNode
+#   description: |
+#     Versión nocturna con luz más tenue (15% brillo)
+#     Solo activa entre 22:00 y 07:00
+#
+#   use_blueprint:
+#     path: mauitz/smartnode_presence_lighting.yaml
+#     input:
+#       presence_sensor: binary_sensor.presence
+#       brightness_sensor: sensor.room_brightness
+#       light_entity: switch.bedroom_3_switch_switch_1
+#
+#       brightness_level: 15           # Luz muy tenue para la noche
+#       transition_time: 2             # Transición más lenta
+#       brightness_threshold: 50       # Umbral más alto (más sensible)
+#       turn_on_delay: 2               # Delay de 2s para evitar activación accidental
+#       turn_off_delay: 10             # Mantener encendida más tiempo
+#
+#       enable_manual_override: true
+#       enable_notifications: false
+#
+#   # Condiciones adicionales para horario nocturno
+#   condition:
+#     - condition: time
+#       after: '22:00:00'
+#       before: '07:00:00'
+
+
+# ============================================================
+# NOTAS IMPORTANTES
+# ============================================================
+#
+# ENTIDADES DEL SMARTNODE1:
+# - binary_sensor.presence              -> Presencia general LD2410
+# - binary_sensor.moving_target         -> Solo movimiento
+# - binary_sensor.still_target          -> Presencia estática
+# - sensor.room_temperature             -> Temperatura
+# - sensor.room_humidity                -> Humedad
+# - sensor.room_brightness              -> Luminosidad (0-100%)
+# - sensor.detection_distance           -> Distancia de detección
+#
+# SWITCHES DISPONIBLES EN BEDROOM:
+# - switch.bedroom_3_switch_switch_1    -> Switch 1 (recomendado para luz principal)
+# - switch.bedroom_3_switch_switch_2    -> Switch 2
+# - switch.bedroom_3_switch_switch_3    -> Switch 3 (conectado a cámara)
+#
+# AJUSTES RECOMENDADOS POR HABITACIÓN:
+# - Dormitorio: turn_off_delay: 5-10s, brightness_level: 60-80%
+# - Baño: turn_off_delay: 3-5s, brightness_level: 100%
+# - Pasillo: turn_off_delay: 2-5s, brightness_level: 50-70%
+# - Cocina: turn_off_delay: 5-10s, brightness_level: 90-100%
+#
+# TROUBLESHOOTING:
+# 1. Si la luz no enciende:
+#    - Verifica que brightness_threshold sea correcto
+#    - Revisa que las entidades existan en Home Assistant
+#    - Activa enable_notifications para debug
+#
+# 2. Si la luz parpadea:
+#    - Aumenta turn_on_delay a 1-2 segundos
+#    - Verifica que no haya otras automatizaciones conflictivas
+#
+# 3. Si se apaga demasiado rápido:
+#    - Aumenta turn_off_delay
+#    - Verifica la sensibilidad del LD2410
+#
+# ============================================================
+
+
