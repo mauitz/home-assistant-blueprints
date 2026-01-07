@@ -1,0 +1,391 @@
+blueprint:
+  name: SmartNode - Iluminación con Estados de Casa (v2)
+  description: |
+    Versión mejorada del control de luces por presencia que respeta
+    los estados globales de la casa (normal, durmiendo, vacía, noche).
+
+    🎯 Nuevas características:
+    - Respeta el estado global de la casa
+    - Ajuste automático de brillo según el modo
+    - No molesta en modo "durmiendo"
+    - Apagado automático en modo "vacía"
+
+  domain: automation
+
+  input:
+    # ====================
+    # SENSORES SMARTNODE
+    # ====================
+    presence_sensor:
+      name: Sensor de Presencia
+      description: Sensor de presencia del SmartNode (binary_sensor)
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: occupancy
+
+    brightness_sensor:
+      name: Sensor de Luminosidad
+      description: Sensor de luminosidad del SmartNode (sensor en %)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+
+    # ====================
+    # DISPOSITIVO DE LUZ
+    # ====================
+    light_entity:
+      name: Luz o Switch
+      description: Luz o switch a controlar
+      selector:
+        entity:
+          filter:
+            - domain:
+              - light
+              - switch
+
+    # ====================
+    # ESTADO DE CASA
+    # ====================
+    home_mode_entity:
+      name: Home Mode (Optional)
+      description: If using Home Mode Manager, select input_select.home_mode
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: input_select
+
+    # ====================
+    # CONFIGURACIÓN POR MODO
+    # ====================
+    brightness_normal:
+      name: Brillo en Modo Normal
+      description: Porcentaje de brillo durante el día
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+
+    brightness_noche:
+      name: Brillo en Modo Noche
+      description: Porcentaje de brillo por la noche
+      default: 40
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+
+    brightness_durmiendo:
+      name: Brillo en Modo Durmiendo
+      description: Porcentaje de brillo si alguien se levanta (ej. baño)
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 50
+          unit_of_measurement: "%"
+
+    # ====================
+    # UMBRALES Y DELAYS
+    # ====================
+    brightness_threshold:
+      name: Umbral de Oscuridad
+      description: Por debajo de este % de luminosidad se considera oscuro
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+
+    turn_on_delay:
+      name: Delay al Encender
+      description: Segundos de espera antes de encender
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 30
+          unit_of_measurement: "s"
+
+    turn_off_delay:
+      name: Delay al Apagar
+      description: Segundos después de no detectar presencia para apagar
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: "s"
+
+    transition_time:
+      name: Tiempo de Transición
+      description: Tiempo de transición al encender/apagar (segundos)
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          unit_of_measurement: "s"
+
+    # ====================
+    # COMPORTAMIENTO AVANZADO
+    # ====================
+    activar_en_durmiendo:
+      name: Activar en Modo Durmiendo
+      description: ¿Encender luz si alguien se levanta de noche?
+      default: true
+      selector:
+        boolean:
+
+    apagar_en_vacia:
+      name: Apagar en Casa Vacía
+      description: Apagar automáticamente si la casa está vacía
+      default: true
+      selector:
+        boolean:
+
+# ====================
+# VARIABLES
+# ====================
+variables:
+  presence_entity: !input presence_sensor
+  brightness_entity: !input brightness_sensor
+  light: !input light_entity
+  home_mode: !input home_mode_entity
+
+  # Determinar brillo según estado
+  brightness_pct: >
+    {% if home_mode == '' %}
+      {{ brightness_normal | int }}
+    {% else %}
+      {% set mode = states(home_mode) %}
+      {% if mode == 'sleeping' %}
+        {{ brightness_durmiendo | int }}
+      {% elif mode == 'night' %}
+        {{ brightness_noche | int }}
+      {% else %}
+        {{ brightness_normal | int }}
+      {% endif %}
+    {% endif %}
+
+  transition: !input transition_time
+  brightness_limit: !input brightness_threshold
+  activar_durmiendo: !input activar_en_durmiendo
+  apagar_vacia: !input apagar_en_vacia
+
+# ====================
+# MODO DE EJECUCIÓN
+# ====================
+mode: restart
+max_exceeded: silent
+
+# ====================
+# TRIGGERS
+# ====================
+trigger:
+  # TRIGGER 1: Presencia detectada
+  - platform: state
+    entity_id: !input presence_sensor
+    from: "off"
+    to: "on"
+    for:
+      seconds: !input turn_on_delay
+    id: presence_on
+
+  # TRIGGER 2: Presencia perdida
+  - platform: state
+    entity_id: !input presence_sensor
+    from: "on"
+    to: "off"
+    for:
+      seconds: !input turn_off_delay
+    id: presence_off
+
+      # TRIGGER 3: Casa vacía (apagado forzado)
+  - platform: state
+    entity_id: !input home_mode_entity
+    to: "away"
+    id: casa_vacia
+
+  # TRIGGER 4: Cambio de modo (ajustar brillo)
+  - platform: state
+    entity_id: !input home_mode_entity
+    id: cambio_estado
+
+# ====================
+# ACCIONES
+# ====================
+action:
+  - choose:
+      # ==========================================
+      # CASO 1: ENCENDER LUZ (PRESENCIA DETECTADA)
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: presence_on
+
+          # Debe estar oscuro
+          - condition: numeric_state
+            entity_id: !input brightness_sensor
+            below: !input brightness_threshold
+
+          # La luz debe estar apagada
+          - condition: state
+            entity_id: !input light_entity
+            state: "off"
+
+          # Verificar estado de casa
+          - condition: or
+            conditions:
+              # No usa sistema de estados
+              - condition: template
+                value_template: "{{ home_mode == '' }}"
+
+              # O está en modo normal/noche
+              - condition: template
+                value_template: "{{ states(home_mode) in ['normal', 'night'] }}"
+
+              # O está durmiendo pero tiene activado el encendido nocturno
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ states(home_mode) == 'sleeping' }}"
+                  - condition: template
+                    value_template: "{{ activar_durmiendo }}"
+
+        sequence:
+          # Encender la luz
+          - choose:
+              # Si es una luz con dimmer
+              - conditions:
+                  - condition: template
+                    value_template: "{{ state_attr(light, 'supported_features') is not none and state_attr(light, 'supported_features') | int | bitwise_and(1) == 1 }}"
+                sequence:
+                  - service: light.turn_on
+                    target:
+                      entity_id: !input light_entity
+                    data:
+                      brightness_pct: "{{ brightness_pct }}"
+                      transition: !input transition_time
+
+            # Si es un switch o luz simple
+            default:
+              - service: homeassistant.turn_on
+                target:
+                  entity_id: !input light_entity
+
+          # Log en el sistema
+          - service: logbook.log
+            data:
+              name: "SmartNode - Luz Automática"
+              message: >
+                💡 Luz encendida por presencia
+                Modo: {{ states(home_mode) if home_mode != '' else 'N/A' }}
+                Brillo: {{ brightness_pct }}%
+                Luminosidad: {{ states(brightness_entity) }}%
+
+      # ==========================================
+      # CASO 2: APAGAR LUZ (SIN PRESENCIA)
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: presence_off
+
+          # La luz debe estar encendida
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+
+        sequence:
+          # Apagar la luz
+          - choose:
+              # Si es una luz con transición
+              - conditions:
+                  - condition: template
+                    value_template: "{{ light.split('.')[0] == 'light' }}"
+                sequence:
+                  - service: light.turn_off
+                    target:
+                      entity_id: !input light_entity
+                    data:
+                      transition: !input transition_time
+
+            # Si es un switch
+            default:
+              - service: homeassistant.turn_off
+                target:
+                  entity_id: !input light_entity
+
+          # Log
+          - service: logbook.log
+            data:
+              name: "SmartNode - Luz Automática"
+              message: >
+                🌙 Luz apagada - Sin presencia por {{ turn_off_delay }}s
+
+      # ==========================================
+      # CASO 3: CASA VACÍA (APAGADO FORZADO)
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: casa_vacia
+
+          - condition: template
+            value_template: "{{ apagar_vacia }}"
+
+          # La luz está encendida
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+
+        sequence:
+          - service: light.turn_off
+            target:
+              entity_id: !input light_entity
+            data:
+              transition: 3
+
+          - service: logbook.log
+            data:
+              name: "SmartNode - Luz Automática"
+              message: "🏠 Luz apagada - Casa vacía"
+
+      # ==========================================
+      # CASO 4: AJUSTAR BRILLO AL CAMBIAR ESTADO
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: cambio_estado
+
+          # La luz está encendida
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+
+          # Es una luz con dimmer
+          - condition: template
+            value_template: "{{ state_attr(light, 'supported_features') is not none and state_attr(light, 'supported_features') | int | bitwise_and(1) == 1 }}"
+
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ brightness_pct }}"
+              transition: 5
+
+          - service: logbook.log
+            data:
+              name: "SmartNode - Luz Automática"
+              message: >
+                🔆 Brillo ajustado por cambio de modo
+                Nuevo modo: {{ states(home_mode) }}
+                Brillo: {{ brightness_pct }}%
+

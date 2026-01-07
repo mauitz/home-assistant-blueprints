@@ -32,6 +32,39 @@ python3 utils/ha_manager.py status
 
 ## 📦 Proyectos
 
+### 🏠 [Home Mode Manager](packages/home_mode_manager.yaml)
+
+**NEW!** Sistema inteligente de gestión de modos globales de casa.
+
+**Características:**
+- ✅ 5 modos predefinidos: normal, away, sleeping, night, guest
+- ✅ Transiciones automáticas basadas en presencia, hora y sol
+- ✅ Horarios configurables (sin hardcode)
+- ✅ Control por voz integrado
+- ✅ Sincronización con escenas (opcional)
+- ✅ Override manual con auto-reset
+- ✅ Widget de dashboard incluido
+- ✅ Integración con SmartNode Lighting
+
+**Archivos:**
+- [`packages/home_mode_manager.yaml`](packages/home_mode_manager.yaml) - Package principal
+- [Documentación completa (EN)](docs/HOME_MODE_MANAGER.md)
+- [Guía de instalación Casita (ES)](docs/HOME_MODE_MANAGER_CASITA.md)
+
+**Uso con SmartNodes:**
+```yaml
+automation:
+  use_blueprint:
+    path: smartnode_presence_lighting_v2.yaml
+    input:
+      home_mode_entity: input_select.home_mode
+      brightness_normal: 80    # Día
+      brightness_noche: 40     # Noche
+      brightness_durmiendo: 10 # Durmiendo
+```
+
+---
+
 ### 🎭 [Simulación de Presencia](docs/pezaustral_presence_simulation/)
 
 Blueprint avanzado para simular presencia en casa cuando estás fuera.
@@ -77,14 +110,13 @@ Guías de integración para cámaras Tapo y Xiaomi.
 
 ---
 
-### 📡 Beacons BLE (ESP32)
+### 🎙️ Smart Nodes (ESP32)
 
-Implementación de beacons Bluetooth Low Energy con ESP32 para presencia.
+Estaciones inteligentes multisensor con audio bidireccional para asistente de voz por habitación.
 
 **Documentación:**
-- [Implementación completa](docs/beacons/IMPLEMENTACION_BLE_BEACONS.md)
-- [Configuración ESP32](docs/beacons/beacons-esp32.md)
-- [Plantilla](docs/beacons/PLANTILLA_BEACONS.md)
+- [Documentación completa](docs/smart_nodes/README.md)
+- [Prototipo v1](docs/smart_nodes/prototype/)
 
 ---
 
@@ -212,7 +244,7 @@ home-assistant-blueprints/
 │   ├── pezaustral_presence_simulation/
 │   ├── frigate/
 │   ├── camaras/
-│   ├── beacons/
+│   ├── smart_nodes/
 │   ├── dashboard/
 │   ├── automatizaciones/    # Otras automatizaciones
 │   └── homeassistant_pezaustral.md
@@ -297,7 +329,7 @@ Toda la documentación está organizada por proyectos en la carpeta [`docs/`](do
 - [**Presence Simulation**](docs/pezaustral_presence_simulation/) - Blueprint completo con changelog y troubleshooting
 - [**Frigate**](docs/frigate/) - NVR con detección de objetos
 - [**Cámaras**](docs/camaras/) - Integración Tapo y Xiaomi
-- [**Beacons BLE**](docs/beacons/) - Presencia con ESP32
+- [**Smart Nodes**](docs/smart_nodes/) - Estaciones inteligentes con audio bidireccional
 - [**Dashboard**](docs/dashboard/) - Widgets y UI
 - [**Automatizaciones**](docs/automatizaciones/) - Guías de automatizaciones avanzadas
 

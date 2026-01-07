@@ -1,0 +1,682 @@
+# ============================================================================
+# HOME MODE MANAGER
+# ============================================================================
+# Version: 2.0
+# Author: PezAustral
+# Date: 2026-01-07
+# License: MIT
+#
+# A comprehensive home automation system that tracks and manages global
+# house states (modes) to enable intelligent context-aware automations.
+#
+# Available Modes:
+#   - normal: House occupied, normal activity
+#   - away: Nobody home (security/energy saving mode)
+#   - sleeping: Everyone sleeping (night mode with minimal disturbance)
+#   - night: Night time but awake (reduced brightness)
+#   - guest: Guest mode (special behavior)
+#
+# Features:
+#   - Automatic mode transitions based on time, sun, and presence
+#   - Manual override with auto-reset
+#   - Voice control integration
+#   - Scene integration (optional)
+#   - Dashboard widget included
+#   - Highly configurable
+# ============================================================================
+
+# ============================================================================
+# CONFIGURATION VARIABLES
+# ============================================================================
+# You can customize these values in the Home Assistant UI after installation
+
+input_number:
+  # Sleeping mode schedule
+  hmm_sleep_hour_start:
+    name: "HMM: Sleep Time Start (Hour)"
+    icon: mdi:clock-start
+    min: 0
+    max: 23
+    step: 1
+    mode: slider
+    initial: 23
+
+  hmm_sleep_minute_start:
+    name: "HMM: Sleep Time Start (Minute)"
+    icon: mdi:clock-start
+    min: 0
+    max: 59
+    step: 1
+    mode: slider
+    initial: 30
+
+  hmm_wake_hour:
+    name: "HMM: Wake Time (Hour)"
+    icon: mdi:clock-end
+    min: 0
+    max: 23
+    step: 1
+    mode: slider
+    initial: 7
+
+  hmm_wake_minute:
+    name: "HMM: Wake Time (Minute)"
+    icon: mdi:clock-end
+    min: 0
+    max: 59
+    step: 1
+    mode: slider
+    initial: 0
+
+  # Away mode timeout
+  hmm_away_timeout:
+    name: "HMM: Away Timeout (Minutes)"
+    icon: mdi:timer-sand
+    min: 5
+    max: 60
+    step: 5
+    mode: slider
+    initial: 15
+
+  # Sleep detection timeout (no activity = sleeping)
+  hmm_sleep_detection_timeout:
+    name: "HMM: Sleep Detection Timeout (Minutes)"
+    icon: mdi:timer-sand
+    min: 15
+    max: 60
+    step: 5
+    mode: slider
+    initial: 30
+
+# ============================================================================
+# CORE MODE SELECTOR
+# ============================================================================
+input_select:
+  home_mode:
+    name: Home Mode
+    icon: mdi:home-account
+    initial: normal
+    options:
+      - normal
+      - away
+      - sleeping
+      - night
+      - guest
+
+# ============================================================================
+# CONTROL FLAGS
+# ============================================================================
+input_boolean:
+  hmm_manual_control:
+    name: Manual Mode Control
+    icon: mdi:hand-back-right
+    initial: false
+
+  hmm_night_detected:
+    name: Night Time Detected
+    icon: mdi:weather-night
+    initial: false
+
+  hmm_enable_scene_sync:
+    name: Enable Scene Synchronization
+    icon: mdi:sync
+    initial: false
+
+  hmm_enable_voice_control:
+    name: Enable Voice Control
+    icon: mdi:microphone
+    initial: true
+
+# ============================================================================
+# PRESENCE DETECTION
+# ============================================================================
+# IMPORTANT: Customize this sensor with your actual presence sensors
+# Replace the entity_ids below with your SmartNodes or other presence sensors
+# ============================================================================
+template:
+  - binary_sensor:
+      - name: "HMM Anyone Home"
+        unique_id: hmm_anyone_home
+        device_class: presence
+        state: >
+          {# ╔═══════════════════════════════════════════════════════════╗ #}
+          {# ║  🔧 CUSTOMIZE: Add your presence sensors here            ║ #}
+          {# ║  Example with SmartNodes:                                ║ #}
+          {# ║  {% set bedroom = is_state('binary_sensor.smartnode1_presence', 'on') %} #}
+          {# ║  {% set living = is_state('binary_sensor.smartnode2_presence', 'on') %}  #}
+          {# ║  {{ bedroom or living }}                                 ║ #}
+          {# ╚═══════════════════════════════════════════════════════════╝ #}
+
+          {# Default: Always returns false (you must configure your sensors) #}
+          {{ false }}
+
+      - name: "HMM Sleep Time"
+        unique_id: hmm_sleep_time
+        state: >
+          {% set current_hour = now().hour %}
+          {% set current_minute = now().minute %}
+          {% set sleep_hour = states('input_number.hmm_sleep_hour_start') | int %}
+          {% set sleep_minute = states('input_number.hmm_sleep_minute_start') | int %}
+          {% set wake_hour = states('input_number.hmm_wake_hour') | int %}
+          {% set wake_minute = states('input_number.hmm_wake_minute') | int %}
+
+          {% set current_time = current_hour * 60 + current_minute %}
+          {% set sleep_time = sleep_hour * 60 + sleep_minute %}
+          {% set wake_time = wake_hour * 60 + wake_minute %}
+
+          {% if sleep_time > wake_time %}
+            {# Sleep time crosses midnight #}
+            {{ current_time >= sleep_time or current_time < wake_time }}
+          {% else %}
+            {# Sleep time doesn't cross midnight #}
+            {{ current_time >= sleep_time and current_time < wake_time }}
+          {% endif %}
+
+  - sensor:
+      - name: "HMM Mode Description"
+        unique_id: hmm_mode_description
+        state: >
+          {% set mode = states('input_select.home_mode') %}
+          {% if mode == 'normal' %}
+            Casa ocupada - Actividad normal
+          {% elif mode == 'away' %}
+            Casa vacía - Sin presencia
+          {% elif mode == 'sleeping' %}
+            Modo nocturno - Todos durmiendo
+          {% elif mode == 'night' %}
+            Horario nocturno - Despiertos
+          {% elif mode == 'guest' %}
+            Modo invitados
+          {% else %}
+            Desconocido
+          {% endif %}
+        icon: mdi:information-outline
+
+      - name: "HMM Time in Mode"
+        unique_id: hmm_time_in_mode
+        state: >
+          {{ relative_time(states.input_select.home_mode.last_changed) }}
+        icon: mdi:clock-outline
+
+      - name: "HMM Sleep Time Formatted"
+        unique_id: hmm_sleep_time_formatted
+        state: >
+          {% set sleep_hour = states('input_number.hmm_sleep_hour_start') | int %}
+          {% set sleep_minute = states('input_number.hmm_sleep_minute_start') | int %}
+          {% set wake_hour = states('input_number.hmm_wake_hour') | int %}
+          {% set wake_minute = states('input_number.hmm_wake_minute') | int %}
+          {{ '%02d:%02d - %02d:%02d' | format(sleep_hour, sleep_minute, wake_hour, wake_minute) }}
+        icon: mdi:clock-time-eight
+
+# ============================================================================
+# AUTOMATIONS - MODE TRANSITIONS
+# ============================================================================
+automation:
+  # ==========================================================================
+  # AUTO 1: Detect Night Time (based on sun)
+  # ==========================================================================
+  - id: hmm_detect_night
+    alias: "[HMM] Detect Night Time"
+    description: Mark night time based on sunset/sunrise
+    mode: restart
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "-00:30:00"
+        id: is_night
+      - platform: sun
+        event: sunrise
+        offset: "+00:30:00"
+        id: is_day
+    action:
+      - service: input_boolean.turn_{{ 'on' if trigger.id == 'is_night' else 'off' }}
+        target:
+          entity_id: input_boolean.hmm_night_detected
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: >
+            {% if trigger.id == 'is_night' %}
+              🌙 Night detected - Night automations active
+            {% else %}
+              ☀️ Day detected - Day automations active
+            {% endif %}
+
+  # ==========================================================================
+  # AUTO 2: Change to NIGHT mode
+  # ==========================================================================
+  - id: hmm_to_night
+    alias: "[HMM] Change to Night Mode"
+    description: At sunset, if someone is home, change to night mode
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_boolean.hmm_night_detected
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.hmm_anyone_home
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hmm_manual_control
+        state: "off"
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: input_select.home_mode
+            state: sleeping
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: night
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: "🌙 NIGHT mode activated - Sunset with presence"
+
+  # ==========================================================================
+  # AUTO 3: Change to NORMAL mode
+  # ==========================================================================
+  - id: hmm_to_normal
+    alias: "[HMM] Change to Normal Mode"
+    description: At sunrise, return to normal mode
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_boolean.hmm_night_detected
+        to: "off"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.hmm_anyone_home
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hmm_manual_control
+        state: "off"
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: input_select.home_mode
+            state: night
+          - condition: state
+            entity_id: input_select.home_mode
+            state: sleeping
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: normal
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: "☀️ NORMAL mode activated - Sunrise"
+
+  # ==========================================================================
+  # AUTO 4: Change to SLEEPING mode
+  # ==========================================================================
+  - id: hmm_to_sleeping
+    alias: "[HMM] Change to Sleeping Mode"
+    description: Detect when everyone is sleeping
+    mode: restart
+    trigger:
+      # Scheduled sleep time
+      - platform: template
+        value_template: >
+          {% set current_hour = now().hour %}
+          {% set current_minute = now().minute %}
+          {% set sleep_hour = states('input_number.hmm_sleep_hour_start') | int %}
+          {% set sleep_minute = states('input_number.hmm_sleep_minute_start') | int %}
+          {{ current_hour == sleep_hour and current_minute == sleep_minute }}
+
+      # Or no activity for timeout during sleep hours
+      - platform: state
+        entity_id: binary_sensor.hmm_anyone_home
+        to: "off"
+        for:
+          minutes: "{{ states('input_number.hmm_sleep_detection_timeout') | int }}"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.hmm_sleep_time
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hmm_manual_control
+        state: "off"
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: input_select.home_mode
+            state: sleeping
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: sleeping
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: "😴 SLEEPING mode activated"
+
+      # Optional: Turn off common lights
+      # Uncomment and customize as needed
+      # - service: light.turn_off
+      #   target:
+      #     entity_id:
+      #       - light.living_room
+      #       - light.kitchen
+      #   data:
+      #     transition: 5
+
+  # ==========================================================================
+  # AUTO 5: Change to AWAY mode
+  # ==========================================================================
+  - id: hmm_to_away
+    alias: "[HMM] Change to Away Mode"
+    description: Detect when nobody is home
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.hmm_anyone_home
+        to: "off"
+        for:
+          minutes: "{{ states('input_number.hmm_away_timeout') | int }}"
+    condition:
+      - condition: state
+        entity_id: input_boolean.hmm_manual_control
+        state: "off"
+      - condition: state
+        entity_id: binary_sensor.hmm_sleep_time
+        state: "off"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: away
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: "🏠 AWAY mode - No presence detected"
+
+      # Optional: Turn off all lights
+      # Uncomment and customize as needed
+      # - service: light.turn_off
+      #   target:
+      #     area_id: all
+      #   data:
+      #     transition: 3
+
+  # ==========================================================================
+  # AUTO 6: Return from AWAY mode
+  # ==========================================================================
+  - id: hmm_presence_detected
+    alias: "[HMM] Presence Detected"
+    description: Change mode when presence is detected
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.hmm_anyone_home
+        to: "on"
+    condition:
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: input_select.home_mode
+            state: away
+          - condition: state
+            entity_id: input_select.home_mode
+            state: guest
+      - condition: state
+        entity_id: input_boolean.hmm_manual_control
+        state: "off"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: >
+            {% if is_state('input_boolean.hmm_night_detected', 'on') %}
+              night
+            {% else %}
+              normal
+            {% endif %}
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: "👋 Welcome - Presence detected"
+
+  # ==========================================================================
+  # AUTO 7: Scene Synchronization (Optional)
+  # ==========================================================================
+  - id: hmm_scene_sync
+    alias: "[HMM] Sync with Scenes"
+    description: Apply scenes when mode changes (if enabled)
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_select.home_mode
+    condition:
+      - condition: state
+        entity_id: input_boolean.hmm_enable_scene_sync
+        state: "on"
+    action:
+      - choose:
+          # When entering SLEEPING mode, apply sleep scene
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'sleeping' }}"
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: scene.nueva_escena  # Your "A dormir" scene
+
+          # When entering NIGHT mode, apply night scene
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'night' }}"
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: scene.anocheser  # Your "Anochecer" scene
+
+          # When entering NORMAL mode at sunrise, apply morning scene
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'normal' }}"
+              - condition: state
+                entity_id: input_boolean.hmm_night_detected
+                state: "off"
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: scene.amanecer  # Your "Amanecer" scene
+
+  # ==========================================================================
+  # AUTO 8: Voice Control - "Ta mañana" (Good night)
+  # ==========================================================================
+  - id: hmm_voice_goodnight
+    alias: "[HMM] Voice - Good Night"
+    description: Activate sleeping mode with voice command
+    mode: restart
+    trigger:
+      - platform: conversation
+        command: Ta manana
+    condition:
+      - condition: state
+        entity_id: input_boolean.hmm_enable_voice_control
+        state: "on"
+    action:
+      - service: script.hmm_force_mode
+        data:
+          mode: sleeping
+
+  # ==========================================================================
+  # AUTO 9: Voice Control - "Buenos días" (Good morning)
+  # ==========================================================================
+  - id: hmm_voice_goodmorning
+    alias: "[HMM] Voice - Good Morning"
+    description: Activate normal mode with voice command
+    mode: restart
+    trigger:
+      - platform: conversation
+        command:
+          - Buenos dias
+          - Buen dia
+    condition:
+      - condition: state
+        entity_id: input_boolean.hmm_enable_voice_control
+        state: "on"
+    action:
+      - service: script.hmm_force_mode
+        data:
+          mode: normal
+
+  # ==========================================================================
+  # AUTO 10: Voice Control - "Nos vamos" (Going out)
+  # ==========================================================================
+  - id: hmm_voice_leaving
+    alias: "[HMM] Voice - Leaving"
+    description: Activate away mode with voice command
+    mode: restart
+    trigger:
+      - platform: conversation
+        command:
+          - Nos vamos
+          - Me voy
+          - Salimos
+    condition:
+      - condition: state
+        entity_id: input_boolean.hmm_enable_voice_control
+        state: "on"
+    action:
+      - service: script.hmm_force_mode
+        data:
+          mode: away
+
+# ============================================================================
+# SCRIPTS - MODE CONTROL
+# ============================================================================
+script:
+  # Force a specific mode manually (with auto-reset after 2 hours)
+  hmm_force_mode:
+    alias: "HMM: Force Mode"
+    mode: restart
+    fields:
+      mode:
+        description: Mode to set (normal, away, sleeping, night, guest)
+        example: "sleeping"
+    sequence:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.home_mode
+        data:
+          option: "{{ mode }}"
+
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.hmm_manual_control
+
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: "🖐️ Mode changed MANUALLY to: {{ mode }}"
+
+      # Auto-reset manual control after 2 hours
+      - delay:
+          hours: 2
+
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.hmm_manual_control
+
+  # Quick script to enable automatic mode again
+  hmm_auto_mode:
+    alias: "HMM: Enable Auto Mode"
+    sequence:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.hmm_manual_control
+
+      - service: logbook.log
+        data:
+          name: Home Mode Manager
+          message: "🤖 Automatic mode enabled"
+
+# ============================================================================
+# DASHBOARD WIDGET (Lovelace Card Configuration)
+# ============================================================================
+# Copy this YAML to your dashboard:
+#
+# type: vertical-stack
+# cards:
+#   # Main status card
+#   - type: glance
+#     title: 🏠 Home Mode Manager
+#     entities:
+#       - entity: input_select.home_mode
+#         name: Current Mode
+#       - entity: binary_sensor.hmm_anyone_home
+#         name: Anyone Home
+#       - entity: input_boolean.hmm_night_detected
+#         name: Night Time
+#
+#   # Information
+#   - type: entities
+#     entities:
+#       - entity: sensor.hmm_mode_description
+#         name: Description
+#       - entity: sensor.hmm_time_in_mode
+#         name: Time in Mode
+#       - entity: sensor.hmm_sleep_time_formatted
+#         name: Sleep Schedule
+#
+#   # Quick action buttons
+#   - type: horizontal-stack
+#     cards:
+#       - type: button
+#         name: Normal
+#         icon: mdi:home
+#         tap_action:
+#           action: call-service
+#           service: script.hmm_force_mode
+#           data:
+#             mode: normal
+#       - type: button
+#         name: 😴 Sleep
+#         tap_action:
+#           action: call-service
+#           service: script.hmm_force_mode
+#           data:
+#             mode: sleeping
+#       - type: button
+#         name: 🏃 Away
+#         tap_action:
+#           action: call-service
+#           service: script.hmm_force_mode
+#           data:
+#             mode: away
+#
+#   # Configuration toggles
+#   - type: entities
+#     entities:
+#       - entity: input_boolean.hmm_manual_control
+#         name: Manual Control (2h)
+#       - entity: input_boolean.hmm_enable_scene_sync
+#         name: Scene Sync
+#       - entity: input_boolean.hmm_enable_voice_control
+#         name: Voice Control
+#
+#   # Sleep schedule configuration
+#   - type: entities
+#     title: ⚙️ Configuration
+#     entities:
+#       - entity: input_number.hmm_sleep_hour_start
+#       - entity: input_number.hmm_sleep_minute_start
+#       - entity: input_number.hmm_wake_hour
+#       - entity: input_number.hmm_wake_minute
+#       - entity: input_number.hmm_away_timeout
+#       - entity: input_number.hmm_sleep_detection_timeout
+# ============================================================================
+
