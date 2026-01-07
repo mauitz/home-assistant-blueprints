@@ -1,0 +1,418 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLOS DE CONFIGURACIÓN
+# SmartNode - Control Multi-Luz por Presencia
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 1: DORMITORIO - Configuración Nocturna Completa
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Enciende múltiples luces al detectar presencia
+#   - Solo funciona de noche (cuando está oscuro)
+#   - Brillo moderado para no deslumbrar
+#   - Apagado después de 60s de ausencia
+
+automation dormitorio_smartnode1:
+  alias: "Dormitorio - Luces Automáticas SmartNode1"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode
+      presence_sensor: binary_sensor.smartnode1_presence
+      brightness_sensor: sensor.smartnode1_room_brightness
+      distance_sensor: sensor.smartnode1_detection_distance
+
+      # Luces a controlar
+      target_lights:
+        - light.lampara_noche_dormitorio
+        - light.luz_techo_dormitorio
+        - light.lampara_escritorio
+
+      # Configuración de iluminación
+      brightness_level: 60
+      transition_time: 1
+
+      # Condiciones y umbrales
+      brightness_threshold: 30
+      only_when_dark: true
+      max_detection_distance: 3  # ← Solo enciende si estás a menos de 3m
+
+      # Delays y timing
+      turn_on_delay: 0
+      turn_off_delay: 60
+
+      # Opciones avanzadas
+      enable_logging: true
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 2: BAÑO - Funcionamiento 24/7
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Funciona día y noche (ignora luminosidad)
+#   - Enciende luz principal y espejo
+#   - Brillo al máximo
+#   - Apagado rápido después de 30s
+
+automation bano_principal:
+  alias: "Baño Principal - Luces Automáticas"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode
+      presence_sensor: binary_sensor.smartnode_bano_presence
+      brightness_sensor: sensor.smartnode_bano_room_brightness
+
+      # Luces a controlar
+      target_lights:
+        - light.luz_bano_principal
+        - light.espejo_bano
+
+      # Configuración de iluminación
+      brightness_level: 100
+      transition_time: 0.5
+
+      # Condiciones y umbrales
+      brightness_threshold: 30  # No se usa porque only_when_dark = false
+      only_when_dark: false      # ← Funciona SIEMPRE
+
+      # Delays y timing
+      turn_on_delay: 0
+      turn_off_delay: 30
+
+      # Opciones avanzadas
+      enable_logging: true
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 3: PASILLO - Luz Tenue Nocturna
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Enciende luces del pasillo al 40% de noche
+#   - Delay de 1s al encender para evitar activaciones al pasar rápido
+#   - Apagado después de 45s
+#   - Umbral de oscuridad más alto (40%)
+
+automation pasillo_noche:
+  alias: "Pasillo - Luces Tenues Nocturnas"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode
+      presence_sensor: binary_sensor.smartnode_pasillo_presence
+      brightness_sensor: sensor.smartnode_pasillo_room_brightness
+
+      # Luces a controlar
+      target_lights:
+        - light.pasillo_1
+        - light.pasillo_2
+        - light.pasillo_3
+
+      # Configuración de iluminación
+      brightness_level: 40       # Luz tenue
+      transition_time: 2         # Transición suave
+
+      # Condiciones y umbrales
+      brightness_threshold: 40   # Más sensible (enciende antes)
+      only_when_dark: true
+
+      # Delays y timing
+      turn_on_delay: 1          # ← Evita activaciones al pasar rápido
+      turn_off_delay: 45
+
+      # Opciones avanzadas
+      enable_logging: false
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 4: COCINA - Solo Luz Bajo Mueble
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Solo enciende luz bajo mueble al detectar presencia
+#   - Brillo medio
+#   - Solo de noche (umbral 25%)
+#   - Apagado después de 2 minutos
+
+automation cocina_luz_bajo_mueble:
+  alias: "Cocina - Luz Bajo Mueble Nocturna"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode
+      presence_sensor: binary_sensor.smartnode_cocina_presence
+      brightness_sensor: sensor.smartnode_cocina_room_brightness
+
+      # Luces a controlar (solo una)
+      target_lights:
+        - light.luz_bajo_mueble_cocina
+
+      # Configuración de iluminación
+      brightness_level: 70
+      transition_time: 1
+
+      # Condiciones y umbrales
+      brightness_threshold: 25
+      only_when_dark: true
+
+      # Delays y timing
+      turn_on_delay: 0
+      turn_off_delay: 120       # 2 minutos
+
+      # Opciones avanzadas
+      enable_logging: true
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 5: SALA DE ESTAR - Control con Grupo de Luces
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Usa un grupo de luces para simplificar configuración
+#   - Enciende todas las luces del grupo
+#   - Solo de noche
+#   - Apagado después de 90s
+
+# Primero definir el grupo en configuration.yaml:
+light grupo_sala_estar:
+  - platform: group
+    name: "Luces Sala Estar"
+    entities:
+      - light.lampara_pie_sala
+      - light.luz_techo_sala
+      - light.lampara_lectura
+
+# Luego usar en automatización:
+automation sala_estar:
+  alias: "Sala Estar - Luces Automáticas"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode
+      presence_sensor: binary_sensor.smartnode_sala_presence
+      brightness_sensor: sensor.smartnode_sala_room_brightness
+
+      # Grupo de luces
+      target_lights:
+        - light.luces_sala_estar  # ← Grupo
+
+      # Configuración de iluminación
+      brightness_level: 80
+      transition_time: 1.5
+
+      # Condiciones y umbrales
+      brightness_threshold: 30
+      only_when_dark: true
+
+      # Delays y timing
+      turn_on_delay: 0
+      turn_off_delay: 90
+
+      # Opciones avanzadas
+      enable_logging: true
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 6: GARAJE - Switches en lugar de Luces
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Controla switches (relés) en lugar de luces inteligentes
+#   - Funcionamiento 24/7
+#   - Apagado rápido (20s)
+
+automation garaje:
+  alias: "Garaje - Switches Automáticos"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode
+      presence_sensor: binary_sensor.smartnode_garaje_presence
+      brightness_sensor: sensor.smartnode_garaje_room_brightness
+
+      # Switches a controlar
+      target_lights:
+        - switch.luz_garaje_principal
+        - switch.luz_garaje_entrada
+
+      # Configuración de iluminación
+      brightness_level: 100     # No aplica a switches
+      transition_time: 0        # No aplica a switches
+
+      # Condiciones y umbrales
+      brightness_threshold: 30
+      only_when_dark: false     # Funciona siempre
+
+      # Delays y timing
+      turn_on_delay: 0
+      turn_off_delay: 20        # Apagado rápido
+
+      # Opciones avanzadas
+      enable_logging: true
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 7: OFICINA - Debug Mode Completo
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Configuración para depuración y ajuste fino
+#   - Logs habilitados
+#   - Delays ajustables para pruebas
+
+automation oficina_debug:
+  alias: "Oficina - Luces Automáticas (Debug)"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode
+      presence_sensor: binary_sensor.smartnode_oficina_presence
+      brightness_sensor: sensor.smartnode_oficina_room_brightness
+
+      # Luces a controlar
+      target_lights:
+        - light.luz_escritorio
+        - light.luz_techo_oficina
+        - light.lampara_pie_oficina
+
+      # Configuración de iluminación
+      brightness_level: 75
+      transition_time: 1
+
+      # Condiciones y umbrales
+      brightness_threshold: 35
+      only_when_dark: true
+
+      # Delays y timing
+      turn_on_delay: 2          # Delay más largo para debug
+      turn_off_delay: 45
+
+      # Opciones avanzadas
+      enable_logging: true      # ← Ver todo en Logbook
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 8: DORMITORIO CON LÍMITE DE DISTANCIA - Evitar Pasillo
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Usa límite de distancia para evitar activaciones desde el pasillo
+#   - El sensor detecta hasta 6m pero solo queremos activar a ≤3m
+#   - Ideal cuando la habitación está cerca de zonas de tránsito
+
+automation dormitorio_con_limite_distancia:
+  alias: "Dormitorio Principal - Con Límite de Distancia"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Sensores del SmartNode (incluye sensor de distancia)
+      presence_sensor: binary_sensor.smartnode_dormitorio_presence
+      brightness_sensor: sensor.smartnode_dormitorio_room_brightness
+      distance_sensor: sensor.smartnode_dormitorio_detection_distance  # ← Obligatorio si usas límite
+
+      # Luces a controlar
+      target_lights:
+        - light.lampara_noche
+        - light.luz_techo_dormitorio
+
+      # Configuración de iluminación
+      brightness_level: 60
+      transition_time: 1
+
+      # Condiciones y umbrales
+      brightness_threshold: 30
+      only_when_dark: true
+      max_detection_distance: 3    # ← CLAVE: Solo enciende si estás a ≤3m
+
+      # Delays y timing
+      turn_on_delay: 0
+      turn_off_delay: 60
+
+      # Opciones avanzadas
+      enable_logging: true
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EJEMPLO 9: HABITACIÓN INVITADOS - Configuración Mínima
+# ══════════════════════════════════════════════════════════════════════════════
+# Descripción:
+#   - Solo parámetros obligatorios
+#   - Usa todos los defaults
+#   - Configuración más simple posible
+
+automation habitacion_invitados:
+  alias: "Habitación Invitados - Luces Automáticas"
+  use_blueprint:
+    path: smartnode_multi_light_presence.yaml
+    input:
+      # Solo parámetros obligatorios
+      presence_sensor: binary_sensor.smartnode_invitados_presence
+      brightness_sensor: sensor.smartnode_invitados_room_brightness
+      target_lights:
+        - light.luz_habitacion_invitados
+
+      # Todos los demás parámetros usan defaults:
+      # distance_sensor: "" (sin sensor de distancia)
+      # brightness_level: 80
+      # transition_time: 1
+      # brightness_threshold: 30
+      # only_when_dark: true
+      # max_detection_distance: 0 (sin límite)
+      # turn_on_delay: 0
+      # turn_off_delay: 60
+      # enable_logging: true
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NOTAS ADICIONALES
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 1. AJUSTE DE UMBRALES
+#    - Habitaciones con ventanas grandes: 25-30%
+#    - Habitaciones interiores: 35-40%
+#    - Pasillos sin ventanas: 40-50%
+
+# 2. DELAYS RECOMENDADOS
+#    - Baños: 30-60s
+#    - Dormitorios: 60-120s
+#    - Pasillos: 30-45s
+#    - Cocina: 90-120s
+#    - Garajes: 15-30s
+
+# 3. NIVELES DE BRILLO
+#    - Noche (dormitorios): 40-60%
+#    - Noche (pasillos): 30-50%
+#    - Día/Noche (baños): 80-100%
+#    - Trabajo (oficina): 70-90%
+
+# 4. TRANSICIONES
+#    - Rápidas (garaje, baño): 0-0.5s
+#    - Normales (dormitorio): 1-1.5s
+#    - Suaves (sala estar): 2-3s
+
+# 5. USO DE GRUPOS
+#    Para simplificar, crea grupos de luces:
+#
+#    light:
+#      - platform: group
+#        name: "Luces Dormitorio Principal"
+#        entities:
+#          - light.lampara_noche_izq
+#          - light.lampara_noche_der
+#          - light.luz_techo_dormitorio
+#          - light.luz_vestidor
+#
+#    Luego usa el grupo en target_lights
+
+# 6. LÍMITE DE DISTANCIA
+#    - Usar cuando el sensor detecta zonas no deseadas (pasillos, habitaciones adyacentes)
+#    - Valores recomendados:
+#      * Dormitorios pequeños: 2-3m
+#      * Dormitorios grandes: 4-5m
+#      * Baños: 2-3m
+#      * Cocina: 3-4m
+#      * Pasillos: 0m (sin límite)
+#    - IMPORTANTE: Debes configurar el sensor de distancia para que funcione
+#    - Si pones 0m (default) → No se aplica límite de distancia
+
+# 7. COMPATIBILIDAD
+#    ✅ Luces inteligentes con dimmer (Philips Hue, IKEA Tradfri, etc.)
+#    ✅ Luces inteligentes on/off
+#    ✅ Switches/Relés (Sonoff, Shelly, etc.)
+#    ✅ Grupos de luces
+#    ✅ Mezcla de tipos (luces + switches)
+

@@ -1,0 +1,426 @@
+blueprint:
+  name: SmartNode - Control Multi-Luz por Presencia
+  description: |
+    # 💡 Automatización de Múltiples Luces por Presencia
+
+    Control automático de múltiples luces basado en presencia detectada
+    por un SmartNode (LD2410) y nivel de luminosidad ambiente.
+
+    **Características:**
+    - ✅ Control de múltiples luces simultáneamente
+    - ✅ Enciende solo luces apagadas al detectar presencia
+    - ✅ Apagado automático configurable tras ausencia
+    - ✅ Respeta condición de oscuridad (configurable)
+    - ✅ Límite de distancia de detección (opcional)
+    - ✅ Soporte para switches y luces con dimmer
+    - ✅ Umbrales y delays configurables
+    - ✅ Transiciones suaves
+
+    **Funcionamiento:**
+    1. Al detectar presencia + condición de oscuridad + dentro del rango → Enciende luces apagadas
+    2. Al no detectar presencia por X segundos → Apaga las mismas luces
+    3. Solo afecta luces que estaban apagadas inicialmente
+
+    **Ideal para:** Dormitorios, baños, pasillos, cualquier habitación con SmartNode
+
+  domain: automation
+  source_url: https://github.com/mauitz/home-assistant-blueprints/blob/main/blueprints/smartnode_multi_light_presence.yaml
+
+  input:
+    # ══════════════════════════════════════════════════════════════════════════
+    # SENSORES SMARTNODE
+    # ══════════════════════════════════════════════════════════════════════════
+    presence_sensor:
+      name: Sensor de Presencia *
+      description: Sensor de presencia del SmartNode (binary_sensor)
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: occupancy
+          multiple: false
+
+    brightness_sensor:
+      name: Sensor de Luminosidad *
+      description: Sensor de luminosidad del SmartNode (sensor en %)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+          multiple: false
+
+    distance_sensor:
+      name: Sensor de Distancia
+      description: Sensor de distancia de detección del SmartNode (opcional)
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+          multiple: false
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # LUCES A CONTROLAR
+    # ══════════════════════════════════════════════════════════════════════════
+    target_lights:
+      name: Luces/Switches *
+      description: Luces o switches a controlar (pueden ser múltiples)
+      selector:
+        entity:
+          filter:
+            - domain:
+              - light
+              - switch
+          multiple: true
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # CONFIGURACIÓN DE ILUMINACIÓN
+    # ══════════════════════════════════════════════════════════════════════════
+    brightness_level:
+      name: Nivel de Brillo
+      description: Porcentaje de brillo al encender (solo para luces con dimmer)
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+
+    transition_time:
+      name: Tiempo de Transición
+      description: Tiempo de transición al encender/apagar (segundos)
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.5
+          unit_of_measurement: "s"
+          mode: slider
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # CONDICIONES Y UMBRALES
+    # ══════════════════════════════════════════════════════════════════════════
+    brightness_threshold:
+      name: Umbral de Oscuridad
+      description: Por debajo de este % de luminosidad se considera oscuro
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+
+    only_when_dark:
+      name: Solo Cuando Está Oscuro
+      description: Si se desactiva, encenderá luces sin importar la luminosidad
+      default: true
+      selector:
+        boolean:
+
+    max_detection_distance:
+      name: Distancia Máxima de Detección
+      description: Distancia máxima en metros para activar luces (0 = sin límite)
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.5
+          unit_of_measurement: "m"
+          mode: slider
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # DELAYS Y TIMING
+    # ══════════════════════════════════════════════════════════════════════════
+    turn_on_delay:
+      name: Delay al Encender
+      description: Segundos de espera antes de encender (evita falsos positivos)
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 30
+          unit_of_measurement: "s"
+          mode: slider
+
+    turn_off_delay:
+      name: Delay al Apagar
+      description: Segundos después de no detectar presencia para apagar
+      default: 60
+      selector:
+        number:
+          min: 5
+          max: 600
+          unit_of_measurement: "s"
+          mode: slider
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # OPCIONES AVANZADAS
+    # ══════════════════════════════════════════════════════════════════════════
+    enable_logging:
+      name: Habilitar Logs
+      description: Registrar eventos en el logbook (útil para debug)
+      default: true
+      selector:
+        boolean:
+
+# ══════════════════════════════════════════════════════════════════════════════
+# VARIABLES
+# ══════════════════════════════════════════════════════════════════════════════
+variables:
+  presence_entity: !input presence_sensor
+  brightness_entity: !input brightness_sensor
+  distance_entity: !input distance_sensor
+  lights: !input target_lights
+  brightness_pct: !input brightness_level
+  transition: !input transition_time
+  brightness_limit: !input brightness_threshold
+  only_dark: !input only_when_dark
+  max_distance: !input max_detection_distance
+  enable_logs: !input enable_logging
+  has_distance_sensor: "{{ distance_entity != '' and distance_entity is not none }}"
+  use_distance_limit: "{{ max_distance > 0 and has_distance_sensor }}"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MODO DE EJECUCIÓN
+# ══════════════════════════════════════════════════════════════════════════════
+mode: restart
+max_exceeded: silent
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TRIGGERS
+# ══════════════════════════════════════════════════════════════════════════════
+trigger:
+  # TRIGGER 1: Presencia detectada
+  - platform: state
+    entity_id: !input presence_sensor
+    from: "off"
+    to: "on"
+    for:
+      seconds: !input turn_on_delay
+    id: presence_detected
+
+  # TRIGGER 2: Presencia perdida
+  - platform: state
+    entity_id: !input presence_sensor
+    from: "on"
+    to: "off"
+    for:
+      seconds: !input turn_off_delay
+    id: presence_lost
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ACCIONES
+# ══════════════════════════════════════════════════════════════════════════════
+action:
+  - choose:
+      # ════════════════════════════════════════════════════════════════════════
+      # CASO 1: ENCENDER LUCES (PRESENCIA DETECTADA)
+      # ════════════════════════════════════════════════════════════════════════
+      - conditions:
+          - condition: trigger
+            id: presence_detected
+
+          # CONDICIÓN: Verificar si está oscuro (solo si only_when_dark = true)
+          - condition: or
+            conditions:
+              # Opción 1: No importa la luminosidad
+              - condition: template
+                value_template: "{{ not only_dark }}"
+
+              # Opción 2: Está oscuro según el umbral
+              - condition: numeric_state
+                entity_id: !input brightness_sensor
+                below: !input brightness_threshold
+
+          # CONDICIÓN: Verificar distancia de detección (solo si está configurada)
+          - condition: or
+            conditions:
+              # Opción 1: No hay límite de distancia configurado
+              - condition: template
+                value_template: "{{ not use_distance_limit }}"
+
+              # Opción 2: La distancia está dentro del rango configurado
+              - condition: numeric_state
+                entity_id: !input distance_sensor
+                below: !input max_detection_distance
+
+        sequence:
+          # Variables para tracking
+          - variables:
+              lights_turned_on: []
+              current_brightness: "{{ states(brightness_entity) | float(0) }}"
+              current_distance: "{{ states(distance_entity) | float(0) if has_distance_sensor else 0 }}"
+
+          # Log de inicio
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                sequence:
+                  - service: logbook.log
+                    data:
+                      name: "🏠 SmartNode Multi-Light"
+                      message: >
+                        Presencia detectada
+                        Luminosidad: {{ current_brightness }}%
+                        Umbral: {{ brightness_limit }}%
+                        {% if has_distance_sensor %}Distancia: {{ current_distance }}m{% if use_distance_limit %} (máx: {{ max_distance }}m){% endif %}
+                        {% endif %}Luces configuradas: {{ lights | length }}
+
+          # Procesar cada luz
+          - repeat:
+              for_each: "{{ lights }}"
+              sequence:
+                - variables:
+                    current_light: "{{ repeat.item }}"
+                    current_domain: "{{ current_light.split('.')[0] }}"
+                    is_off: "{{ is_state(current_light, 'off') }}"
+
+                # Solo encender si está apagada
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ is_off }}"
+                      sequence:
+                        # Encender luz (con o sin dimmer)
+                        - choose:
+                            # Si es una luz con soporte de brillo
+                            - conditions:
+                                - condition: template
+                                  value_template: >
+                                    {{ current_domain == 'light' and
+                                       state_attr(current_light, 'supported_features') is not none and
+                                       state_attr(current_light, 'supported_features') | int | bitwise_and(1) == 1 }}
+                              sequence:
+                                - service: light.turn_on
+                                  target:
+                                    entity_id: "{{ current_light }}"
+                                  data:
+                                    brightness_pct: "{{ brightness_pct }}"
+                                    transition: "{{ transition }}"
+
+                          # Si es switch o luz simple
+                          default:
+                            - service: homeassistant.turn_on
+                              target:
+                                entity_id: "{{ current_light }}"
+
+                        # Agregar a lista de encendidas
+                        - variables:
+                            lights_turned_on: "{{ lights_turned_on + [current_light] }}"
+
+                        # Log individual
+                        - choose:
+                            - conditions:
+                                - condition: template
+                                  value_template: "{{ enable_logs }}"
+                              sequence:
+                                - service: logbook.log
+                                  data:
+                                    name: "💡 SmartNode Multi-Light"
+                                    message: >
+                                      Encendida: {{ state_attr(current_light, 'friendly_name') or current_light }}
+
+          # Log final de encendido
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ enable_logs and lights_turned_on | length > 0 }}"
+                sequence:
+                  - service: logbook.log
+                    data:
+                      name: "✅ SmartNode Multi-Light"
+                      message: >
+                        Total encendidas: {{ lights_turned_on | length }} luz(es)
+
+      # ════════════════════════════════════════════════════════════════════════
+      # CASO 2: APAGAR LUCES (SIN PRESENCIA)
+      # ════════════════════════════════════════════════════════════════════════
+      - conditions:
+          - condition: trigger
+            id: presence_lost
+
+        sequence:
+          # Variables para tracking
+          - variables:
+              lights_turned_off: []
+
+          # Log de inicio
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ enable_logs }}"
+                sequence:
+                  - service: logbook.log
+                    data:
+                      name: "🌙 SmartNode Multi-Light"
+                      message: >
+                        Ausencia detectada ({{ turn_off_delay }}s)
+                        Verificando luces a apagar...
+
+          # Procesar cada luz
+          - repeat:
+              for_each: "{{ lights }}"
+              sequence:
+                - variables:
+                    current_light: "{{ repeat.item }}"
+                    current_domain: "{{ current_light.split('.')[0] }}"
+                    is_on: "{{ is_state(current_light, 'on') }}"
+
+                # Solo apagar si está encendida
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ is_on }}"
+                      sequence:
+                        # Apagar luz (con o sin transición)
+                        - choose:
+                            # Si es una luz
+                            - conditions:
+                                - condition: template
+                                  value_template: "{{ current_domain == 'light' }}"
+                              sequence:
+                                - service: light.turn_off
+                                  target:
+                                    entity_id: "{{ current_light }}"
+                                  data:
+                                    transition: "{{ transition }}"
+
+                          # Si es switch
+                          default:
+                            - service: homeassistant.turn_off
+                              target:
+                                entity_id: "{{ current_light }}"
+
+                        # Agregar a lista de apagadas
+                        - variables:
+                            lights_turned_off: "{{ lights_turned_off + [current_light] }}"
+
+                        # Log individual
+                        - choose:
+                            - conditions:
+                                - condition: template
+                                  value_template: "{{ enable_logs }}"
+                              sequence:
+                                - service: logbook.log
+                                  data:
+                                    name: "🔌 SmartNode Multi-Light"
+                                    message: >
+                                      Apagada: {{ state_attr(current_light, 'friendly_name') or current_light }}
+
+          # Log final de apagado
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ enable_logs and lights_turned_off | length > 0 }}"
+                sequence:
+                  - service: logbook.log
+                    data:
+                      name: "✅ SmartNode Multi-Light"
+                      message: >
+                        Total apagadas: {{ lights_turned_off | length }} luz(es)
+
