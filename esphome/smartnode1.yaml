@@ -14,27 +14,28 @@ logger:
 api:
   encryption:
     key: "uiBug7J/YQ2WEQwAinei45aUGm7L9cf6Sp82nI4GuIU="
+  reauth_timeout: 5min  # Reconexión rápida tras desconexión
 
 ota:
   - platform: esphome
     password: "fc6b855770911eb3179ff203b83f5ec8"
 
 wifi:
-  ssid: "PA Devices_2G"
-  password: "R3spons3d3v1s3s"
+  ssid: "sunsetlabs-2.4GHz"
+  password: "bienvenido"
 
-  # IP estática para evitar problemas DHCP
+  # IP estática configurada
   manual_ip:
     static_ip: 192.168.1.13
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
 
-  # Optimización para conexión más estable
+  # Optimización para respuesta rápida (conectado a corriente)
   fast_connect: true
   reboot_timeout: 15min
-  power_save_mode: none
-  output_power: 8.5dB
+  power_save_mode: none   # Sin ahorro WiFi - respuesta rápida (80-120ms)
+  output_power: 10dB      # Potencia moderada para balance estabilidad/consumo
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -68,23 +69,24 @@ uart:
   stop_bits: 1
 
 ld2410:
+  # Configuración optimizada para respuesta rápida
 
 # Parámetros avanzados para el LD2410
 sensor:
-  # LDR - Sensor de Luz (CORREGIDO)
+  # LDR - Sensor de Luz (CORREGIDO - Invertido)
   - platform: adc
     pin: 32
     name: "Room Brightness"
-    update_interval: 5s
+    update_interval: 30s  # Optimizado: la luz no cambia tan rápido
     accuracy_decimals: 0
     unit_of_measurement: "%"
     attenuation: 12db  # Rango completo 0-3.3V
     samples: 3
     filters:
-      # Convertir a porcentaje (más luz = mayor %)
+      # Invertir: El circuito da bajo voltaje con mucha luz
       - calibrate_linear:
-          - 0.0 -> 0.0    # Oscuridad total
-          - 3.3 -> 100.0  # Luz máxima
+          - 0.0 -> 100.0  # Voltaje bajo = Mucha luz = 100%
+          - 3.3 -> 0.0    # Voltaje alto = Oscuridad = 0%
       - lambda: 'return round(x);'
 
   - platform: dht
@@ -101,7 +103,7 @@ sensor:
     pin: 35  # GPIO35 (ADC disponible)
     name: "Battery Voltage"
     id: battery_voltage
-    update_interval: 30s
+    update_interval: 60s  # Optimizado: no necesita actualización tan frecuente
     accuracy_decimals: 2
     unit_of_measurement: "V"
     attenuation: 12db
@@ -122,7 +124,7 @@ sensor:
     id: battery_level
     unit_of_measurement: "%"
     accuracy_decimals: 0
-    update_interval: 30s
+    update_interval: 60s  # Sincronizado con Battery Voltage
     icon: "mdi:battery"
     device_class: battery
     lambda: |-
@@ -140,7 +142,7 @@ sensor:
     id: sound_level
     unit_of_measurement: "dB"
     accuracy_decimals: 1
-    update_interval: 1s
+    update_interval: 30s  # Optimizado: sensor no implementado aún
     icon: "mdi:microphone"
     lambda: |-
       // TODO: Implementar procesamiento de audio desde INMP441
@@ -149,60 +151,28 @@ sensor:
 
   - platform: ld2410
     moving_distance:
-      name : Moving Distance
+      name: Moving Distance
+      filters:
+        - delta: 0.1  # Solo reportar si cambia ±10cm
     still_distance:
       name: Still Distance
+      filters:
+        - delta: 0.1  # Solo reportar si cambia ±10cm
     moving_energy:
       name: Move Energy
+      filters:
+        - throttle: 5s  # Máximo 1 reporte cada 5s
     still_energy:
       name: Still Energy
+      filters:
+        - throttle: 5s  # Máximo 1 reporte cada 5s
     detection_distance:
       name: Detection Distance
-    g0:
-      move_energy:
-        name: g0 move energy
-      still_energy:
-        name: g0 still energy
-    g1:
-      move_energy:
-        name: g1 move energy
-      still_energy:
-        name: g1 still energy
-    g2:
-      move_energy:
-        name: g2 move energy
-      still_energy:
-        name: g2 still energy
-    g3:
-      move_energy:
-        name: g3 move energy
-      still_energy:
-        name: g3 still energy
-    g4:
-      move_energy:
-        name: g4 move energy
-      still_energy:
-        name: g4 still energy
-    g5:
-      move_energy:
-        name: g5 move energy
-      still_energy:
-        name: g5 still energy
-    g6:
-      move_energy:
-        name: g6 move energy
-      still_energy:
-        name: g6 still energy
-    g7:
-      move_energy:
-        name: g7 move energy
-      still_energy:
-        name: g7 still energy
-    g8:
-      move_energy:
-        name: g8 move energy
-      still_energy:
-        name: g8 still energy
+      filters:
+        - delta: 0.2      # Solo reportar si cambia ±20cm
+        - throttle: 500ms # Máximo 2 reportes por segundo
+    # Sensores g0-g8 eliminados para reducir tráfico WiFi
+    # Solo se mantienen los 5 sensores esenciales con filtros optimizados
 
 # Parámetros principales para el LD2410
 binary_sensor:
