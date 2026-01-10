@@ -475,4 +475,4 @@ Si encuentras problemas:
 ---
 
 **Última actualización:** 2026-01-10
-**Versión:** 3.4
+**Versión:** 3.5

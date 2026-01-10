@@ -500,72 +500,84 @@ views:
         view_layout:
           grid-column: 1 / -1
         cards:
-          # Badge de Estado (SOLO VISUAL - NO CLICKEABLE)
-          - type: markdown
-            content: |
-              {% set running = is_state('input_boolean.presence_simulation_running', 'on') %}
-              {% set paused = is_state('input_boolean.presence_simulation_paused', 'on') %}
-              {% set lights = states('input_number.presence_simulation_lights_on_count') | int(0) %}
-              {% set loop = states('input_number.presence_simulation_loop_counter') | int(0) %}
-
-              {% if running and paused %}
-                # ⏸️ SIMULACIÓN EN PAUSA | {{ lights }} luces encendidas
-              {% elif running %}
-                # 🔄 SIMULACIÓN ACTIVA | {{ lights }} luces | Loop {{ loop }}
-              {% else %}
-                # ⚫ SIMULACIÓN INACTIVA
-              {% endif %}
+          # Badge de Estado Animado
+          - type: custom:button-card
+            entity: input_boolean.presence_simulation_running
+            name: |
+              [[[
+                if (entity.state === 'on') {
+                  const pausado = states['input_boolean.presence_simulation_paused']?.state === 'on';
+                  if (pausado) {
+                    const lights = parseInt(states['input_number.presence_simulation_lights_on_count']?.state) || 0;
+                    return `⏸️ SIMULACIÓN EN PAUSA | ${lights} luces encendidas`;
+                  }
+                  const lights = parseInt(states['input_number.presence_simulation_lights_on_count']?.state) || 0;
+                  const loop = parseInt(states['input_number.presence_simulation_loop_counter']?.state) || 0;
+                  return `🔄 SIMULACIÓN ACTIVA | ${lights} luces | Loop ${loop}`;
+                } else if (states['input_boolean.presence_simulation']?.state === 'off') {
+                  return '⚫ SIMULACIÓN INACTIVA';
+                } else {
+                  return '⏳ DETENIENDO...';
+                }
+              ]]]
+            show_state: false
+            styles:
+              card:
+                - height: 80px
+                - border-radius: 12px
+                - font-size: 15px
+                - font-weight: 600
+                - letter-spacing: 0.5px
+                - border: none
+              name:
+                - justify-self: center
+                - align-self: center
+            state:
+              - value: 'on'
+                styles:
+                  card:
+                    - background: |
+                        [[[
+                          const pausado = states['input_boolean.presence_simulation_paused']?.state === 'on';
+                          if (pausado) {
+                            return 'linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 146, 60, 0.25) 100%)';
+                          }
+                          return 'linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)';
+                        ]]]
+                    - animation: |
+                        [[[
+                          const pausado = states['input_boolean.presence_simulation_paused']?.state === 'on';
+                          return pausado ? 'none' : 'glow-green 2s ease-in-out infinite';
+                        ]]]
+                    - border: |
+                        [[[
+                          const pausado = states['input_boolean.presence_simulation_paused']?.state === 'on';
+                          return pausado ? '2px solid rgba(245, 158, 11, 0.5)' : '2px solid rgba(16, 185, 129, 0.5)';
+                        ]]]
+                  name:
+                    - color: |
+                        [[[
+                          const pausado = states['input_boolean.presence_simulation_paused']?.state === 'on';
+                          return pausado ? '#F59E0B' : '#10B981';
+                        ]]]
+              - value: 'off'
+                styles:
+                  card:
+                    - background: 'rgba(50, 50, 50, 0.3)'
+                    - border: '1px solid #2A2A2A'
+                  name:
+                    - color: '#666666'
             card_mod:
               style: |
-                ha-card {
-                  height: 80px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  border-radius: 12px;
-                  border: none;
-                  {% set running = is_state('input_boolean.presence_simulation_running', 'on') %}
-                  {% set paused = is_state('input_boolean.presence_simulation_paused', 'on') %}
-                  {% if running and paused %}
-                    background: linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 146, 60, 0.25) 100%);
-                    border: 2px solid rgba(245, 158, 11, 0.5);
-                  {% elif running %}
-                    background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%);
-                    border: 2px solid rgba(16, 185, 129, 0.5);
-                    animation: glow-green 2s ease-in-out infinite;
-                  {% else %}
-                    background: rgba(50, 50, 50, 0.3);
-                    border: 1px solid #2A2A2A;
-                  {% endif %}
-                }
-                ha-markdown {
-                  width: 100%;
-                  text-align: center;
-                }
-                ha-markdown h1 {
-                  font-size: 15px;
-                  font-weight: 600;
-                  letter-spacing: 0.5px;
-                  margin: 0;
-                  {% set running = is_state('input_boolean.presence_simulation_running', 'on') %}
-                  {% set paused = is_state('input_boolean.presence_simulation_paused', 'on') %}
-                  {% if running and paused %}
-                    color: #F59E0B;
-                  {% elif running %}
-                    color: #10B981;
-                  {% else %}
-                    color: #666666;
-                  {% endif %}
-                }
                 @keyframes glow-green {
                   0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
                   50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); }
                 }
 
-          # Botones de Control (SOLO 3 BOTONES SIMPLES)
+          # Botones de Control START/PAUSE/RESUME/STOP
           - type: horizontal-stack
             cards:
-              # Botón 1: INICIAR (cuando está OFF)
+              # Botón 1: INICIAR (solo cuando OFF)
               - type: conditional
                 conditions:
                   - entity: input_boolean.presence_simulation
@@ -601,25 +613,29 @@ views:
                         transition: all 0.3s ease;
                       }
 
-              # Botón 2: PAUSA / REANUDAR (toggle cuando está ON)
+              # Botón 2: PAUSAR (solo cuando ON y NO pausado)
               - type: conditional
                 conditions:
-                  - entity: input_boolean.presence_simulation
+                  - entity: input_boolean.presence_simulation_running
                     state: "on"
+                  - entity: input_boolean.presence_simulation_paused
+                    state: "off"
                 card:
                   type: custom:button-card
-                  entity: input_boolean.presence_simulation_paused
-                  name: |
-                    [[[ return entity.state === 'on' ? 'REANUDAR' : 'PAUSAR'; ]]]
-                  icon: |
-                    [[[ return entity.state === 'on' ? 'mdi:play-circle' : 'mdi:pause'; ]]]
+                  name: PAUSAR
+                  icon: mdi:pause
                   tap_action:
-                    action: toggle
+                    action: call-service
+                    service: input_boolean.turn_on
+                    service_data:
+                      entity_id: input_boolean.presence_simulation_paused
                   styles:
                     card:
                       - height: 60px
                       - border-radius: 8px
+                      - background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
                       - border: none
+                      - box-shadow: '0 4px 12px rgba(245, 158, 11, 0.4)'
                     icon:
                       - width: 24px
                       - color: white
@@ -627,21 +643,47 @@ views:
                       - font-size: 13px
                       - font-weight: 600
                       - color: white
-                  state:
-                    - value: 'on'
-                      styles:
-                        card:
-                          - background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                          - box-shadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
-                    - value: 'off'
-                      styles:
-                        card:
-                          - background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-                          - box-shadow: '0 4px 12px rgba(245, 158, 11, 0.4)'
                   card_mod:
                     style: |
                       ha-card:hover {
                         transform: translateY(-2px);
+                        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5) !important;
+                        transition: all 0.3s ease;
+                      }
+
+              # Botón 2B: REANUDAR (solo cuando pausado)
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.presence_simulation_paused
+                    state: "on"
+                card:
+                  type: custom:button-card
+                  name: REANUDAR
+                  icon: mdi:play-circle
+                  tap_action:
+                    action: call-service
+                    service: input_boolean.turn_off
+                    service_data:
+                      entity_id: input_boolean.presence_simulation_paused
+                  styles:
+                    card:
+                      - height: 60px
+                      - border-radius: 8px
+                      - background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                      - border: none
+                      - box-shadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
+                    icon:
+                      - width: 24px
+                      - color: white
+                    name:
+                      - font-size: 13px
+                      - font-weight: 600
+                      - color: white
+                  card_mod:
+                    style: |
+                      ha-card:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5) !important;
                         transition: all 0.3s ease;
                       }
 
@@ -832,11 +874,34 @@ views:
 
           ---
 
-          ### ⏱️ Tiempos
+          ### ⏱️ Timing de Ejecución
 
           **Fecha inicio:** {{ states('input_datetime.presence_simulation_start_time') }}
           **Tiempo activo:** {{ states('sensor.presence_simulation_runtime') }}
           **Tiempo restante:** {{ states('sensor.presence_simulation_time_remaining') }}
+
+          ---
+
+          ### ⚙️ Parámetros de Automatización
+
+          | Parámetro | Valor |
+          |-----------|-------|
+          | 🔢 **Max luces simultáneas** | 2 |
+          | ⏱️ **Tiempo encendido** | 2-3 min |
+          | ⏲️ **Delay entre luces** | 5-10 seg |
+          | 🔄 **Loops totales** | 2 |
+          | 💤 **Delay entre loops** | 1-2 min |
+          | 💡 **Dispositivos** | 6 switches |
+
+          ---
+
+          ### 📖 Flujo de Ejecución
+
+          1. **Rotación** → Enciende/apaga luces cada 5-10 seg
+          2. **Mantener** → Últimas 2 encendidas por 2-3 min
+          3. **Apagar** → Todas las luces se apagan
+          4. **Pausa** → Espera 1-2 min entre loops
+          5. **Repetir** → Vuelve al paso 1 (con orden aleatorio)
 
           ---
 

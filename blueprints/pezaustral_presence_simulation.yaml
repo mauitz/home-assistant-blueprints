@@ -430,6 +430,19 @@ action:
                                 data:
                                   value: "{{ lights_currently_on | length }}"
 
+                              # Actualizar última luz apagada
+                              - service: input_text.set_value
+                                target:
+                                  entity_id: input_text.presence_simulation_last_light_off
+                                data:
+                                  value: "{{ state_attr(light_to_turn_off, 'friendly_name') or light_to_turn_off }}"
+
+                              - service: input_datetime.set_datetime
+                                target:
+                                  entity_id: input_datetime.presence_simulation_last_update
+                                data:
+                                  datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
               # ┌─────────────────────────────────────────────────────────────┐
               # │ ENCENDER LUZ NUEVA                                          │
               # └─────────────────────────────────────────────────────────────┘
@@ -480,6 +493,19 @@ action:
                               {% set ns.names = ns.names + [name] %}
                             {% endfor %}
                             {{ ns.names | join(', ') if ns.names | length > 0 else 'Ninguna' }}
+
+                      # Actualizar última luz encendida
+                      - service: input_text.set_value
+                        target:
+                          entity_id: input_text.presence_simulation_last_light_on
+                        data:
+                          value: "{{ state_attr(current_light, 'friendly_name') or current_light }}"
+
+                      - service: input_datetime.set_datetime
+                        target:
+                          entity_id: input_datetime.presence_simulation_last_update
+                        data:
+                          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
 
               # ┌─────────────────────────────────────────────────────────────┐
               # │ DELAY CORTO ANTES DE LA SIGUIENTE LUZ                       │
