@@ -26,6 +26,12 @@ input_boolean:
     name: Simulación Activa
     icon: mdi:play-circle
     initial: off
+  
+  # Estado de pausa (v2.2)
+  presence_simulation_paused:
+    name: Simulación en Pausa
+    icon: mdi:pause-circle
+    initial: off
 
 # ──────────────────────────────────────────────────────────────────────────
 # INPUT NUMBERS - Contadores

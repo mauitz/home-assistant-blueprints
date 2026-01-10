@@ -1,0 +1,66 @@
+# Script para Resetear Presence Simulation
+# Limpia todos los valores de los helpers dinámicos
+
+reset_presence_simulation:
+  alias: "Reset Presence Simulation"
+  icon: mdi:refresh
+  sequence:
+    # Apagar control principal
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.presence_simulation
+    
+    # Apagar running
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.presence_simulation_running
+    
+    # Apagar paused
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.presence_simulation_paused
+    
+    # Resetear contadores
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.presence_simulation_loop_counter
+      data:
+        value: 0
+    
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.presence_simulation_lights_on_count
+      data:
+        value: 0
+    
+    # Resetear textos
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.presence_simulation_status
+      data:
+        value: "Inactiva"
+    
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.presence_simulation_active_lights
+      data:
+        value: "Ninguna"
+    
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.presence_simulation_last_light_on
+      data:
+        value: "-"
+    
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.presence_simulation_last_light_off
+      data:
+        value: "-"
+    
+    # Log
+    - service: logbook.log
+      data:
+        name: "🔄 Presence Simulation"
+        message: "Reset completo - Todos los valores limpiados"
+

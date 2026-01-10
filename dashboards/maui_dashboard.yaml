@@ -270,127 +270,6 @@ views:
               box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4) !important;
               transition: all 0.3s ease;
             }
-      - type: markdown
-        content: |
-          # Simulación de Presencia
-        view_layout:
-          grid-column: 1 / -1
-        card_mod:
-          style: |
-            ha-card {
-              background: none;
-              box-shadow: none;
-              margin-bottom: -12px;
-              margin-top: 24px;
-            }
-            h1 {
-              font-size: 18px;
-              font-weight: 400;
-              margin: 0;
-              color: #A0A0A0;
-              letter-spacing: 0.5px;
-            }
-      - type: vertical-stack
-        cards:
-          - type: entities
-            title: 🏠 Estado y Control
-            show_header_toggle: false
-            entities:
-              - entity: input_boolean.presence_simulation
-                name: Control Principal
-                icon: mdi:power
-              - entity: input_boolean.presence_simulation_running
-                name: Estado Ejecución
-                icon: mdi:run
-              - entity: input_text.presence_simulation_status
-                name: Estado Actual
-                icon: mdi:information-outline
-            card_mod:
-              style: |
-                ha-card {
-                  background: #1A1A1A;
-                  border: 1px solid #2A2A2A;
-                  border-radius: 12px 12px 0 0;
-                  box-shadow: none;
-                }
-                .card-header {
-                  background: linear-gradient(90deg, rgba(66, 165, 245, 0.15) 0%, transparent 100%);
-                  border-left: 4px solid #42A5F5;
-                  padding: 12px 16px;
-                  font-size: 14px;
-                  font-weight: 600;
-                  color: #42A5F5;
-                }
-          - type: entities
-            title: ⏱️ Progreso y Tiempo
-            show_header_toggle: false
-            entities:
-              - entity: sensor.presence_simulation_runtime
-                name: Tiempo Activo
-                icon: mdi:timer-outline
-              - entity: sensor.presence_simulation_progress
-                name: Progreso
-                icon: mdi:progress-clock
-              - entity: input_number.presence_simulation_loop_counter
-                name: Loop Actual
-                icon: mdi:counter
-              - entity: input_number.presence_simulation_loop_total
-                name: Loops Totales
-                icon: mdi:format-list-numbered
-              - entity: sensor.presence_simulation_time_remaining
-                name: Tiempo Restante
-                icon: mdi:timer-sand
-            card_mod:
-              style: |
-                ha-card {
-                  background: #1A1A1A;
-                  border: 1px solid #2A2A2A;
-                  border-top: none;
-                  border-radius: 0;
-                  box-shadow: none;
-                  margin-top: -1px;
-                }
-                .card-header {
-                  background: linear-gradient(90deg, rgba(255, 152, 0, 0.15) 0%, transparent 100%);
-                  border-left: 4px solid #FF9800;
-                  padding: 12px 16px;
-                  font-size: 14px;
-                  font-weight: 600;
-                  color: #FF9800;
-                }
-          - type: entities
-            title: 💡 Luces Activas
-            show_header_toggle: false
-            entities:
-              - entity: input_number.presence_simulation_lights_on_count
-                name: Cantidad de Luces
-                icon: mdi:lightbulb-multiple
-              - entity: input_text.presence_simulation_active_lights
-                name: Dispositivos
-                icon: mdi:format-list-bulleted
-              - entity: input_text.presence_simulation_last_light_on
-                name: Última Encendida
-                icon: mdi:lightbulb-on
-              - entity: input_text.presence_simulation_last_light_off
-                name: Última Apagada
-                icon: mdi:lightbulb-off
-            card_mod:
-              style: |
-                ha-card {
-                  background: #1A1A1A;
-                  border: 1px solid #2A2A2A;
-                  border-radius: 0 0 12px 12px;
-                  box-shadow: none;
-                  margin-top: -1px;
-                }
-                .card-header {
-                  background: linear-gradient(90deg, rgba(76, 175, 80, 0.15) 0%, transparent 100%);
-                  border-left: 4px solid #4CAF50;
-                  padding: 12px 16px;
-                  font-size: 14px;
-                  font-weight: 600;
-                  color: #4CAF50;
-                }
   - title: Riego
     path: riego
     icon: mdi:sprinkler-variant
@@ -581,4 +460,758 @@ views:
               border: 1px solid #2A2A2A;
               border-radius: 12px;
               box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+
+  - title: Simulación
+    path: simulacion
+    icon: mdi:home-automation
+    theme: maui_dark
+    type: custom:grid-layout
+    layout:
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))
+      grid-gap: 16px
+    badges: []
+    cards:
+      - type: markdown
+        content: |
+          # 🏠 Simulación de Presencia v2.2
+        view_layout:
+          grid-column: 1 / -1
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+            }
+            h1 {
+              font-size: 20px;
+              font-weight: 500;
+              margin: 0;
+              padding: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # CONTROL PRINCIPAL - Badge Animado + Botones
+      # ═══════════════════════════════════════════════════════════════════
+      - type: vertical-stack
+        view_layout:
+          grid-column: 1 / -1
+        cards:
+          # Badge de Estado (SOLO VISUAL - NO CLICKEABLE)
+          - type: markdown
+            content: |
+              {% set running = is_state('input_boolean.presence_simulation_running', 'on') %}
+              {% set paused = is_state('input_boolean.presence_simulation_paused', 'on') %}
+              {% set lights = states('input_number.presence_simulation_lights_on_count') | int(0) %}
+              {% set loop = states('input_number.presence_simulation_loop_counter') | int(0) %}
+
+              {% if running and paused %}
+                # ⏸️ SIMULACIÓN EN PAUSA | {{ lights }} luces encendidas
+              {% elif running %}
+                # 🔄 SIMULACIÓN ACTIVA | {{ lights }} luces | Loop {{ loop }}
+              {% else %}
+                # ⚫ SIMULACIÓN INACTIVA
+              {% endif %}
+            card_mod:
+              style: |
+                ha-card {
+                  height: 80px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  border-radius: 12px;
+                  border: none;
+                  {% set running = is_state('input_boolean.presence_simulation_running', 'on') %}
+                  {% set paused = is_state('input_boolean.presence_simulation_paused', 'on') %}
+                  {% if running and paused %}
+                    background: linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 146, 60, 0.25) 100%);
+                    border: 2px solid rgba(245, 158, 11, 0.5);
+                  {% elif running %}
+                    background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%);
+                    border: 2px solid rgba(16, 185, 129, 0.5);
+                    animation: glow-green 2s ease-in-out infinite;
+                  {% else %}
+                    background: rgba(50, 50, 50, 0.3);
+                    border: 1px solid #2A2A2A;
+                  {% endif %}
+                }
+                ha-markdown {
+                  width: 100%;
+                  text-align: center;
+                }
+                ha-markdown h1 {
+                  font-size: 15px;
+                  font-weight: 600;
+                  letter-spacing: 0.5px;
+                  margin: 0;
+                  {% set running = is_state('input_boolean.presence_simulation_running', 'on') %}
+                  {% set paused = is_state('input_boolean.presence_simulation_paused', 'on') %}
+                  {% if running and paused %}
+                    color: #F59E0B;
+                  {% elif running %}
+                    color: #10B981;
+                  {% else %}
+                    color: #666666;
+                  {% endif %}
+                }
+                @keyframes glow-green {
+                  0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+                  50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); }
+                }
+
+          # Botones de Control (SOLO 3 BOTONES SIMPLES)
+          - type: horizontal-stack
+            cards:
+              # Botón 1: INICIAR (cuando está OFF)
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.presence_simulation
+                    state: "off"
+                card:
+                  type: custom:button-card
+                  name: INICIAR
+                  icon: mdi:play
+                  tap_action:
+                    action: call-service
+                    service: input_boolean.turn_on
+                    service_data:
+                      entity_id: input_boolean.presence_simulation
+                  styles:
+                    card:
+                      - height: 60px
+                      - border-radius: 8px
+                      - background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                      - border: none
+                      - box-shadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
+                    icon:
+                      - width: 24px
+                      - color: white
+                    name:
+                      - font-size: 13px
+                      - font-weight: 600
+                      - color: white
+                  card_mod:
+                    style: |
+                      ha-card:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5) !important;
+                        transition: all 0.3s ease;
+                      }
+
+              # Botón 2: PAUSA / REANUDAR (toggle cuando está ON)
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.presence_simulation
+                    state: "on"
+                card:
+                  type: custom:button-card
+                  entity: input_boolean.presence_simulation_paused
+                  name: |
+                    [[[ return entity.state === 'on' ? 'REANUDAR' : 'PAUSAR'; ]]]
+                  icon: |
+                    [[[ return entity.state === 'on' ? 'mdi:play-circle' : 'mdi:pause'; ]]]
+                  tap_action:
+                    action: toggle
+                  styles:
+                    card:
+                      - height: 60px
+                      - border-radius: 8px
+                      - border: none
+                    icon:
+                      - width: 24px
+                      - color: white
+                    name:
+                      - font-size: 13px
+                      - font-weight: 600
+                      - color: white
+                  state:
+                    - value: 'on'
+                      styles:
+                        card:
+                          - background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                          - box-shadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
+                    - value: 'off'
+                      styles:
+                        card:
+                          - background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                          - box-shadow: '0 4px 12px rgba(245, 158, 11, 0.4)'
+                  card_mod:
+                    style: |
+                      ha-card:hover {
+                        transform: translateY(-2px);
+                        transition: all 0.3s ease;
+                      }
+
+              # Botón 3: DETENER (cuando está ON)
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.presence_simulation
+                    state: "on"
+                card:
+                  type: custom:button-card
+                  name: DETENER
+                  icon: mdi:stop
+                  tap_action:
+                    action: call-service
+                    service: input_boolean.turn_off
+                    service_data:
+                      entity_id: input_boolean.presence_simulation
+                  confirmation:
+                    text: "¿Detener la simulación y apagar todas las luces?"
+                  styles:
+                    card:
+                      - height: 60px
+                      - border-radius: 8px
+                      - background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)'
+                      - border: none
+                      - box-shadow: '0 4px 12px rgba(220, 38, 38, 0.4)'
+                    icon:
+                      - width: 24px
+                      - color: white
+                      - animation: pulse 2s ease-in-out infinite
+                    name:
+                      - font-size: 13px
+                      - font-weight: 600
+                      - color: white
+                  card_mod:
+                    style: |
+                      @keyframes pulse {
+                        0%, 100% { opacity: 1; }
+                        50% { opacity: 0.8; }
+                      }
+                      ha-card:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 16px rgba(220, 38, 38, 0.6) !important;
+                        transition: all 0.3s ease;
+                      }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # ESTADO Y PROGRESO
+      # ═══════════════════════════════════════════════════════════════════
+      - type: horizontal-stack
+        cards:
+          - type: entities
+            title: ⏱️ Progreso
+            show_header_toggle: false
+            entities:
+              - entity: sensor.presence_simulation_runtime
+                name: Tiempo Activo
+                icon: mdi:timer-outline
+              - entity: sensor.presence_simulation_progress
+                name: Progreso
+                icon: mdi:progress-clock
+              - entity: sensor.presence_simulation_time_remaining
+                name: Tiempo Restante
+                icon: mdi:timer-sand
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 12px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(255, 152, 0, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #FF9800;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #FF9800;
+                }
+
+          - type: entities
+            title: 📊 Loops
+            show_header_toggle: false
+            entities:
+              - entity: input_number.presence_simulation_loop_counter
+                name: Loop Actual
+                icon: mdi:counter
+              - entity: input_number.presence_simulation_loop_total
+                name: Total de Loops
+                icon: mdi:format-list-numbered
+              - entity: input_text.presence_simulation_status
+                name: Estado
+                icon: mdi:information-outline
+            card_mod:
+              style: |
+                ha-card {
+                  background: #1A1A1A;
+                  border: 1px solid #2A2A2A;
+                  border-radius: 12px;
+                }
+                .card-header {
+                  background: linear-gradient(90deg, rgba(66, 165, 245, 0.15) 0%, transparent 100%);
+                  border-left: 4px solid #42A5F5;
+                  padding: 12px 16px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #42A5F5;
+                }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # LUCES ACTIVAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: entities
+        title: 💡 Luces Activas
+        show_header_toggle: false
+        entities:
+          - entity: input_number.presence_simulation_lights_on_count
+            name: Cantidad Encendidas
+            icon: mdi:lightbulb-multiple
+          - entity: input_text.presence_simulation_active_lights
+            name: Dispositivos
+            icon: mdi:format-list-bulleted
+          - entity: input_text.presence_simulation_last_light_on
+            name: Última Encendida
+            icon: mdi:lightbulb-on
+          - entity: input_text.presence_simulation_last_light_off
+            name: Última Apagada
+            icon: mdi:lightbulb-off
+        card_mod:
+          style: |
+            ha-card {
+              background: #1A1A1A;
+              border: 1px solid #2A2A2A;
+              border-radius: 12px;
+            }
+            .card-header {
+              background: linear-gradient(90deg, rgba(76, 175, 80, 0.15) 0%, transparent 100%);
+              border-left: 4px solid #4CAF50;
+              padding: 12px 16px;
+              font-size: 14px;
+              font-weight: 600;
+              color: #4CAF50;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # HISTORIAL 24H
+      # ═══════════════════════════════════════════════════════════════════
+      - type: history-graph
+        title: 📈 Historial 24 horas
+        hours_to_show: 24
+        refresh_interval: 60
+        entities:
+          - entity: input_boolean.presence_simulation_running
+            name: Ejecución
+          - entity: input_number.presence_simulation_lights_on_count
+            name: Luces Encendidas
+        card_mod:
+          style: |
+            ha-card {
+              background: #1A1A1A;
+              border: 1px solid #2A2A2A;
+              border-radius: 12px;
+            }
+            .card-header {
+              background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%);
+              border-left: 4px solid #8B5CF6;
+              padding: 12px 16px;
+              font-size: 14px;
+              font-weight: 600;
+              color: #8B5CF6;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # CONFIGURACIÓN ACTUAL (Markdown Dinámico)
+      # ═══════════════════════════════════════════════════════════════════
+      - type: markdown
+        title: ⚙️ Configuración Actual
+        content: |
+          **Blueprint:** Presence Simulation v2.2
+
+          ---
+
+          ### 📊 Estado de Ejecución
+
+          **Estado:** {{ states('input_text.presence_simulation_status') }}
+          **Pausado:** {{ '⏸️ Sí' if is_state('input_boolean.presence_simulation_paused', 'on') else '▶️ No' }}
+          **Ejecutando:** {{ '🟢 Activo' if is_state('input_boolean.presence_simulation_running', 'on') else '⚫ Inactivo' }}
+
+          ---
+
+          ### ⏱️ Tiempos
+
+          **Fecha inicio:** {{ states('input_datetime.presence_simulation_start_time') }}
+          **Tiempo activo:** {{ states('sensor.presence_simulation_runtime') }}
+          **Tiempo restante:** {{ states('sensor.presence_simulation_time_remaining') }}
+
+          ---
+
+          ### 🔄 Progreso
+
+          **Loop actual:** {{ states('input_number.presence_simulation_loop_counter') | int(0) }}
+          **Total loops:** {{ states('input_number.presence_simulation_loop_total') | int(0) }}
+          **Progreso:** {{ states('sensor.presence_simulation_progress') | int(0) }}%
+
+          ---
+
+          ### 💡 Luces
+
+          **Luces encendidas:** {{ states('input_number.presence_simulation_lights_on_count') | int(0) }}
+          **Última encendida:** {{ states('input_text.presence_simulation_last_light_on') }}
+          **Última apagada:** {{ states('input_text.presence_simulation_last_light_off') }}
+        card_mod:
+          style: |
+            ha-card {
+              background: #1A1A1A;
+              border: 1px solid #2A2A2A;
+              border-radius: 12px;
+              padding: 16px;
+            }
+            .card-header {
+              background: linear-gradient(90deg, rgba(236, 72, 153, 0.15) 0%, transparent 100%);
+              border-left: 4px solid #EC4899;
+              padding: 12px 16px;
+              font-size: 14px;
+              font-weight: 600;
+              color: #EC4899;
+              margin: -16px -16px 16px -16px;
+            }
+            ha-markdown {
+              color: #A0A0A0;
+              font-size: 13px;
+              line-height: 1.8;
+            }
+            ha-markdown strong {
+              color: #E0E0E0;
+            }
+
+      # ═══════════════════════════════════════════════════════════════════
+      # ACCIONES RÁPIDAS
+      # ═══════════════════════════════════════════════════════════════════
+      - type: horizontal-stack
+        cards:
+          - type: custom:button-card
+            name: 🔄 Reset Completo
+            icon: mdi:refresh
+            tap_action:
+              action: call-service
+              service: script.reset_presence_simulation
+            confirmation:
+              text: "¿Resetear todos los valores de la simulación?"
+            styles:
+              card:
+                - height: 60px
+                - background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+                - border: none
+                - border-radius: 12px
+                - box-shadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+              icon:
+                - width: 24px
+                - color: white
+              name:
+                - font-size: 13px
+                - font-weight: 500
+                - color: white
+            card_mod:
+              style: |
+                ha-card:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4) !important;
+                  transition: all 0.3s ease;
+                }
+
+          - type: custom:button-card
+            name: Ver Documentación
+            icon: mdi:book-open-variant
+            tap_action:
+              action: url
+              url_path: https://github.com/mauitz/home-assistant-blueprints
+            styles:
+              card:
+                - height: 60px
+                - background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)'
+                - border: none
+                - border-radius: 12px
+                - box-shadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+              icon:
+                - width: 24px
+                - color: white
+              name:
+                - font-size: 13px
+                - font-weight: 500
+                - color: white
+            card_mod:
+              style: |
+                ha-card:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important;
+                  transition: all 0.3s ease;
+                }
+
+          - type: custom:button-card
+            name: Ver Logbook
+            icon: mdi:text-box-outline
+            tap_action:
+              action: navigate
+              navigation_path: /logbook
+            styles:
+              card:
+                - height: 60px
+                - background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)'
+                - border: none
+                - border-radius: 12px
+                - box-shadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+              icon:
+                - width: 24px
+                - color: white
+              name:
+                - font-size: 13px
+                - font-weight: 500
+                - color: white
+            card_mod:
+              style: |
+                ha-card:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4) !important;
+                  transition: all 0.3s ease;
+                }
+
+  - title: Plano
+    path: floorplan
+    icon: mdi:floor-plan
+    theme: maui_dark
+    badges: []
+    cards:
+      - type: markdown
+        content: |
+          # 🏠 Plano Interactivo de la Casa
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-bottom: -12px;
+            }
+            h1 {
+              font-size: 20px;
+              font-weight: 500;
+              margin: 0;
+              padding: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      - type: custom:floorplan-card
+        full_height: true
+        config:
+          image: /local/floorplan/casa.svg
+          stylesheet: /local/floorplan/casa.css
+
+          rules:
+            # ═══════════════════════════════════════════════════════════
+            # LIVING/COCINA - Control de luces
+            # ═══════════════════════════════════════════════════════════
+            - element: living_cocina
+              entity: light.riego_z1_led_wifi
+              state_action:
+                - service: floorplan.class_toggle
+                  service_data:
+                    class: light-on
+                - service: floorplan.class_toggle
+                  service_data:
+                    class: light-off
+              tap_action:
+                action: call-service
+                service: light.toggle
+                service_data:
+                  entity_id: light.riego_z1_led_wifi
+              hold_action:
+                action: more-info
+
+            # ═══════════════════════════════════════════════════════════
+            # DECK EXTERIOR - Sensor de riego
+            # ═══════════════════════════════════════════════════════════
+            - element: deck_exterior
+              entity: sensor.riego_z1_humedad_suelo_z1
+              state_action:
+                - service: floorplan.class_toggle
+                  service_data:
+                    class: sensor-on
+              tap_action:
+                action: navigate
+                navigation_path: /dashboard-maui/riego
+
+            # ═══════════════════════════════════════════════════════════
+            # ENTRADA - Cámara
+            # ═══════════════════════════════════════════════════════════
+            - element: entrada
+              entity: camera.tapo_c530ws_entrada_live_view
+              tap_action:
+                action: more-info
+              hold_action:
+                action: call-service
+                service: camera.snapshot
+                service_data:
+                  entity_id: camera.tapo_c530ws_entrada_live_view
+
+            # ═══════════════════════════════════════════════════════════
+            # SENSORES - Indicadores visuales
+            # ═══════════════════════════════════════════════════════════
+            - element: sensor_living
+              entity: sensor.riego_z1_humedad_suelo_z1
+              state_action:
+                - service: floorplan.class_toggle
+                  service_data:
+                    class: sensor-on
+              tap_action:
+                action: more-info
+
+            - element: sensor_entrada
+              entity: camera.tapo_c530ws_entrada_live_view
+              state_action:
+                - service: floorplan.class_toggle
+                  service_data:
+                    class: sensor-on
+              tap_action:
+                action: more-info
+
+            # ═══════════════════════════════════════════════════════════
+            # PUERTA PRINCIPAL
+            # ═══════════════════════════════════════════════════════════
+            - element: puerta_principal
+              entity: binary_sensor.riego_z1_presencia_detectada
+              state_action:
+                - service: floorplan.class_toggle
+                  service_data:
+                    class: door-open
+                - service: floorplan.class_toggle
+                  service_data:
+                    class: door-closed
+              tap_action:
+                action: more-info
+
+      - type: markdown
+        content: |
+          # 📊 Estado General
+        card_mod:
+          style: |
+            ha-card {
+              background: none;
+              box-shadow: none;
+              margin-top: 24px;
+              margin-bottom: -12px;
+            }
+            h1 {
+              font-size: 18px;
+              font-weight: 400;
+              margin: 0;
+              color: #A0A0A0;
+              letter-spacing: 0.5px;
+            }
+
+      - type: horizontal-stack
+        cards:
+          - type: custom:button-card
+            entity: sensor.riego_z1_humedad_suelo_z1
+            name: Humedad Suelo
+            icon: mdi:water-percent
+            show_state: true
+            styles:
+              card:
+                - height: 100px
+                - background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%)
+                - border: none
+                - border-radius: 12px
+                - box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3)
+              icon:
+                - width: 35px
+                - color: white
+              name:
+                - font-size: 13px
+                - font-weight: 500
+                - color: white
+              state:
+                - font-size: 18px
+                - font-weight: 600
+                - color: white
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-maui/riego
+
+          - type: custom:button-card
+            entity: sensor.riego_z1_nivel_tanque
+            name: Nivel Tanque
+            icon: mdi:water-check
+            show_state: true
+            styles:
+              card:
+                - height: 100px
+                - background: linear-gradient(135deg, #00BCD4 0%, #26C6DA 100%)
+                - border: none
+                - border-radius: 12px
+                - box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3)
+              icon:
+                - width: 35px
+                - color: white
+              name:
+                - font-size: 13px
+                - font-weight: 500
+                - color: white
+              state:
+                - font-size: 18px
+                - font-weight: 600
+                - color: white
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-maui/riego
+
+          - type: custom:button-card
+            entity: camera.tapo_c530ws_entrada_live_view
+            name: Cámara Entrada
+            icon: mdi:cctv
+            styles:
+              card:
+                - height: 100px
+                - background: linear-gradient(135deg, #673AB7 0%, #7E57C2 100%)
+                - border: none
+                - border-radius: 12px
+                - box-shadow: 0 4px 12px rgba(103, 58, 183, 0.3)
+              icon:
+                - width: 35px
+                - color: white
+              name:
+                - font-size: 13px
+                - font-weight: 500
+                - color: white
+            tap_action:
+              action: more-info
+
+      - type: markdown
+        content: |
+          # ℹ️ Instrucciones
+
+          **Interacción con el plano:**
+          - 🖱️ **Click**: Alternar luces o abrir detalles
+          - 👆 **Mantener presionado**: Más información
+          - 🎨 **Colores**:
+            - 🟡 Amarillo: Luz encendida
+            - 🔴 Rojo: Movimiento detectado
+            - 🟢 Verde: Sensor activo
+            - ⚪ Gris: Apagado/Inactivo
+        card_mod:
+          style: |
+            ha-card {
+              background: #1A1A1A;
+              border: 1px solid #2A2A2A;
+              border-radius: 12px;
+              padding: 16px;
+              margin-top: 16px;
+            }
+            ha-markdown {
+              color: #A0A0A0;
+              font-size: 13px;
+              line-height: 1.6;
+            }
+            ha-markdown h1 {
+              font-size: 16px;
+              font-weight: 600;
+              color: #42A5F5;
+              margin-bottom: 12px;
+            }
+            ha-markdown strong {
+              color: #E0E0E0;
             }
