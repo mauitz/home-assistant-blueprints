@@ -65,29 +65,36 @@ automation:
 
 ---
 
-### 🎭 [Simulación de Presencia v2.1](docs/pezaustral_presence_simulation/) ⭐ BUGFIX CRÍTICO
+### 🎭 [Simulación de Presencia v2.2](docs/pezaustral_presence_simulation/) ⭐ UX UPGRADE
 
 Blueprint avanzado para simular presencia en casa cuando estás fuera.
 
-**v2.1 - Bug Crítico Corregido:**
-- ✅ **FIX:** Ahora mantiene múltiples luces encendidas simultáneamente (bug v2.0 corregido)
-- ✅ **FIX:** Parámetro `max_lights_on` ahora funciona correctamente
-- ✅ Rotación dinámica real de luces implementada
-- ✅ Nuevo parámetro `delay_between_lights` configurable
+**v2.2 - Nuevas Funciones UX:**
+- ✨ **NUEVO:** Función PAUSE/RESUME (pausar sin apagar luces)
+- ✨ **NUEVO:** Sistema de notificaciones configurable
+- ✨ **NUEVO:** Vista dedicada de dashboard con badge animado
+- ✨ **NUEVO:** Botones inteligentes START/PAUSE/RESUME/STOP
+- ✅ Múltiples luces simultáneas (bug v2.0 corregido en v2.1)
+- ✅ Parámetro `max_lights_on` funcional
+- ✅ Rotación dinámica de luces
 
 **Características:**
+- ⏸️ **PAUSE/RESUME:** Control fino durante ejecución sin perder estado
+- 📱 **Notificaciones:** Alertas de inicio/stop/completado configurables
+- 🎮 **Control Mejorado:** Botones dedicados con visibilidad inteligente
+- 📊 **Vista Dedicada:** Dashboard completo con badge animado y estadísticas
 - ✅ Control inteligente de múltiples luces/switches
-- ✅ Límite de dispositivos encendidos simultáneamente (¡AHORA FUNCIONA!)
+- ✅ Límite de dispositivos encendidos simultáneamente
 - ✅ **Cleanup automático** integrado (apaga todo al detener)
 - ✅ Monitoreo en tiempo real con widgets
-- ✅ Loops configurables o infinitos
+- ✅ Loops configurables o infinitos (0-99)
 - ✅ Escenas de salida personalizables
 - ✅ Logs detallados
 
 **Archivos:**
-- [`blueprints/pezaustral_presence_simulation.yaml`](blueprints/pezaustral_presence_simulation.yaml) - v2.1
+- [`blueprints/pezaustral_presence_simulation.yaml`](blueprints/pezaustral_presence_simulation.yaml) - v2.2
 - [Documentación completa](docs/pezaustral_presence_simulation/)
-- [Bugfix Report](BUGFIX_v2.1_PRESENCE_SIMULATION.md)
+- [Changelog detallado](docs/pezaustral_presence_simulation/CHANGELOG.md)
 - [Ejemplos de configuración](examples/)
 
 ---
@@ -356,7 +363,20 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
 
 ## 📝 Changelog
 
-### v3.4 (Enero 2026)
+### v3.5 (Enero 2026) - 🎨 UX UPGRADE
+- 🎉 **Simulación de Presencia v2.2 - NUEVAS FUNCIONES UX**
+  - ✨ **Función PAUSE/RESUME:** Pausar simulación manteniendo luces encendidas
+  - ✨ **Sistema de Notificaciones:** Alertas configurables (inicio/stop/completado)
+  - ✨ **Vista Dedicada Dashboard:** Nueva vista "Simulación" con badge animado
+  - ✨ **Controles Mejorados:** Botones START/PAUSE/RESUME/STOP inteligentes
+  - 📊 **Badge Animado:** Indicador visual con estados dinámicos (activo/pausa/inactivo)
+  - 🎮 **UX Mejorada:** Control fino sin perder estado, confirmación al detener
+  - 📱 **Notificaciones Opcionales:** Soporte para cualquier servicio de notificación
+  - 📚 **Documentación Completa:** README y CHANGELOG actualizados con v2.2
+  - 🔧 **Nuevo Helper:** input_boolean.presence_simulation_paused
+  - 📝 **Dashboard v3.5:** Vista dedicada con diseño profesional y responsive
+
+### v3.4 (Enero 2026) - 🐛 BUGFIX CRÍTICO
 - 🐛 **BUGFIX CRÍTICO - Simulación de Presencia v2.1**
   - Corregido bug crítico donde solo se encendía 1 luz a la vez
   - Parámetro `max_lights_on` ahora funciona correctamente

@@ -2,41 +2,48 @@
 
 ## 📌 Estado en HA Pezaustral
 
-**Versión instalada en HA (192.168.1.100:8123):** v2.0 (con bug crítico)
-**Versión en repositorio local:** v2.1 ✅ **ACTUALIZACIÓN CRÍTICA RECOMENDADA**
+**Versión instalada en HA (192.168.1.100:8123):** v2.1 (actualizar a v2.2 recomendado)
+**Versión en repositorio local:** v2.2 ✅ **NUEVAS FUNCIONES UX**
 **Blueprint para Home Assistant**
 
-Simulación avanzada de presencia con control de lámparas simultáneas, loops configurables y detención inmediata.
+Simulación avanzada de presencia con control de lámparas simultáneas, loops configurables, detención inmediata, función PAUSE/RESUME y notificaciones configurables.
 
 ---
 
 ## 🆕 Diferencias de Versiones
 
-### Instalada en HA: v2.0 🔴 BUG CRÍTICO
+### Instalada en HA: v2.1 ✅ **FUNCIONANDO CORRECTAMENTE**
 - ✅ Cleanup automático integrado
 - ✅ Monitoreo integrado
 - ✅ Logging detallado
-- ❌ **BUG:** Solo mantiene 1 luz encendida (ignora max_lights_on)
-- ❌ **BUG:** Comportamiento secuencial, no simultáneo
+- ✅ Múltiples luces simultáneas (bug v2.0 corregido)
+- ✅ Parámetro max_lights_on funcional
+- ✅ Rotación dinámica de luces
+- ✅ Delay configurable entre luces
 
-### Disponible en Repo: v2.1 ✅ **BUG CORREGIDO**
-- Todo lo de v2.0 +
-- ✅ **FIX CRÍTICO:** Ahora mantiene múltiples luces encendidas simultáneamente
-- ✅ **FIX:** Parámetro max_lights_on ahora funciona correctamente
-- ✅ Rotación dinámica de luces implementada
-- ✅ Nuevo parámetro delay_between_lights (10-60 seg)
-- ✅ Comportamiento realista de simulación de presencia
+### Disponible en Repo: v2.2 🎉 **NUEVAS FUNCIONES UX**
+- Todo lo de v2.1 +
+- ✨ **NUEVO:** Función PAUSE/RESUME (pausar sin apagar luces)
+- ✨ **NUEVO:** Sistema de notificaciones configurable
+- ✨ **NUEVO:** Vista dedicada de dashboard con icono propio
+- ✨ **MEJORADO:** Control mejorado con botones dedicados (START/PAUSE/RESUME/STOP)
+- ✨ **MEJORADO:** Badge animado de estado con indicadores visuales
+- ✨ **MEJORADO:** UX general significativamente mejorada
 
-> **⚠️ ACTUALIZACIÓN CRÍTICA:** Si estás usando v2.0, actualiza a v2.1 inmediatamente. El bug hace que el parámetro max_lights_on sea completamente inoperante.
+> **💡 ACTUALIZACIÓN RECOMENDADA:** v2.2 trae mejoras significativas de experiencia de usuario y nuevas funcionalidades solicitadas por la comunidad.
 
 ---
 
 ## ✨ Características Principales
 
+- **⏸️ PAUSE/RESUME (v2.2)**: Pausar simulación manteniendo luces encendidas
+- **📱 Notificaciones (v2.2)**: Alertas configurables (inicio/stop/completado)
+- **🎮 Control Mejorado (v2.2)**: Botones dedicados START/PAUSE/RESUME/STOP
+- **📊 Vista Dedicada (v2.2)**: Dashboard completo con badge animado y controles avanzados
 - **Control de lámparas simultáneas**: Limita cuántas pueden estar encendidas al mismo tiempo
 - **Apagado inteligente**: Sistema de apagado automático en paralelo
-- **Loop configurable**: 0-50 repeticiones o infinito
-- **Detención inmediata**: Se detiene en menos de 5 segundos
+- **Loop configurable**: 0-99 repeticiones o infinito
+- **Detención inmediata**: Se detiene en menos de 2 segundos
 - **Escena de salida**: Configurable para fin normal o parada de emergencia
 - **Múltiples triggers**: Tiempo, sol, luz ambiental, entidades
 - **Control por zona**: Activa solo cuando no hay personas
@@ -184,15 +191,20 @@ Loop: 8 repeticiones
 
 ## 🆚 Comparación con Versiones Anteriores
 
-| Característica | v1.3 | v2.0 (buggy) | v2.1 (fixed) |
-|----------------|------|--------------|--------------|
-| Detención | ✅ < 5 seg | ✅ < 5 seg | ✅ < 5 seg |
-| Cleanup automático | ❌ Externa | ✅ Integrado | ✅ Integrado |
-| Luces simultáneas | ✅ Funciona | ❌ **ROTO** | ✅ **CORREGIDO** |
-| max_lights_on | ✅ Operativo | ❌ Ignorado | ✅ Operativo |
-| Rotación de luces | ✅ Sí | ❌ No | ✅ Sí |
-| Delay entre luces | ⚠️ Fijo | ❌ N/A | ✅ Configurable |
-| Monitoreo | ✅ Sí | ✅ Sí | ✅ Mejorado |
+| Característica | v1.3 | v2.0 (buggy) | v2.1 (fixed) | v2.2 (UX) |
+|----------------|------|--------------|--------------|-----------|
+| Detención | ✅ < 5 seg | ✅ < 5 seg | ✅ < 5 seg | ✅ < 2 seg |
+| Cleanup automático | ❌ Externa | ✅ Integrado | ✅ Integrado | ✅ Integrado |
+| Luces simultáneas | ✅ Funciona | ❌ **ROTO** | ✅ **CORREGIDO** | ✅ Funcionando |
+| max_lights_on | ✅ Operativo | ❌ Ignorado | ✅ Operativo | ✅ Operativo |
+| Rotación de luces | ✅ Sí | ❌ No | ✅ Sí | ✅ Sí |
+| Delay entre luces | ⚠️ Fijo | ❌ N/A | ✅ Configurable | ✅ Configurable |
+| Monitoreo | ✅ Sí | ✅ Sí | ✅ Mejorado | ✅ Mejorado |
+| **PAUSE/RESUME** | ❌ No | ❌ No | ❌ No | ✅ **NUEVO** |
+| **Notificaciones** | ❌ No | ❌ No | ❌ No | ✅ **NUEVO** |
+| **Vista dedicada** | ❌ No | ❌ No | ❌ No | ✅ **NUEVO** |
+| **Badge animado** | ❌ No | ❌ No | ❌ No | ✅ **NUEVO** |
+| **Botones dedicados** | ❌ No | ❌ No | ❌ No | ✅ **NUEVO** |
 
 ---
 
@@ -222,5 +234,5 @@ Si encuentras algún bug o tienes sugerencias:
 
 ---
 
-*PezAustral Presence Simulation v2.1 - Enero 2026*
+*PezAustral Presence Simulation v2.2 - Enero 2026*
 

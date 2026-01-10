@@ -1,23 +1,24 @@
 blueprint:
-  name: PezAustral Presence Simulation v2.1
+  name: PezAustral Presence Simulation v2.2
   description: >
     # 🏠 Simulación de Presencia Inteligente
 
-    **VERSIÓN 2.1 - BUG CRÍTICO CORREGIDO**
+    **VERSIÓN 2.2 - NUEVAS FUNCIONES UX**
 
-    ✅ **FIX v2.1** - Ahora mantiene múltiples luces encendidas simultáneamente (bug crítico v2.0 corregido)
-    ✅ **CLEANUP AUTOMÁTICO** - Apaga TODAS las luces al detener (sin automatizaciones extras)
+    ✅ **NUEVO v2.2** - Función PAUSE/RESUME (pausar sin apagar luces)
+    ✅ **NUEVO v2.2** - Sistema de notificaciones configurable
+    ✅ **MEJORADO** - Mantiene múltiples luces encendidas simultáneamente
+    ✅ **CLEANUP AUTOMÁTICO** - Apaga TODAS las luces al detener
     ✅ **MONITOREO INTEGRADO** - Actualiza contadores automáticamente
     ✅ **DETENCIÓN LIMPIA** - Se puede detener en cualquier momento
     ✅ **ESCENAS DE SALIDA** - Configurables para fin normal o emergencia
-    ✅ **CONTROL DE LÁMPARAS** - Máximo simultáneas configurable (¡AHORA FUNCIONA!)
+    ✅ **CONTROL DE LÁMPARAS** - Máximo simultáneas configurable
     ✅ **LOGS DETALLADOS** - Tracking completo en Logbook
 
-    **CAMBIOS v2.1:**
-    - FIX CRÍTICO: Las luces ahora permanecen encendidas simultáneamente
-    - Rotación real de luces según max_lights_on
-    - Delay corto entre encendidos (no apaga inmediatamente)
-    - Las luces se mantienen encendidas durante todo el loop
+    **CAMBIOS v2.2:**
+    - ⏸️ PAUSE/RESUME: Pausar simulación manteniendo luces encendidas
+    - 📱 Notificaciones: Sistema de alertas configurable (inicio/stop/completado)
+    - 🎨 Mejor UX: Control mejorado en dashboard
 
     **Documentación:** https://github.com/mauitz/home-assistant-blueprints
 
@@ -184,6 +185,41 @@ blueprint:
       selector:
         boolean:
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # NOTIFICACIONES (v2.2)
+    # ══════════════════════════════════════════════════════════════════════════
+    enable_notifications:
+      name: Habilitar Notificaciones
+      description: Enviar notificaciones al iniciar, detener o completar
+      default: false
+      selector:
+        boolean:
+
+    notification_service:
+      name: Servicio de Notificación
+      description: "Ejemplo: notify.mobile_app_blacky o notify.persistent_notification"
+      default: ""
+      selector:
+        text:
+
+    notify_on_start:
+      name: Notificar al Iniciar
+      default: true
+      selector:
+        boolean:
+
+    notify_on_stop:
+      name: Notificar al Detener
+      default: true
+      selector:
+        boolean:
+
+    notify_on_complete:
+      name: Notificar al Completar
+      default: true
+      selector:
+        boolean:
+
 # ══════════════════════════════════════════════════════════════════════════════
 # VARIABLES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -204,6 +240,11 @@ variables:
   exit_scene: !input exit_scene
   emergency_scene: !input emergency_scene
   enable_monitoring: !input enable_monitoring
+  enable_notifications: !input enable_notifications
+  notification_service: !input notification_service
+  notify_on_start: !input notify_on_start
+  notify_on_stop: !input notify_on_stop
+  notify_on_complete: !input notify_on_complete
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TRIGGER
@@ -263,8 +304,25 @@ action:
   # Log de inicio
   - service: logbook.log
     data:
-      name: "🏠 Presence Simulation v2.1"
+      name: "🏠 Presence Simulation v2.2"
       message: "Iniciando - {{ lights | length }} dispositivos, máx {{ max_lights_on }} simultáneas, {{ loop_count }} loops"
+
+  # Notificación de inicio (v2.2)
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_notifications and notify_on_start and notification_service | length > 0 }}"
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "🏠 Simulación Iniciada"
+              message: |
+                {{ lights | length }} dispositivos configurados
+                Máximo simultáneas: {{ max_lights_on }}
+                Loops: {{ loop_count if loop_count < 99 else '∞ Infinito' }}
+              data:
+                tag: presence_simulation
+                group: presence_simulation
 
   # ════════════════════════════════════════════════════════════════════════════
   # LOOP PRINCIPAL
@@ -305,9 +363,13 @@ action:
 
         # ────────────────────────────────────────────────────────────────────
         # ENCENDER LUCES Y MANTENERLAS (LÓGICA CORREGIDA v2.1)
+        # ORDEN ALEATORIO (v2.2)
         # ────────────────────────────────────────────────────────────────────
+        - variables:
+            shuffled_lights: "{{ lights | shuffle | list }}"
+
         - repeat:
-            for_each: "{{ lights }}"
+            for_each: "{{ shuffled_lights }}"
             sequence:
               # Verificar si se detuvo
               - condition: state
@@ -423,12 +485,79 @@ action:
               # │ DELAY CORTO ANTES DE LA SIGUIENTE LUZ                       │
               # │ (NO apagamos la luz, la dejamos encendida)                  │
               # └─────────────────────────────────────────────────────────────┘
-              - wait_template: "{{ is_state(automation_control_entity, 'off') }}"
+              - wait_template: |
+                  {{ is_state(automation_control_entity, 'off') or
+                     is_state('input_boolean.presence_simulation_paused', 'on') }}
                 timeout:
                   seconds: "{{ range(delay_between_lights_min, delay_between_lights_max + 1) | random }}"
 
-              # Si se detuvo durante el wait, marcar y salir
+              # Detectar pausa o detención (v2.2)
               - choose:
+                  # ═══ PAUSA DETECTADA ═══
+                  - conditions:
+                      - condition: state
+                        entity_id: input_boolean.presence_simulation_paused
+                        state: "on"
+                    sequence:
+                      - service: logbook.log
+                        data:
+                          name: "⏸️ Presence Simulation v2.2"
+                          message: "PAUSADA - {{ lights_currently_on | length }} luces manteniéndose encendidas"
+
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: "{{ enable_monitoring }}"
+                            sequence:
+                              - service: input_text.set_value
+                                target:
+                                  entity_id: input_text.presence_simulation_status
+                                data:
+                                  value: "⏸️ En pausa - {{ lights_currently_on | length }} luces encendidas"
+
+                      # Esperar hasta resume o stop
+                      - wait_template: |
+                          {{ is_state(automation_control_entity, 'off') or
+                             is_state('input_boolean.presence_simulation_paused', 'off') }}
+
+                      # Verificar si se resumió o se detuvo
+                      - choose:
+                          # Si se detuvo durante la pausa
+                          - conditions:
+                              - condition: state
+                                entity_id: !input automation_control_entity
+                                state: "off"
+                            sequence:
+                              - variables:
+                                  detener_manualmente: true
+                              - stop: "Detenido durante pausa"
+
+                          # Si se resumió
+                          - conditions:
+                              - condition: state
+                                entity_id: input_boolean.presence_simulation_paused
+                                state: "off"
+                              - condition: state
+                                entity_id: !input automation_control_entity
+                                state: "on"
+                            sequence:
+                              - service: logbook.log
+                                data:
+                                  name: "▶️ Presence Simulation v2.2"
+                                  message: "RESUMIDA - Continuando desde pausa"
+
+                              - choose:
+                                  - conditions:
+                                      - condition: template
+                                        value_template: "{{ enable_monitoring }}"
+                                    sequence:
+                                      - service: input_text.set_value
+                                        target:
+                                          entity_id: input_text.presence_simulation_status
+                                        data:
+                                          value: "En ejecución - Loop {{ repeat.index }}"
+
+                  # ═══ DETENCIÓN MANUAL ═══
                   - conditions:
                       - condition: state
                         entity_id: !input automation_control_entity
@@ -443,15 +572,82 @@ action:
         # ────────────────────────────────────────────────────────────────────
         - service: logbook.log
           data:
-            name: "⏱️  Presence Simulation"
+            name: "⏱️  Presence Simulation v2.2"
             message: "Ciclo completo - {{ lights_currently_on | length }} luces encendidas durante {{ time_on_min }}-{{ time_on_max }} min"
 
-        - wait_template: "{{ is_state(automation_control_entity, 'off') }}"
+        - wait_template: |
+            {{ is_state(automation_control_entity, 'off') or
+               is_state('input_boolean.presence_simulation_paused', 'on') }}
           timeout:
             minutes: "{{ range(time_on_min, time_on_max + 1) | random }}"
 
-        # Verificar si se detuvo durante el tiempo de espera
+        # Verificar si se pausó o detuvo durante el tiempo de espera (v2.2)
         - choose:
+            # ═══ PAUSA DETECTADA ═══
+            - conditions:
+                - condition: state
+                  entity_id: input_boolean.presence_simulation_paused
+                  state: "on"
+              sequence:
+                - service: logbook.log
+                  data:
+                    name: "⏸️ Presence Simulation v2.2"
+                    message: "PAUSADA durante mantenimiento - {{ lights_currently_on | length }} luces encendidas"
+
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ enable_monitoring }}"
+                      sequence:
+                        - service: input_text.set_value
+                          target:
+                            entity_id: input_text.presence_simulation_status
+                          data:
+                            value: "⏸️ En pausa - {{ lights_currently_on | length }} luces encendidas"
+
+                # Esperar hasta resume o stop
+                - wait_template: |
+                    {{ is_state(automation_control_entity, 'off') or
+                       is_state('input_boolean.presence_simulation_paused', 'off') }}
+
+                # Verificar qué pasó
+                - choose:
+                    # Si se detuvo durante la pausa
+                    - conditions:
+                        - condition: state
+                          entity_id: !input automation_control_entity
+                          state: "off"
+                      sequence:
+                        - variables:
+                            detener_manualmente: true
+                        - stop: "Detenido durante pausa"
+
+                    # Si se resumió
+                    - conditions:
+                        - condition: state
+                          entity_id: input_boolean.presence_simulation_paused
+                          state: "off"
+                        - condition: state
+                          entity_id: !input automation_control_entity
+                          state: "on"
+                      sequence:
+                        - service: logbook.log
+                          data:
+                            name: "▶️ Presence Simulation v2.2"
+                            message: "RESUMIDA - Continuando loop"
+
+                        - choose:
+                            - conditions:
+                                - condition: template
+                                  value_template: "{{ enable_monitoring }}"
+                              sequence:
+                                - service: input_text.set_value
+                                  target:
+                                    entity_id: input_text.presence_simulation_status
+                                  data:
+                                    value: "En ejecución - Loop {{ repeat.index }}"
+
+            # ═══ DETENCIÓN MANUAL ═══
             - conditions:
                 - condition: state
                   entity_id: !input automation_control_entity
@@ -536,43 +732,40 @@ action:
 
   # ════════════════════════════════════════════════════════════════════════════
   # CLEANUP FINAL (se ejecuta SIEMPRE, termine como termine)
+  # APAGA TODAS LAS LUCES CONFIGURADAS (no solo las encendidas)
   # ════════════════════════════════════════════════════════════════════════════
   - alias: "Cleanup Final"
-    choose:
-      # Si hay luces encendidas, apagarlas
-      - conditions:
-          - condition: template
-            value_template: "{{ lights_currently_on | length > 0 }}"
-        sequence:
-          - service: logbook.log
-            data:
-              name: "🧹 Presence Simulation"
-              message: "Limpieza final: {{ lights_currently_on | length }} luz(es)"
+    sequence:
+      - service: logbook.log
+        data:
+          name: "🧹 Presence Simulation v2.2"
+          message: "Limpieza final: Apagando TODAS las luces configuradas ({{ lights | length }} dispositivos)"
 
-          - repeat:
-              for_each: "{{ lights_currently_on }}"
-              sequence:
-                - variables:
-                    cleanup_light: "{{ repeat.item }}"
-                    cleanup_domain: "{{ cleanup_light.split('.')[0] }}"
+      # Apagar TODAS las luces de la configuración
+      - repeat:
+          for_each: "{{ lights }}"
+          sequence:
+            - variables:
+                cleanup_light: "{{ repeat.item }}"
+                cleanup_domain: "{{ cleanup_light.split('.')[0] }}"
 
-                - choose:
-                    - conditions:
-                        - condition: template
-                          value_template: "{{ cleanup_domain == 'light' }}"
-                      sequence:
-                        - service: light.turn_off
-                          target:
-                            entity_id: "{{ cleanup_light }}"
-                          data:
-                            transition: "{{ transition_off }}"
-                  default:
-                    - service: homeassistant.turn_off
+            - choose:
+                - conditions:
+                    - condition: template
+                      value_template: "{{ cleanup_domain == 'light' }}"
+                  sequence:
+                    - service: light.turn_off
                       target:
                         entity_id: "{{ cleanup_light }}"
+                      data:
+                        transition: "{{ transition_off }}"
+              default:
+                - service: homeassistant.turn_off
+                  target:
+                    entity_id: "{{ cleanup_light }}"
 
-                - delay:
-                    milliseconds: 300
+            - delay:
+                milliseconds: 300
 
   # Limpiar helpers
   - choose:
@@ -632,8 +825,46 @@ action:
             target:
               entity_id: "{{ exit_scene }}"
 
+  # Notificación de stop/completado (v2.2)
+  - choose:
+      # Notificación de DETENCIÓN MANUAL
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_notifications and notify_on_stop and notification_service | length > 0 and detener_manualmente }}"
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "⏹️ Simulación Detenida"
+              message: |
+                Detenida manualmente
+                Loops completados: {{ states('input_number.presence_simulation_loop_counter') | int(0) }}/{{ loop_count if loop_count < 99 else '∞' }}
+                Todas las luces apagadas
+              data:
+                tag: presence_simulation
+                group: presence_simulation
+
+      # Notificación de COMPLETADO NORMAL
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_notifications and notify_on_complete and notification_service | length > 0 and not detener_manualmente }}"
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "✅ Simulación Completada"
+              message: |
+                Todos los loops completados exitosamente
+                Loops: {{ loop_count }}
+                Dispositivos: {{ lights | length }}
+                {% set runtime = states('sensor.presence_simulation_runtime') %}
+                {% if runtime not in ['unknown', 'unavailable', 'Inactiva'] %}
+                Tiempo total: {{ runtime }}
+                {% endif %}
+              data:
+                tag: presence_simulation
+                group: presence_simulation
+
   # Log final
   - service: logbook.log
     data:
-      name: "✅ Presence Simulation v2.1"
+      name: "✅ Presence Simulation v2.2"
       message: "Finalizada - Todas las luces apagadas"
