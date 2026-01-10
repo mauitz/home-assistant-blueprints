@@ -2,8 +2,8 @@
 
 ## 📌 Estado en HA Pezaustral
 
-**Versión instalada en HA (192.168.1.100:8123):** v1.3 ✅ OPERATIVA
-**Versión en repositorio local:** v2.0 (disponible para actualizar)
+**Versión instalada en HA (192.168.1.100:8123):** v2.0 (con bug crítico)
+**Versión en repositorio local:** v2.1 ✅ **ACTUALIZACIÓN CRÍTICA RECOMENDADA**
 **Blueprint para Home Assistant**
 
 Simulación avanzada de presencia con control de lámparas simultáneas, loops configurables y detención inmediata.
@@ -12,21 +12,22 @@ Simulación avanzada de presencia con control de lámparas simultáneas, loops c
 
 ## 🆕 Diferencias de Versiones
 
-### Instalada en HA: v1.3
-- ✅ Monitoreo integrado (helpers actualizados automáticamente)
-- ✅ Logging detallado en Logbook
-- ✅ Detención inmediata
-- ✅ Cleanup inteligente con automatización separada
-- ✅ Tracking de luces activas
+### Instalada en HA: v2.0 🔴 BUG CRÍTICO
+- ✅ Cleanup automático integrado
+- ✅ Monitoreo integrado
+- ✅ Logging detallado
+- ❌ **BUG:** Solo mantiene 1 luz encendida (ignora max_lights_on)
+- ❌ **BUG:** Comportamiento secuencial, no simultáneo
 
-### Disponible en Repo: v2.0
-- Todo lo de v1.3 +
-- ✅ Cleanup automático sin automatizaciones extras
-- ✅ Monitoreo más robusto
-- ✅ Sin necesidad de automatizaciones adicionales
-- ✅ Bug de entity_id corregido (14-12-2025)
+### Disponible en Repo: v2.1 ✅ **BUG CORREGIDO**
+- Todo lo de v2.0 +
+- ✅ **FIX CRÍTICO:** Ahora mantiene múltiples luces encendidas simultáneamente
+- ✅ **FIX:** Parámetro max_lights_on ahora funciona correctamente
+- ✅ Rotación dinámica de luces implementada
+- ✅ Nuevo parámetro delay_between_lights (10-60 seg)
+- ✅ Comportamiento realista de simulación de presencia
 
-> **Recomendación:** La v1.3 funciona perfectamente. Actualizar a v2.0 solo si deseas simplificar (eliminar automatización de cleanup)
+> **⚠️ ACTUALIZACIÓN CRÍTICA:** Si estás usando v2.0, actualiza a v2.1 inmediatamente. El bug hace que el parámetro max_lights_on sea completamente inoperante.
 
 ---
 
@@ -120,15 +121,18 @@ Simulación avanzada de presencia con control de lámparas simultáneas, loops c
 - Loop: Habilitado, 5 repeticiones
 ```
 
-### Prueba Rápida (5 minutos)
+### Prueba Rápida v2.1 (3-4 minutos)
 
 ```yaml
-- Luces: [3 switches cualquiera]
-- Máximo simultáneas: 1
-- min_on_time: 1 minuto
-- max_on_time: 2 minutos
-- Loop: 2 repeticiones
+- Luces: [4-6 switches cualquiera]
+- Máximo simultáneas: 2
+- time_on_min: 2 minutos
+- time_on_max: 3 minutos
+- delay_between_lights_min: 5 segundos
+- delay_between_lights_max: 10 segundos
+- Loop: 1 repetición
 - Activar y observar
+  → Deberías ver 2 luces encendidas simultáneamente
 ```
 
 ---
@@ -180,13 +184,15 @@ Loop: 8 repeticiones
 
 ## 🆚 Comparación con Versiones Anteriores
 
-| Característica | v1.0 (con bug) | v1.1 (fixed) |
-|----------------|----------------|--------------|
-| Detención | ❌ Imposible | ✅ < 5 segundos |
-| Mode | restart | single |
-| Verificación continua | ❌ No | ✅ Sí |
-| Escena emergencia | ❌ No | ✅ Sí |
-| Control durante ejecución | ❌ No | ✅ Sí |
+| Característica | v1.3 | v2.0 (buggy) | v2.1 (fixed) |
+|----------------|------|--------------|--------------|
+| Detención | ✅ < 5 seg | ✅ < 5 seg | ✅ < 5 seg |
+| Cleanup automático | ❌ Externa | ✅ Integrado | ✅ Integrado |
+| Luces simultáneas | ✅ Funciona | ❌ **ROTO** | ✅ **CORREGIDO** |
+| max_lights_on | ✅ Operativo | ❌ Ignorado | ✅ Operativo |
+| Rotación de luces | ✅ Sí | ❌ No | ✅ Sí |
+| Delay entre luces | ⚠️ Fijo | ❌ N/A | ✅ Configurable |
+| Monitoreo | ✅ Sí | ✅ Sí | ✅ Mejorado |
 
 ---
 
@@ -216,5 +222,5 @@ Si encuentras algún bug o tienes sugerencias:
 
 ---
 
-*PezAustral Presence Simulation v1.1 - Noviembre 2025*
+*PezAustral Presence Simulation v2.1 - Enero 2026*
 

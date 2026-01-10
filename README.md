@@ -65,13 +65,19 @@ automation:
 
 ---
 
-### 🎭 [Simulación de Presencia](docs/pezaustral_presence_simulation/)
+### 🎭 [Simulación de Presencia v2.1](docs/pezaustral_presence_simulation/) ⭐ BUGFIX CRÍTICO
 
 Blueprint avanzado para simular presencia en casa cuando estás fuera.
 
+**v2.1 - Bug Crítico Corregido:**
+- ✅ **FIX:** Ahora mantiene múltiples luces encendidas simultáneamente (bug v2.0 corregido)
+- ✅ **FIX:** Parámetro `max_lights_on` ahora funciona correctamente
+- ✅ Rotación dinámica real de luces implementada
+- ✅ Nuevo parámetro `delay_between_lights` configurable
+
 **Características:**
 - ✅ Control inteligente de múltiples luces/switches
-- ✅ Límite de dispositivos encendidos simultáneamente
+- ✅ Límite de dispositivos encendidos simultáneamente (¡AHORA FUNCIONA!)
 - ✅ **Cleanup automático** integrado (apaga todo al detener)
 - ✅ Monitoreo en tiempo real con widgets
 - ✅ Loops configurables o infinitos
@@ -79,8 +85,9 @@ Blueprint avanzado para simular presencia en casa cuando estás fuera.
 - ✅ Logs detallados
 
 **Archivos:**
-- [`blueprints/pezaustral_presence_simulation.yaml`](blueprints/pezaustral_presence_simulation.yaml)
+- [`blueprints/pezaustral_presence_simulation.yaml`](blueprints/pezaustral_presence_simulation.yaml) - v2.1
 - [Documentación completa](docs/pezaustral_presence_simulation/)
+- [Bugfix Report](BUGFIX_v2.1_PRESENCE_SIMULATION.md)
 - [Ejemplos de configuración](examples/)
 
 ---
@@ -349,6 +356,15 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
 
 ## 📝 Changelog
 
+### v3.4 (Enero 2026)
+- 🐛 **BUGFIX CRÍTICO - Simulación de Presencia v2.1**
+  - Corregido bug crítico donde solo se encendía 1 luz a la vez
+  - Parámetro `max_lights_on` ahora funciona correctamente
+  - Implementada rotación dinámica real de luces
+  - Nuevo parámetro `delay_between_lights` (10-60 seg)
+  - Documentación completa del bugfix agregada
+  - Actualización URGENTE recomendada desde v2.0
+
 ### v3.3 (Diciembre 2024)
 - 📦 **Reorganización completa del Irrigation System**
   - Todo el sistema encapsulado en carpeta `irrigation/`
@@ -386,9 +402,16 @@ Este es un proyecto personal, pero las contribuciones son bienvenidas.
 - ✅ Primer release del Sistema de Riego Inteligente
 - ✅ Widget especializado y scripts auxiliares
 
+### v2.1 (2026-01-10)
+- 🐛 **BUGFIX CRÍTICO:** Corregido comportamiento de luces simultáneas
+- ✅ Parámetro `max_lights_on` ahora funciona correctamente
+- ✅ Implementada rotación dinámica real
+- ✅ Nuevo parámetro `delay_between_lights`
+
 ### v2.0 (2025-11-18)
 - ✅ Blueprint de simulación de presencia completamente reescrito
 - ✅ Cleanup automático integrado (sin automatizaciones extras)
+- ❌ Bug: Solo mantenía 1 luz encendida (corregido en v2.1)
 - ✅ Reorganización completa del proyecto
 - ✅ Documentación consolidada por proyectos
 - ✅ Limpieza de archivos temporales
@@ -431,5 +454,5 @@ Si encuentras problemas:
 
 ---
 
-**Última actualización:** 2024-12-14
-**Versión:** 3.3
+**Última actualización:** 2026-01-10
+**Versión:** 3.4

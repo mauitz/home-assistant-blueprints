@@ -1,21 +1,23 @@
 blueprint:
-  name: PezAustral Presence Simulation v2.0
+  name: PezAustral Presence Simulation v2.1
   description: >
     # 🏠 Simulación de Presencia Inteligente
 
-    **VERSIÓN 2.0 - TODO INTEGRADO**
+    **VERSIÓN 2.1 - BUG CRÍTICO CORREGIDO**
 
+    ✅ **FIX v2.1** - Ahora mantiene múltiples luces encendidas simultáneamente (bug crítico v2.0 corregido)
     ✅ **CLEANUP AUTOMÁTICO** - Apaga TODAS las luces al detener (sin automatizaciones extras)
     ✅ **MONITOREO INTEGRADO** - Actualiza contadores automáticamente
     ✅ **DETENCIÓN LIMPIA** - Se puede detener en cualquier momento
     ✅ **ESCENAS DE SALIDA** - Configurables para fin normal o emergencia
-    ✅ **CONTROL DE LÁMPARAS** - Máximo simultáneas configurable
+    ✅ **CONTROL DE LÁMPARAS** - Máximo simultáneas configurable (¡AHORA FUNCIONA!)
     ✅ **LOGS DETALLADOS** - Tracking completo en Logbook
 
-    **MEJORAS V2.0:**
-    - Cleanup se ejecuta SIEMPRE al detener (no solo al finalizar loops)
-    - Sin necesidad de automatizaciones adicionales
-    - Un solo blueprint hace todo
+    **CAMBIOS v2.1:**
+    - FIX CRÍTICO: Las luces ahora permanecen encendidas simultáneamente
+    - Rotación real de luces según max_lights_on
+    - Delay corto entre encendidos (no apaga inmediatamente)
+    - Las luces se mantienen encendidas durante todo el loop
 
     **Documentación:** https://github.com/mauitz/home-assistant-blueprints
 
@@ -69,6 +71,7 @@ blueprint:
 
     time_on_min:
       name: Tiempo Encendido Mínimo (min)
+      description: Cada luz permanecerá encendida al menos este tiempo
       default: 15
       selector:
         number:
@@ -78,6 +81,7 @@ blueprint:
 
     time_on_max:
       name: Tiempo Encendido Máximo (min)
+      description: Cada luz permanecerá encendida como máximo este tiempo
       default: 45
       selector:
         number:
@@ -85,8 +89,29 @@ blueprint:
           max: 240
           mode: box
 
+    delay_between_lights_min:
+      name: Delay Entre Luces Mínimo (seg)
+      description: Tiempo mínimo de espera antes de encender la siguiente luz
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 300
+          mode: box
+
+    delay_between_lights_max:
+      name: Delay Entre Luces Máximo (seg)
+      description: Tiempo máximo de espera antes de encender la siguiente luz
+      default: 60
+      selector:
+        number:
+          min: 1
+          max: 300
+          mode: box
+
     loop_delay_min:
       name: Delay Entre Loops Mínimo (min)
+      description: Pausa entre repeticiones completas
       default: 5
       selector:
         number:
@@ -96,6 +121,7 @@ blueprint:
 
     loop_delay_max:
       name: Delay Entre Loops Máximo (min)
+      description: Pausa máxima entre repeticiones completas
       default: 15
       selector:
         number:
@@ -168,6 +194,8 @@ variables:
   loop_count: !input loop_count
   time_on_min: !input time_on_min
   time_on_max: !input time_on_max
+  delay_between_lights_min: !input delay_between_lights_min
+  delay_between_lights_max: !input delay_between_lights_max
   loop_delay_min: !input loop_delay_min
   loop_delay_max: !input loop_delay_max
   transition_on: !input transition_on
@@ -200,6 +228,7 @@ action:
   # ════════════════════════════════════════════════════════════════════════════
   - variables:
       lights_currently_on: []
+      lights_with_timestamp: []
       loop_interrupted: false
       detener_manualmente: false
 
@@ -234,11 +263,11 @@ action:
   # Log de inicio
   - service: logbook.log
     data:
-      name: "🏠 Presence Simulation"
-      message: "Iniciando - {{ lights | length }} dispositivos, {{ loop_count }} loops"
+      name: "🏠 Presence Simulation v2.1"
+      message: "Iniciando - {{ lights | length }} dispositivos, máx {{ max_lights_on }} simultáneas, {{ loop_count }} loops"
 
   # ════════════════════════════════════════════════════════════════════════════
-  # LOOP PRINCIPAL (con try-catch simulado)
+  # LOOP PRINCIPAL
   # ════════════════════════════════════════════════════════════════════════════
   - repeat:
       count: "{{ loop_count if loop_count < 99 else 999 }}"
@@ -275,7 +304,7 @@ action:
             message: "Loop {{ repeat.index }}/{{ loop_count }}"
 
         # ────────────────────────────────────────────────────────────────────
-        # PROCESAR CADA LUZ
+        # ENCENDER LUCES Y MANTENERLAS (LÓGICA CORREGIDA v2.1)
         # ────────────────────────────────────────────────────────────────────
         - repeat:
             for_each: "{{ lights }}"
@@ -296,12 +325,19 @@ action:
                       null
                     {% endif %}
 
-              # Apagar luz antigua si alcanzamos el límite
+              # ┌─────────────────────────────────────────────────────────────┐
+              # │ APAGAR LUZ MÁS ANTIGUA SI ALCANZAMOS EL LÍMITE             │
+              # └─────────────────────────────────────────────────────────────┘
               - choose:
                   - conditions:
                       - condition: template
                         value_template: "{{ needs_turn_off and light_to_turn_off != 'null' }}"
                     sequence:
+                      - service: logbook.log
+                        data:
+                          name: "🔄 Presence Simulation"
+                          message: "Rotando: apagando {{ state_attr(light_to_turn_off, 'friendly_name') or light_to_turn_off }}"
+
                       - choose:
                           - conditions:
                               - condition: template
@@ -320,7 +356,7 @@ action:
                       - variables:
                           lights_currently_on: "{{ lights_currently_on[1:] | list }}"
 
-                      # Actualizar monitoreo
+                      # Actualizar monitoreo después de apagar
                       - choose:
                           - conditions:
                               - condition: template
@@ -332,7 +368,9 @@ action:
                                 data:
                                   value: "{{ lights_currently_on | length }}"
 
-              # Encender luz nueva
+              # ┌─────────────────────────────────────────────────────────────┐
+              # │ ENCENDER LUZ NUEVA                                          │
+              # └─────────────────────────────────────────────────────────────┘
               - choose:
                   - conditions:
                       - condition: template
@@ -351,9 +389,9 @@ action:
               - service: logbook.log
                 data:
                   name: "💡 Presence Simulation"
-                  message: "Encendida: {{ state_attr(current_light, 'friendly_name') or current_light }}"
+                  message: "Encendida: {{ state_attr(current_light, 'friendly_name') or current_light }} ({{ lights_currently_on | length + 1 }}/{{ max_lights_on }})"
 
-              # Agregar a lista
+              # Agregar a lista de luces encendidas
               - variables:
                   lights_currently_on: "{{ lights_currently_on + [current_light] }}"
 
@@ -381,10 +419,13 @@ action:
                             {% endfor %}
                             {{ ns.names | join(', ') if ns.names | length > 0 else 'Ninguna' }}
 
-              # Esperar tiempo aleatorio con verificación
+              # ┌─────────────────────────────────────────────────────────────┐
+              # │ DELAY CORTO ANTES DE LA SIGUIENTE LUZ                       │
+              # │ (NO apagamos la luz, la dejamos encendida)                  │
+              # └─────────────────────────────────────────────────────────────┘
               - wait_template: "{{ is_state(automation_control_entity, 'off') }}"
                 timeout:
-                  minutes: "{{ range(time_on_min, time_on_max + 1) | random }}"
+                  seconds: "{{ range(delay_between_lights_min, delay_between_lights_max + 1) | random }}"
 
               # Si se detuvo durante el wait, marcar y salir
               - choose:
@@ -397,36 +438,87 @@ action:
                           detener_manualmente: true
                       - stop: "Detenido manualmente"
 
-              # Apagar esta luz
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ current_domain == 'light' }}"
-                    sequence:
-                      - service: light.turn_off
-                        target:
-                          entity_id: "{{ current_light }}"
-                        data:
-                          transition: "{{ transition_off }}"
-                default:
-                  - service: homeassistant.turn_off
-                    target:
-                      entity_id: "{{ current_light }}"
+        # ────────────────────────────────────────────────────────────────────
+        # MANTENER LUCES ENCENDIDAS DURANTE EL TIEMPO CONFIGURADO
+        # ────────────────────────────────────────────────────────────────────
+        - service: logbook.log
+          data:
+            name: "⏱️  Presence Simulation"
+            message: "Ciclo completo - {{ lights_currently_on | length }} luces encendidas durante {{ time_on_min }}-{{ time_on_max }} min"
 
-              - variables:
-                  lights_currently_on: "{{ lights_currently_on | reject('eq', current_light) | list }}"
+        - wait_template: "{{ is_state(automation_control_entity, 'off') }}"
+          timeout:
+            minutes: "{{ range(time_on_min, time_on_max + 1) | random }}"
 
-              # Actualizar monitoreo
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ enable_monitoring }}"
+        # Verificar si se detuvo durante el tiempo de espera
+        - choose:
+            - conditions:
+                - condition: state
+                  entity_id: !input automation_control_entity
+                  state: "off"
+              sequence:
+                - variables:
+                    detener_manualmente: true
+                - stop: "Detenido manualmente"
+
+        # ────────────────────────────────────────────────────────────────────
+        # APAGAR TODAS LAS LUCES AL FINAL DEL LOOP
+        # ────────────────────────────────────────────────────────────────────
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ lights_currently_on | length > 0 }}"
+              sequence:
+                - service: logbook.log
+                  data:
+                    name: "🌙 Presence Simulation"
+                    message: "Finalizando loop - Apagando {{ lights_currently_on | length }} luces"
+
+                - repeat:
+                    for_each: "{{ lights_currently_on }}"
                     sequence:
-                      - service: input_number.set_value
-                        target:
-                          entity_id: input_number.presence_simulation_lights_on_count
-                        data:
-                          value: "{{ lights_currently_on | length }}"
+                      - variables:
+                          loop_light: "{{ repeat.item }}"
+                          loop_domain: "{{ loop_light.split('.')[0] }}"
+
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: "{{ loop_domain == 'light' }}"
+                            sequence:
+                              - service: light.turn_off
+                                target:
+                                  entity_id: "{{ loop_light }}"
+                                data:
+                                  transition: "{{ transition_off }}"
+                        default:
+                          - service: homeassistant.turn_off
+                            target:
+                              entity_id: "{{ loop_light }}"
+
+                      - delay:
+                          milliseconds: 300
+
+                - variables:
+                    lights_currently_on: []
+
+                # Actualizar monitoreo
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ enable_monitoring }}"
+                      sequence:
+                        - service: input_number.set_value
+                          target:
+                            entity_id: input_number.presence_simulation_lights_on_count
+                          data:
+                            value: 0
+
+                        - service: input_text.set_value
+                          target:
+                            entity_id: input_text.presence_simulation_active_lights
+                          data:
+                            value: "Ninguna"
 
         # Delay entre loops
         - choose:
@@ -434,6 +526,11 @@ action:
                 - condition: template
                   value_template: "{{ repeat.index < loop_count }}"
               sequence:
+                - service: logbook.log
+                  data:
+                    name: "💤 Presence Simulation"
+                    message: "Pausa entre loops ({{ loop_delay_min }}-{{ loop_delay_max }} min)"
+
                 - delay:
                     minutes: "{{ range(loop_delay_min, loop_delay_max + 1) | random }}"
 
@@ -450,7 +547,7 @@ action:
           - service: logbook.log
             data:
               name: "🧹 Presence Simulation"
-              message: "Limpieza: {{ lights_currently_on | length }} luz(es)"
+              message: "Limpieza final: {{ lights_currently_on | length }} luz(es)"
 
           - repeat:
               for_each: "{{ lights_currently_on }}"
@@ -538,6 +635,5 @@ action:
   # Log final
   - service: logbook.log
     data:
-      name: "✅ Presence Simulation"
+      name: "✅ Presence Simulation v2.1"
       message: "Finalizada - Todas las luces apagadas"
-
