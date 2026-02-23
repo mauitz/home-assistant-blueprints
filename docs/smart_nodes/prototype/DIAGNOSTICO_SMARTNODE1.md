@@ -492,3 +492,4 @@ Si los problemas persisten, sería útil ver:
 4. 📝 Reportar resultados después de cambios
 
 
+

@@ -173,3 +173,4 @@ echo ""
 echo -e "${BLUE}Diagnóstico completado${NC}"
 
 
+

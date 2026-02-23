@@ -14,7 +14,7 @@ Esta guía te ayudará a elegir la configuración óptima para cada SmartNode se
 ├─ SÍ → Perfil 1: RESPUESTA RÁPIDA ⭐ (Recomendado)
 │        Latencia: 80-120ms
 │        Consumo: No es problema
-│        
+│
 └─ NO (a batería)
    │
    ├─ ¿Es crítico que responda rápido? (<200ms)
@@ -77,22 +77,22 @@ ota:
 wifi:
   ssid: "TU_SSID"
   password: "TU_PASSWORD"
-  
+
   manual_ip:
     static_ip: 192.168.1.XX  # Cambiar XX
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
-  
+
   fast_connect: true
   reboot_timeout: 15min
-  
+
   # ═══════════════════════════════════════
   # PERFIL: RESPUESTA RÁPIDA
   # ═══════════════════════════════════════
   power_save_mode: none   # Sin ahorro WiFi
   output_power: 10dB      # Potencia moderada
-  
+
   ap:
     ssid: "SmartNodeX Fallback"
     password: "12345678"
@@ -148,7 +148,7 @@ binary_sensor:
 ```yaml
 wifi:
   # ... (misma configuración base)
-  
+
   # ═══════════════════════════════════════
   # PERFIL: EQUILIBRADO
   # ═══════════════════════════════════════
@@ -187,7 +187,7 @@ binary_sensor:
 ```yaml
 wifi:
   # ... (misma configuración base)
-  
+
   # ═══════════════════════════════════════
   # PERFIL: MÁXIMO AHORRO
   # ═══════════════════════════════════════
@@ -200,7 +200,7 @@ sensor:
     pin: 32
     name: "Room Brightness"
     update_interval: 60s  # Era 30s
-  
+
   - platform: dht
     pin: 4
     model: DHT11
@@ -209,7 +209,7 @@ sensor:
     humidity:
       name: "Room Humidity"
     update_interval: 120s  # Era 60s
-  
+
   - platform: ld2410
     detection_distance:
       name: Detection Distance
@@ -242,7 +242,7 @@ binary_sensor:
 ```yaml
 wifi:
   # ... (misma configuración base)
-  
+
   # ═══════════════════════════════════════
   # PERFIL: MÁXIMA VELOCIDAD
   # ═══════════════════════════════════════
@@ -551,6 +551,6 @@ binary_sensor:
 
 ---
 
-**Última actualización:** 2026-01-07  
+**Última actualización:** 2026-01-07
 **Versión:** 1.0
 

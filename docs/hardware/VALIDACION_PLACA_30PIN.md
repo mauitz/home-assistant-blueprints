@@ -283,3 +283,6 @@ python3 -m esphome run riego_z1.yaml --device /dev/cu.usbserial-0001
 **Autor**: @mauitz
 
 
+
+
+

@@ -923,3 +923,6 @@ Con esta PCB de 8×12 cm tienes:
 **¡Mucha suerte con tu proyecto!** 🚀
 
 
+
+
+

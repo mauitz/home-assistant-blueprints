@@ -357,7 +357,7 @@ wifi:
 
 ---
 
-**Última actualización:** 2026-01-07  
-**Estado:** ✅ Operacional y optimizado  
+**Última actualización:** 2026-01-07
+**Estado:** ✅ Operacional y optimizado
 **Próxima revisión:** 2026-02-01
 

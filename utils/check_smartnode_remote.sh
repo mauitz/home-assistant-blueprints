@@ -170,3 +170,4 @@ echo -e "${BLUE}Verificación completada${NC}"
 echo ""
 
 
+

@@ -169,3 +169,6 @@ Si usas GPIO32/33 para LD2410C, actualiza `riego_z1.yaml`:
 <invoke name="read_file">
 <parameter name="target_file">/Users/maui/_maui/domotica/home-assistant-blueprints/esphome/riego_z1.yaml
 
+
+
+

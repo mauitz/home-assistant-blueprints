@@ -115,3 +115,6 @@ echo "Para más detalles, ejecuta:"
 echo "  python3 utils/ha_manager.py status"
 echo "  cat docs/homeassistant_pezaustral.md"
 echo ""
+
+
+

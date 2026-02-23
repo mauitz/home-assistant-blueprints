@@ -4,8 +4,8 @@
 
 Dispositivo multisensor basado en ESP32 con capacidad de detección de presencia mmWave, temperatura, humedad, luz ambiental y sistema de alimentación portátil con batería recargable.
 
-**Estado:** ✅ **100% FUNCIONAL - Producción**  
-**Última actualización:** 4 Enero 2026  
+**Estado:** ✅ **100% FUNCIONAL - Producción**
+**Última actualización:** 4 Enero 2026
 **Versión:** 3.0
 
 ---
@@ -300,7 +300,8 @@ Para problemas o dudas:
 
 ---
 
-**Última prueba exitosa:** 4 Enero 2026  
-**Dispositivo:** smartnode1 @ 192.168.1.13  
+**Última prueba exitosa:** 4 Enero 2026
+**Dispositivo:** smartnode1 @ 192.168.1.13
 **Todos los sensores verificados:** ✅ FUNCIONANDO
+
 

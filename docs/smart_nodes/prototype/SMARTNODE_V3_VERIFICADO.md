@@ -1,7 +1,7 @@
 # Smart Node V3 - Configuración Verificada y Funcionando
 
-**Estado:** ✅ 100% FUNCIONAL  
-**Fecha verificación:** 4 Enero 2026  
+**Estado:** ✅ 100% FUNCIONAL
+**Fecha verificación:** 4 Enero 2026
 **Dispositivo:** smartnode1 @ 192.168.1.13
 
 ---
@@ -338,7 +338,8 @@ Firmware:
 
 ---
 
-**Pruebas realizadas por:** Sistema automatizado  
-**Supervisión:** Usuario maui  
+**Pruebas realizadas por:** Sistema automatizado
+**Supervisión:** Usuario maui
 **Próxima revisión:** Cuando se agreguen nuevos sensores (V4)
+
 

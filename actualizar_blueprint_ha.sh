@@ -36,7 +36,7 @@ if [ $? -eq 0 ]; then
     echo "   4. Prueba iniciar la simulación"
     echo "   5. Verifica que empiece con switches diferentes cada vez"
     echo ""
-    
+
     # Verificar que el shuffle está presente
     if grep -q "shuffled_lights" "$DEST"; then
         echo "✅ VERIFICADO: Shuffle presente en el blueprint"

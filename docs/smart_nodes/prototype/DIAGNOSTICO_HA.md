@@ -477,3 +477,4 @@ python3 -m esphome logs smartnode1.yaml --device /dev/cu.usbserial-0001
 **Próximo paso:** Ver logs desde el boot para identificar problema WiFi
 
 
+

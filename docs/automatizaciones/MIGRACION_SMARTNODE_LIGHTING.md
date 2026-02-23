@@ -356,3 +356,4 @@ Cuando instales más SmartNodes en otras habitaciones, simplemente:
 **Compatible con:** Home Assistant 2025.x
 
 
+

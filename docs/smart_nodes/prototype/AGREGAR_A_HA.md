@@ -225,3 +225,4 @@ Error: Association/Authentication Failed intermitente
 **¿Funcionó?** Dime si aparece en Home Assistant y vemos los sensores.
 
 
+

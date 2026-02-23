@@ -299,3 +299,6 @@ Estas custom cards deben estar instaladas en Home Assistant:
 **Última actualización:** 15 de Diciembre, 2025
 **Mantenido por:** Maui
 **Repositorio:** home-assistant-blueprints
+
+
+
