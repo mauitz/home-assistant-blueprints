@@ -1,0 +1,689 @@
+# LightNode Pasillo - Sistema de iluminación inteligente
+# Hardware: ESP32 + 2× LED strips + LD2410C + LDR
+# Versión: 1.3
+
+substitutions:
+  device_name: lightnode-entrance
+  friendly_name: "LightNode Entrance"
+  
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  platform: ESP32
+  board: esp32dev
+
+# WiFi - Misma configuración que smartnode1
+wifi:
+  ssid: "sunsetlabs-2.4GHz"
+  password: "bienvenido"
+  
+  # IP estática
+  manual_ip:
+    static_ip: 192.168.1.15
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+  
+  # Optimización para respuesta rápida
+  fast_connect: true
+  reboot_timeout: 15min
+  power_save_mode: none
+  output_power: 10dB
+  
+  # Fallback AP en caso de que no conecte
+  ap:
+    ssid: "LightNode Entrance Fallback"
+    password: "lightnode123"
+
+captive_portal:
+
+# Habilitar logging
+logger:
+  level: DEBUG
+  
+# API para Home Assistant
+api:
+  encryption:
+    key: "RejA9fXVyRXZ6EuvXrUmC0HEPQVkSuY3wTmEFfzVOoU="
+
+# OTA para actualizaciones remotas
+ota:
+  - platform: esphome
+    password: "lightnode2026"
+
+# Portal web
+web_server:
+  port: 80
+
+# ═══════════════════════════════════════════════════════════
+# UART para sensor LD2410C (presencia mmWave)
+# ═══════════════════════════════════════════════════════════
+uart:
+  tx_pin: GPIO33  # Lado izquierdo ESP32
+  rx_pin: GPIO32  # Lado izquierdo ESP32
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+
+# ═══════════════════════════════════════════════════════════
+# Sensor LD2410C - Detección de presencia
+# ═══════════════════════════════════════════════════════════
+ld2410:
+
+# Binary sensor de presencia
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: "Presencia Entrance"
+      id: presencia_entrance
+      device_class: occupancy
+      on_press:
+        then:
+          - logger.log: "¡Presencia detectada!"
+          - if:
+              condition:
+                switch.is_on: switch_control_automatico
+              then:
+                - logger.log: "Modo automático activado"
+                - script.execute: control_automatico_proximidad
+              else:
+                - logger.log: "Modo manual - sin acción automática"
+      on_release:
+        then:
+          - logger.log: "Sin presencia"
+          - if:
+              condition:
+                switch.is_on: switch_control_automatico
+              then:
+                - script.execute: apagar_luces_timeout
+
+  - platform: ld2410
+    has_moving_target:
+      name: "Objetivo en Movimiento Entrance"
+      internal: true
+    
+  - platform: ld2410
+    has_still_target:
+      name: "Objetivo Estático Entrance"
+      internal: true
+
+# ═══════════════════════════════════════════════════════════
+# Sensor LDR - Luz ambiente
+# ═══════════════════════════════════════════════════════════
+sensor:
+  # LDR conectado a GPIO 34 (ADC)
+  - platform: adc
+    pin: GPIO34
+    name: "Luz Ambiente Raw"
+    id: ldr_raw
+    update_interval: 2s
+    attenuation: 12db
+    internal: true  # No exponer valor crudo
+    
+  # Sensor procesado (porcentaje de luz)
+  - platform: template
+    name: "Luz Ambiente"
+    id: luz_ambiente
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 2s
+    lambda: |-
+      // Convertir voltaje ADC a porcentaje
+      // 0V (oscuro) = 0%, 3.3V (muy luminoso) = 100%
+      float voltage = id(ldr_raw).state;
+      float percent = (voltage / 3.3) * 100.0;
+      return percent;
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
+  
+  # Sensores de diagnóstico LD2410C
+  - platform: ld2410
+    moving_distance:
+      name: "Distancia Movimiento"
+      id: distancia_movimiento
+      entity_category: diagnostic
+      icon: mdi:run-fast
+    still_distance:
+      name: "Distancia Estático"
+      id: distancia_estatico
+      entity_category: diagnostic
+      icon: mdi:human-male
+    moving_energy:
+      name: "Energía Movimiento"
+      internal: true
+    still_energy:
+      name: "Energía Estático"
+      internal: true
+    detection_distance:
+      name: "Distancia Detectada"
+      id: distancia_deteccion
+      icon: mdi:ruler
+      on_value:
+        then:
+          # Trigger automático cuando cambia la distancia
+          - if:
+              condition:
+                switch.is_on: switch_control_automatico
+              then:
+                - script.execute: control_automatico_proximidad
+
+  # WiFi Signal
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+
+  # Uptime
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+
+# ═══════════════════════════════════════════════════════════
+# Outputs PWM para LEDs
+# ═══════════════════════════════════════════════════════════
+output:
+  # Canal Izquierdo - GPIO 25
+  - platform: ledc
+    pin: GPIO25
+    id: pwm_led_izquierda
+    frequency: 5000 Hz
+    channel: 0
+    
+  # Canal Derecho - GPIO 26
+  - platform: ledc
+    pin: GPIO26
+    id: pwm_led_derecha
+    frequency: 5000 Hz
+    channel: 1
+
+# ═══════════════════════════════════════════════════════════
+# Luces - Control de guirnaldas LED (uso interno)
+# ═══════════════════════════════════════════════════════════
+light:
+  # LED Izquierda (controlada por sistema automático o switches manuales)
+  - platform: monochromatic
+    name: "LED Entrance Izquierda"
+    id: led_izquierda
+    output: pwm_led_izquierda
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true
+    
+  # LED Derecha (controlada por sistema automático o switches manuales)
+  - platform: monochromatic
+    name: "LED Entrance Derecha"
+    id: led_derecha
+    output: pwm_led_derecha
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true
+
+# ═══════════════════════════════════════════════════════════
+# Configuración de automatización
+# ═══════════════════════════════════════════════════════════
+globals:
+  - id: umbral_luz
+    type: float
+    restore_value: no
+    initial_value: '30.0'  # Activar si luz < 30%
+    
+  - id: timeout_apagado
+    type: int
+    restore_value: no
+    initial_value: '30'  # Segundos sin presencia antes de apagar
+  
+  # Nuevos parámetros para control automático avanzado
+  - id: distancia_inicio
+    type: float
+    restore_value: no
+    initial_value: '100.0'  # X: 100cm (1 metro) - distancia donde empieza a encender
+    
+  - id: brillo_inicio
+    type: int
+    restore_value: no
+    initial_value: '10'  # Y: 10% - brillo inicial a 1 metro
+    
+  - id: distancia_maxima
+    type: float
+    restore_value: no
+    initial_value: '0.0'  # Z: 0cm - distancia para brillo 100% (junto al sensor)
+  
+  # Control manual de dimmer
+  - id: dimmer_derecha
+    type: int
+    restore_value: yes
+    initial_value: '100'
+    
+  - id: dimmer_izquierda
+    type: int
+    restore_value: yes
+    initial_value: '100'
+
+# ═══════════════════════════════════════════════════════════
+# Scripts de automatización avanzada
+# ═══════════════════════════════════════════════════════════
+script:
+  # Script: Control automático con proximidad
+  - id: control_automatico_proximidad
+    mode: restart
+    then:
+      - lambda: |-
+          // Obtener distancia de detección (con fallback)
+          float distancia = id(distancia_deteccion).state;
+          
+          // FALLBACK: Si detection_distance es 0, usar moving o still
+          if (distancia == 0 || isnan(distancia)) {
+            float dist_mov = id(distancia_movimiento).state;
+            float dist_est = id(distancia_estatico).state;
+            
+            // Usar la mayor de las dos (la que tenga valor)
+            if (!isnan(dist_mov) && dist_mov > 0) {
+              distancia = dist_mov;
+              ESP_LOGD("auto", "Usando Distancia Movimiento: %.0fcm", distancia);
+            } else if (!isnan(dist_est) && dist_est > 0) {
+              distancia = dist_est;
+              ESP_LOGD("auto", "Usando Distancia Estático: %.0fcm", distancia);
+            } else {
+              // Realmente no hay detección
+              ESP_LOGD("auto", "Sin detección válida - iniciando apagado");
+              id(apagar_luces_timeout).execute();
+              return;
+            }
+          }
+          
+          ESP_LOGD("auto", "Distancia final usada: %.0fcm", distancia);
+          
+          // Verificar condición "solo de noche"
+          bool solo_noche = id(switch_solo_noche).state;
+          float luz_actual = id(luz_ambiente).state;
+          float umbral = id(umbral_luz);
+          
+          if (solo_noche && luz_actual >= umbral) {
+            ESP_LOGD("auto", "Solo de noche activado - hay luz (%.0f >= %.0f)", luz_actual, umbral);
+            return;
+          }
+          
+          // Calcular brillo según distancia
+          float dist_inicio = id(distancia_inicio);
+          float dist_maxima = id(distancia_maxima);
+          int brillo_min = id(brillo_inicio);
+          
+          int brillo = 0;
+          if (distancia > dist_inicio) {
+            brillo = 0;
+          } else if (distancia <= dist_maxima) {
+            brillo = 100;
+          } else {
+            float rango_distancia = dist_inicio - dist_maxima;
+            float rango_brillo = 100.0 - brillo_min;
+            float progreso = (dist_inicio - distancia) / rango_distancia;
+            brillo = brillo_min + (progreso * rango_brillo);
+          }
+          
+          ESP_LOGD("auto", "Distancia: %.0fcm → Brillo: %d%%", distancia, brillo);
+          
+          // Aplicar brillo a ambas luces (proximidad omnidireccional)
+          if (brillo > 0) {
+            auto call_izq = id(led_izquierda).turn_on();
+            call_izq.set_brightness(brillo / 100.0);
+            call_izq.set_transition_length(300);
+            call_izq.perform();
+            
+            auto call_der = id(led_derecha).turn_on();
+            call_der.set_brightness(brillo / 100.0);
+            call_der.set_transition_length(300);
+            call_der.perform();
+          } else {
+            id(apagar_luces_timeout).execute();
+          }
+  
+  # Script: Apagar luces con timeout
+  - id: apagar_luces_timeout
+    mode: restart
+    then:
+      - logger.log: 
+          format: "Iniciando timeout de %d segundos..."
+          args: ['id(timeout_apagado)']
+      - delay: !lambda 'return id(timeout_apagado) * 1000;'
+      - if:
+          condition:
+            binary_sensor.is_off: presencia_entrance
+          then:
+            - logger.log: "Timeout cumplido - Apagando LEDs"
+            - light.turn_off:
+                id: led_izquierda
+                transition_length: 2000ms
+            - light.turn_off:
+                id: led_derecha
+                transition_length: 2000ms
+          else:
+            - logger.log: "Presencia detectada nuevamente - Cancelando apagado"
+
+# ═══════════════════════════════════════════════════════════
+# Numbers para configuración desde Home Assistant
+# ═══════════════════════════════════════════════════════════
+number:
+  # ═══════════════════════════════════════════════════════════
+  # CONTROLES PRINCIPALES (en orden)
+  # ═══════════════════════════════════════════════════════════
+  
+  # 4. Dimmer Luz Derecha
+  - platform: template
+    name: "4. Dimmer Derecha"
+    id: config_dimmer_derecha
+    min_value: 5
+    max_value: 100
+    step: 5
+    initial_value: 100
+    optimistic: true
+    unit_of_measurement: "%"
+    mode: slider
+    icon: mdi:tune-vertical
+    on_value:
+      then:
+        - globals.set:
+            id: dimmer_derecha
+            value: !lambda 'return (int)x;'
+        - logger.log:
+            format: "Dimmer derecha: %d%%"
+            args: ['(int)x']
+        # Si está en manual y encendida, aplicar nuevo brillo
+        - if:
+            condition:
+              and:
+                - switch.is_off: switch_control_automatico
+                - switch.is_on: switch_luz_derecha
+            then:
+              - lambda: |-
+                  int brillo = (int)x;
+                  auto call = id(led_derecha).turn_on();
+                  call.set_brightness(brillo / 100.0);
+                  call.perform();
+  
+  # 6. Dimmer Luz Izquierda
+  - platform: template
+    name: "6. Dimmer Izquierda"
+    id: config_dimmer_izquierda
+    min_value: 5
+    max_value: 100
+    step: 5
+    initial_value: 100
+    optimistic: true
+    unit_of_measurement: "%"
+    mode: slider
+    icon: mdi:tune-vertical
+    on_value:
+      then:
+        - globals.set:
+            id: dimmer_izquierda
+            value: !lambda 'return (int)x;'
+        - logger.log:
+            format: "Dimmer izquierda: %d%%"
+            args: ['(int)x']
+        # Si está en manual y encendida, aplicar nuevo brillo
+        - if:
+            condition:
+              and:
+                - switch.is_off: switch_control_automatico
+                - switch.is_on: switch_luz_izquierda
+            then:
+              - lambda: |-
+                  int brillo = (int)x;
+                  auto call = id(led_izquierda).turn_on();
+                  call.set_brightness(brillo / 100.0);
+                  call.perform();
+  
+  # ═══════════════════════════════════════════════════════════
+  # CONFIGURACIÓN AVANZADA
+  # ═══════════════════════════════════════════════════════════
+  
+  # 7. Timeout Apagado
+  - platform: template
+    name: "7. Timeout Apagado"
+    id: config_timeout
+    min_value: 5
+    max_value: 300
+    step: 5
+    initial_value: 30
+    optimistic: true
+    unit_of_measurement: "s"
+    mode: slider
+    icon: mdi:timer-sand
+    on_value:
+      then:
+        - globals.set:
+            id: timeout_apagado
+            value: !lambda 'return (int)x;'
+        - logger.log:
+            format: "Timeout actualizado a: %d segundos"
+            args: ['(int)x']
+  
+  # 8. Umbral Luz (Solo de Noche)
+  - platform: template
+    name: "8. Umbral Luz"
+    id: config_umbral_luz
+    min_value: 0
+    max_value: 100
+    step: 5
+    initial_value: 30
+    optimistic: true
+    unit_of_measurement: "%"
+    mode: slider
+    icon: mdi:brightness-6
+    on_value:
+      then:
+        - globals.set:
+            id: umbral_luz
+            value: !lambda 'return x;'
+        - logger.log:
+            format: "Umbral de luz actualizado a: %.0f"
+            args: ['x']
+  
+  # 9. Distancia Inicio (X)
+  - platform: template
+    name: "9. Distancia Inicio (X)"
+    id: config_dist_inicio
+    min_value: 50
+    max_value: 600
+    step: 10
+    initial_value: 100
+    optimistic: true
+    unit_of_measurement: "cm"
+    mode: slider
+    icon: mdi:arrow-expand-horizontal
+    on_value:
+      then:
+        - globals.set:
+            id: distancia_inicio
+            value: !lambda 'return x;'
+        - logger.log:
+            format: "Distancia inicio: %.0fcm"
+            args: ['x']
+  
+  # 10. Brillo Inicio (Y)
+  - platform: template
+    name: "A. Brillo Inicio (Y)"
+    id: config_brillo_inicio
+    min_value: 5
+    max_value: 80
+    step: 5
+    initial_value: 10
+    optimistic: true
+    unit_of_measurement: "%"
+    mode: slider
+    icon: mdi:brightness-4
+    on_value:
+      then:
+        - globals.set:
+            id: brillo_inicio
+            value: !lambda 'return (int)x;'
+        - logger.log:
+            format: "Brillo inicio: %d%%"
+            args: ['(int)x']
+  
+  # 11. Distancia Máxima (Z)
+  - platform: template
+    name: "B. Distancia Máxima (Z)"
+    id: config_dist_maxima
+    min_value: 0
+    max_value: 200
+    step: 5
+    initial_value: 0
+    optimistic: true
+    unit_of_measurement: "cm"
+    mode: slider
+    icon: mdi:arrow-collapse-horizontal
+    on_value:
+      then:
+        - globals.set:
+            id: distancia_maxima
+            value: !lambda 'return x;'
+        - logger.log:
+            format: "Distancia máxima: %.0fcm"
+            args: ['x']
+  
+  # ═══════════════════════════════════════════════════════════
+  # Configuración LD2410C (avanzada)
+  # ═══════════════════════════════════════════════════════════
+  - platform: ld2410
+    timeout:
+      name: "Tiempo Espera Sensor"
+      entity_category: config
+      icon: mdi:timer-outline
+    max_move_distance_gate:
+      name: "Límite Distancia (Movimiento)"
+      entity_category: config
+      icon: mdi:run
+    max_still_distance_gate:
+      name: "Límite Distancia (Estático)"
+      entity_category: config
+      icon: mdi:human-male
+
+# ═══════════════════════════════════════════════════════════
+# Switches de control
+# ═══════════════════════════════════════════════════════════
+switch:
+  # 1. Control Automático
+  - platform: template
+    name: "1. Control Automático"
+    id: switch_control_automatico
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: mdi:robot
+    on_turn_on:
+      - logger.log: "Control automático ACTIVADO - Modo proximidad"
+    on_turn_off:
+      - logger.log: "Control automático DESACTIVADO - Modo manual"
+  
+  # 2. Solo de Noche
+  - platform: template
+    name: "2. Solo de Noche"
+    id: switch_solo_noche
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: mdi:moon-waning-crescent
+    on_turn_on:
+      - logger.log: "Solo de noche ACTIVADO - requiere oscuridad"
+    on_turn_off:
+      - logger.log: "Solo de noche DESACTIVADO - funciona siempre"
+  
+  # 3. Control Manual Luz Derecha
+  - platform: template
+    name: "3. Luz Derecha"
+    id: switch_luz_derecha
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:light-recessed
+    turn_on_action:
+      - if:
+          condition:
+            switch.is_off: switch_control_automatico
+          then:
+            - lambda: |-
+                bool solo_noche = id(switch_solo_noche).state;
+                float luz = id(luz_ambiente).state;
+                float umbral = id(umbral_luz);
+                
+                if (solo_noche && luz >= umbral) {
+                  ESP_LOGW("manual", "Solo de noche activado - hay luz (%.0f >= %.0f)", luz, umbral);
+                  id(switch_luz_derecha).publish_state(false);
+                  return;
+                }
+                
+                int brillo = id(dimmer_derecha);
+                auto call = id(led_derecha).turn_on();
+                call.set_brightness(brillo / 100.0);
+                call.perform();
+                ESP_LOGI("manual", "Luz derecha ON al %d%%", brillo);
+    turn_off_action:
+      - light.turn_off: led_derecha
+      - logger.log: "Luz derecha OFF (manual)"
+  
+  # 5. Control Manual Luz Izquierda
+  - platform: template
+    name: "5. Luz Izquierda"
+    id: switch_luz_izquierda
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:light-recessed
+    turn_on_action:
+      - if:
+          condition:
+            switch.is_off: switch_control_automatico
+          then:
+            - lambda: |-
+                bool solo_noche = id(switch_solo_noche).state;
+                float luz = id(luz_ambiente).state;
+                float umbral = id(umbral_luz);
+                
+                if (solo_noche && luz >= umbral) {
+                  ESP_LOGW("manual", "Solo de noche activado - hay luz (%.0f >= %.0f)", luz, umbral);
+                  id(switch_luz_izquierda).publish_state(false);
+                  return;
+                }
+                
+                int brillo = id(dimmer_izquierda);
+                auto call = id(led_izquierda).turn_on();
+                call.set_brightness(brillo / 100.0);
+                call.perform();
+                ESP_LOGI("manual", "Luz izquierda ON al %d%%", brillo);
+    turn_off_action:
+      - light.turn_off: led_izquierda
+      - logger.log: "Luz izquierda OFF (manual)"
+
+  # Reiniciar ESP32
+  - platform: restart
+    name: "Reiniciar LightNode"
+    icon: mdi:restart
+
+# ═══════════════════════════════════════════════════════════
+# Información del dispositivo
+# ═══════════════════════════════════════════════════════════
+text_sensor:
+  - platform: template
+    name: "Ayuda / Estado"
+    icon: mdi:information-outline
+    lambda: |-
+      if (id(switch_control_automatico).state) {
+        if (id(switch_solo_noche).state) {
+          return {"Auto: ON (Solo Noche)"};
+        } else {
+          return {"Auto: ON (Siempre)"};
+        }
+      } else {
+        return {"Manual"};
+      }
+    update_interval: 5s
+
+  - platform: version
+    name: "ESPHome Version"
+    entity_category: diagnostic
+    
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+    ssid:
+      name: "WiFi SSID"
+      entity_category: diagnostic

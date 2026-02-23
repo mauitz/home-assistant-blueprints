@@ -1,0 +1,334 @@
+# LightNode Pasillo - Sistema de iluminación inteligente
+# Hardware: ESP32 + 2× LED strips + LD2410C + LDR
+# Versión: 1.3
+
+substitutions:
+  device_name: lightnode-entrada
+  friendly_name: "LightNode Entrada"
+  
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  platform: ESP32
+  board: esp32dev
+
+# WiFi - Misma configuración que smartnode1
+wifi:
+  ssid: "sunsetlabs-2.4GHz"
+  password: "bienvenido"
+  
+  # IP estática
+  manual_ip:
+    static_ip: 192.168.1.15
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+  
+  # Optimización para respuesta rápida
+  fast_connect: true
+  reboot_timeout: 15min
+  power_save_mode: none
+  output_power: 10dB
+  
+  # Fallback AP en caso de que no conecte
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: "lightnode123"
+
+captive_portal:
+
+# Habilitar logging
+logger:
+  level: DEBUG
+  
+# API para Home Assistant
+api:
+  encryption:
+    key: "RejA9fXVyRXZ6EuvXrUmC0HEPQVkSuY3wTmEFfzVOoU="
+
+# OTA para actualizaciones remotas
+ota:
+  - platform: esphome
+    password: "lightnode2026"
+
+# Portal web
+web_server:
+  port: 80
+
+# ═══════════════════════════════════════════════════════════
+# UART para sensor LD2410C (presencia mmWave)
+# ═══════════════════════════════════════════════════════════
+uart:
+  tx_pin: GPIO33  # Lado izquierdo ESP32
+  rx_pin: GPIO32  # Lado izquierdo ESP32
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+
+# ═══════════════════════════════════════════════════════════
+# Sensor LD2410C - Detección de presencia
+# ═══════════════════════════════════════════════════════════
+ld2410:
+
+# Binary sensor de presencia
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: "Presencia Pasillo"
+      id: presencia_pasillo
+      device_class: occupancy
+      on_press:
+        then:
+          - logger.log: "¡Presencia detectada!"
+          - script.execute: activar_luces
+      on_release:
+        then:
+          - logger.log: "Sin presencia"
+          - script.execute: apagar_luces_timeout
+
+  - platform: ld2410
+    has_moving_target:
+      name: "Objetivo en Movimiento"
+    
+  - platform: ld2410
+    has_still_target:
+      name: "Objetivo Estático"
+
+# ═══════════════════════════════════════════════════════════
+# Sensor LDR - Luz ambiente
+# ═══════════════════════════════════════════════════════════
+sensor:
+  # LDR conectado a GPIO 34 (ADC)
+  - platform: adc
+    pin: GPIO34
+    name: "Luz Ambiente Raw"
+    id: ldr_raw
+    update_interval: 2s
+    attenuation: 12db
+    internal: true  # No exponer valor crudo
+    
+  # Sensor procesado (porcentaje de luz)
+  - platform: template
+    name: "Luz Ambiente"
+    id: luz_ambiente
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 2s
+    lambda: |-
+      // Convertir voltaje ADC a porcentaje
+      // 0V (oscuro) = 0%, 3.3V (muy luminoso) = 100%
+      float voltage = id(ldr_raw).state;
+      float percent = (voltage / 3.3) * 100.0;
+      return percent;
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
+  
+  # Sensores de diagnóstico LD2410C
+  - platform: ld2410
+    moving_distance:
+      name: "Distancia Movimiento"
+    still_distance:
+      name: "Distancia Estático"
+    moving_energy:
+      name: "Energía Movimiento"
+    still_energy:
+      name: "Energía Estático"
+    detection_distance:
+      name: "Distancia Detección"
+
+  # WiFi Signal
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+
+  # Uptime
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+
+# ═══════════════════════════════════════════════════════════
+# Outputs PWM para LEDs
+# ═══════════════════════════════════════════════════════════
+output:
+  # Canal Izquierdo - GPIO 25
+  - platform: ledc
+    pin: GPIO25
+    id: pwm_led_izquierda
+    frequency: 5000 Hz
+    channel: 0
+    
+  # Canal Derecho - GPIO 26
+  - platform: ledc
+    pin: GPIO26
+    id: pwm_led_derecha
+    frequency: 5000 Hz
+    channel: 1
+
+# ═══════════════════════════════════════════════════════════
+# Luces - Control de guirnaldas LED
+# ═══════════════════════════════════════════════════════════
+light:
+  # LED Izquierda
+  - platform: monochromatic
+    name: "LED Pasillo Izquierda"
+    id: led_izquierda
+    output: pwm_led_izquierda
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+    
+  # LED Derecha
+  - platform: monochromatic
+    name: "LED Pasillo Derecha"
+    id: led_derecha
+    output: pwm_led_derecha
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ═══════════════════════════════════════════════════════════
+# Configuración de automatización
+# ═══════════════════════════════════════════════════════════
+globals:
+  - id: umbral_luz
+    type: float
+    restore_value: no
+    initial_value: '30.0'  # Activar si luz < 30%
+    
+  - id: timeout_apagado
+    type: int
+    restore_value: no
+    initial_value: '30'  # Segundos sin presencia antes de apagar
+
+# ═══════════════════════════════════════════════════════════
+# Scripts de automatización
+# ═══════════════════════════════════════════════════════════
+script:
+  # Script: Activar luces si está oscuro
+  - id: activar_luces
+    mode: restart
+    then:
+      - logger.log: "Evaluando si activar luces..."
+      - if:
+          condition:
+            lambda: 'return id(luz_ambiente).state < id(umbral_luz);'
+          then:
+            - logger.log: 
+                format: "Luz ambiente: %.0f < %.0f - Encendiendo LEDs"
+                args: ['id(luz_ambiente).state', 'id(umbral_luz)']
+            - light.turn_on:
+                id: led_izquierda
+                brightness: 100%
+                transition_length: 800ms
+            - light.turn_on:
+                id: led_derecha
+                brightness: 100%
+                transition_length: 800ms
+          else:
+            - logger.log:
+                format: "Luz ambiente: %.0f >= %.0f - No es necesario encender"
+                args: ['id(luz_ambiente).state', 'id(umbral_luz)']
+  
+  # Script: Apagar luces con timeout
+  - id: apagar_luces_timeout
+    mode: restart
+    then:
+      - logger.log: 
+          format: "Iniciando timeout de %d segundos..."
+          args: ['id(timeout_apagado)']
+      - delay: !lambda 'return id(timeout_apagado) * 1000;'
+      - if:
+          condition:
+            binary_sensor.is_off: presencia_pasillo
+          then:
+            - logger.log: "Timeout cumplido - Apagando LEDs"
+            - light.turn_off:
+                id: led_izquierda
+                transition_length: 1000ms
+            - light.turn_off:
+                id: led_derecha
+                transition_length: 1000ms
+          else:
+            - logger.log: "Presencia detectada nuevamente - Cancelando apagado"
+
+# ═══════════════════════════════════════════════════════════
+# Numbers para configuración desde Home Assistant
+# ═══════════════════════════════════════════════════════════
+number:
+  # Configuración LD2410C
+  - platform: ld2410
+    timeout:
+      name: "LD2410 Timeout"
+    max_move_distance_gate:
+      name: "LD2410 Max Move Distance"
+    max_still_distance_gate:
+      name: "LD2410 Max Still Distance"
+  
+  # Configuración de automatización
+  - platform: template
+    name: "Umbral Luz (Activación)"
+    id: config_umbral_luz
+    min_value: 0
+    max_value: 100
+    step: 5
+    initial_value: 30
+    optimistic: true
+    unit_of_measurement: "%"
+    mode: slider
+    on_value:
+      then:
+        - globals.set:
+            id: umbral_luz
+            value: !lambda 'return x;'
+        - logger.log:
+            format: "Umbral de luz actualizado a: %.0f"
+            args: ['x']
+            
+  - platform: template
+    name: "Timeout Apagado"
+    id: config_timeout
+    min_value: 5
+    max_value: 300
+    step: 5
+    initial_value: 30
+    optimistic: true
+    unit_of_measurement: "s"
+    mode: slider
+    on_value:
+      then:
+        - globals.set:
+            id: timeout_apagado
+            value: !lambda 'return (int)x;'
+        - logger.log:
+            format: "Timeout actualizado a: %d segundos"
+            args: ['(int)x']
+
+# ═══════════════════════════════════════════════════════════
+# Switches de control manual
+# ═══════════════════════════════════════════════════════════
+switch:
+  # Habilitar/deshabilitar automatización
+  - platform: template
+    name: "Automatización Activada"
+    id: auto_enabled
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: mdi:lightbulb-auto
+
+  # Reiniciar ESP32
+  - platform: restart
+    name: "Reiniciar LightNode"
+    icon: mdi:restart
+
+# ═══════════════════════════════════════════════════════════
+# Información del dispositivo
+# ═══════════════════════════════════════════════════════════
+text_sensor:
+  - platform: version
+    name: "ESPHome Version"
+    
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+    ssid:
+      name: "WiFi SSID"
