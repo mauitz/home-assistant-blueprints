@@ -1,0 +1,177 @@
+# Configuración SmartNode1 CON sensor de audio funcional
+# Esta versión incluye un componente custom que LEE realmente el micrófono
+
+esphome:
+  name: smartnode1
+  friendly_name: Smart Node 1
+  # Incluir componente custom para lectura de audio
+  includes:
+    - custom_components/audio_level_sensor.h
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "uiBug7J/YQ2WEQwAinei45aUGm7L9cf6Sp82nI4GuIU="
+
+ota:
+  - platform: esphome
+    password: "fc6b855770911eb3179ff203b83f5ec8"
+
+wifi:
+  ssid: "sunsetlabs-2.4GHz"
+  password: "bienvenido"
+
+  # IP estática configurada
+  manual_ip:
+    static_ip: 192.168.1.13
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+
+  # Optimización para respuesta rápida (conectado a corriente)
+  fast_connect: true
+  reboot_timeout: 15min
+  power_save_mode: none
+  output_power: 10dB
+
+  ap:
+    ssid: "Test1 Fallback Hotspot"
+    password: "EFM0SoydaFKO"
+
+captive_portal:
+
+
+# I2S Audio para micrófono INMP441
+i2s_audio:
+  - id: mic_i2s
+    i2s_lrclk_pin: GPIO25  # WS (Word Select)
+    i2s_bclk_pin: GPIO26   # SCK (Serial Clock)
+
+# Micrófono INMP441
+microphone:
+  - platform: i2s_audio
+    id: smartnode_mic
+    adc_type: external
+    i2s_din_pin: GPIO33    # SD (Serial Data)
+    pdm: false
+
+
+# UART para LD2410
+uart:
+  tx_pin: 17
+  rx_pin: 16
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+
+ld2410:
+
+sensor:
+  # LDR - Sensor de Luz
+  - platform: adc
+    pin: 32
+    name: "Room Brightness"
+    update_interval: 30s
+    accuracy_decimals: 0
+    unit_of_measurement: "%"
+    attenuation: 12db
+    samples: 3
+    filters:
+      - calibrate_linear:
+          - 0.0 -> 100.0
+          - 3.3 -> 0.0
+      - lambda: 'return round(x);'
+
+  - platform: dht
+    pin: 4
+    model: DHT11
+    temperature:
+      name: "Room Temperature"
+    humidity:
+      name: "Room Humidity"
+    update_interval: 60s
+
+  # Voltaje de Batería
+  - platform: adc
+    pin: 35
+    name: "Battery Voltage"
+    id: battery_voltage
+    update_interval: 60s
+    accuracy_decimals: 2
+    unit_of_measurement: "V"
+    attenuation: 12db
+    filters:
+      - multiply: 2.0
+      - lambda: |-
+          if (x < 0.5) return 0.0;
+          return x;
+    device_class: voltage
+    state_class: measurement
+
+  # Porcentaje de Batería
+  - platform: template
+    name: "Battery Level"
+    id: battery_level
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 60s
+    icon: "mdi:battery"
+    device_class: battery
+    lambda: |-
+      float voltage = id(battery_voltage).state;
+      if (voltage >= 4.2) return 100.0;
+      if (voltage <= 3.0) return 0.0;
+      return ((voltage - 3.0) / 1.2) * 100.0;
+
+  # Sensor de Nivel de Sonido CUSTOM
+  # Este sensor SÍ lee realmente datos del micrófono
+  - platform: custom
+    lambda: |-
+      auto audio_sensor = new AudioLevelSensor(id(smartnode_mic));
+      App.register_component(audio_sensor);
+      return {audio_sensor};
+    sensors:
+      - name: "Sound Level"
+        unit_of_measurement: "%"
+        accuracy_decimals: 0
+        icon: "mdi:microphone"
+
+  - platform: ld2410
+    moving_distance:
+      name: Moving Distance
+      filters:
+        - delta: 0.1
+    still_distance:
+      name: Still Distance
+      filters:
+        - delta: 0.1
+    moving_energy:
+      name: Move Energy
+      filters:
+        - throttle: 5s
+    still_energy:
+      name: Still Energy
+      filters:
+        - throttle: 5s
+    detection_distance:
+      name: Detection Distance
+      filters:
+        - delta: 0.2
+        - throttle: 500ms
+
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: Presence
+    has_moving_target:
+      name: Moving Target
+    has_still_target:
+      name: Still Target

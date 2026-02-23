@@ -1,0 +1,227 @@
+# Ejemplos de Automatizaciones con Detección de Sonido
+# SmartNode1 con sensor de audio
+
+# =============================================================================
+# EJEMPLO 1: Alertar cuando hay ruido fuerte
+# =============================================================================
+- alias: "Alertar ruido fuerte en dormitorio"
+  description: "Notifica cuando se detecta ruido fuerte en el dormitorio"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.loud_noise_detected
+      to: 'on'
+  condition:
+    # Solo alertar si hay presencia (alguien en la habitación)
+    - condition: state
+      entity_id: binary_sensor.smartnode1_presence
+      state: 'on'
+  action:
+    - service: notify.mobile_app_tu_telefono
+      data:
+        message: "🔊 ¡Ruido fuerte detectado en dormitorio!"
+        title: "Alerta de Sonido"
+
+# =============================================================================
+# EJEMPLO 2: Detectar alarma de humo/CO
+# =============================================================================
+- alias: "Detectar alarma de emergencia"
+  description: "Detecta sonidos continuos y fuertes que podrían ser alarmas"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.sound_level
+      above: 80
+      for:
+        seconds: 5  # Ruido sostenido por 5 segundos
+  action:
+    - service: notify.mobile_app_tu_telefono
+      data:
+        message: "⚠️ ¡Posible alarma detectada en dormitorio!"
+        title: "Alerta de Emergencia"
+        data:
+          priority: high
+          ttl: 0
+    # Encender todas las luces
+    - service: light.turn_on
+      target:
+        entity_id: all
+      data:
+        brightness: 255
+
+# =============================================================================
+# EJEMPLO 3: Modo silencioso nocturno
+# =============================================================================
+- alias: "Verificar silencio nocturno"
+  description: "Alerta si hay ruido después de que todos duermen"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.sound_level
+      above: 40
+  condition:
+    # Solo entre 11 PM y 6 AM
+    - condition: time
+      after: "23:00:00"
+      before: "06:00:00"
+    # Y todos en casa están dormidos
+    - condition: state
+      entity_id: input_boolean.everyone_sleeping
+      state: 'on'
+  action:
+    - service: notify.mobile_app_tu_telefono
+      data:
+        message: "🔕 Ruido detectado durante horas de sueño"
+
+# =============================================================================
+# EJEMPLO 4: Detector de bebé llorando
+# =============================================================================
+- alias: "Detectar llanto de bebé"
+  description: "Notifica cuando hay ruido en la habitación del bebé"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.sound_level
+      above: 50
+      for:
+        seconds: 3
+  condition:
+    # Solo cuando el bebé está durmiendo
+    - condition: state
+      entity_id: input_boolean.baby_sleeping
+      state: 'on'
+  action:
+    - service: notify.mobile_app_tu_telefono
+      data:
+        message: "👶 El bebé podría estar llorando"
+        title: "Monitor de Bebé"
+    # Encender luz nocturna tenue
+    - service: light.turn_on
+      target:
+        entity_id: light.bedroom_night_light
+      data:
+        brightness: 30
+        rgb_color: [255, 200, 150]  # Luz cálida
+
+# =============================================================================
+# EJEMPLO 5: Registrar eventos de sonido en historial
+# =============================================================================
+- alias: "Registrar eventos de sonido significativos"
+  description: "Crea un log de cuando hay ruidos importantes"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.sound_level
+      above: 60
+  action:
+    - service: logbook.log
+      data:
+        name: "Evento de Sonido"
+        message: "Ruido detectado: {{ states('sensor.sound_level') }}%"
+        entity_id: sensor.sound_level
+
+# =============================================================================
+# EJEMPLO 6: Automatización con presencia + sonido
+# =============================================================================
+- alias: "Activar escena según presencia y sonido"
+  description: "Si hay presencia y ruido, alguien entró"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.smartnode1_presence
+      to: 'on'
+  condition:
+    # Solo si también hay sonido (pisadas, puerta, etc)
+    - condition: numeric_state
+      entity_id: sensor.sound_level
+      above: 30
+    # Y las luces están apagadas
+    - condition: state
+      entity_id: light.bedroom_main
+      state: 'off'
+  action:
+    # Encender luces al 50%
+    - service: light.turn_on
+      target:
+        entity_id: light.bedroom_main
+      data:
+        brightness: 128
+        transition: 2
+
+# =============================================================================
+# EJEMPLO 7: Dashboard card para monitoreo
+# =============================================================================
+# Agregar a Lovelace dashboard:
+#
+# type: entities
+# title: Monitor de Sonido - Dormitorio
+# entities:
+#   - entity: sensor.sound_level
+#     name: Nivel de Sonido
+#     icon: mdi:microphone
+#   - entity: binary_sensor.loud_noise_detected
+#     name: Ruido Fuerte
+#   - type: divider
+#   - entity: binary_sensor.smartnode1_presence
+#     name: Presencia
+#   - entity: sensor.room_temperature
+#     name: Temperatura
+
+# =============================================================================
+# EJEMPLO 8: Gráfico de nivel de sonido en el tiempo
+# =============================================================================
+# Agregar a Lovelace dashboard:
+#
+# type: history-graph
+# title: Historial de Sonido - 24h
+# hours_to_show: 24
+# entities:
+#   - entity: sensor.sound_level
+#     name: Nivel de Sonido
+
+# =============================================================================
+# EJEMPLO 9: Calibración automática del umbral
+# =============================================================================
+- alias: "Calibrar umbral de ruido según hora"
+  description: "Ajusta el umbral de detección según la hora del día"
+  trigger:
+    - platform: time
+      at: "08:00:00"  # Mañana - umbral más alto
+    - platform: time
+      at: "22:00:00"  # Noche - umbral más bajo
+  action:
+    - choose:
+        # Modo día: más tolerante al ruido
+        - conditions:
+            - condition: time
+              after: "08:00:00"
+              before: "22:00:00"
+          sequence:
+            - service: input_number.set_value
+              target:
+                entity_id: input_number.sound_threshold
+              data:
+                value: 70
+        # Modo noche: más sensible
+        - conditions:
+            - condition: time
+              after: "22:00:00"
+              before: "08:00:00"
+          sequence:
+            - service: input_number.set_value
+              target:
+                entity_id: input_number.sound_threshold
+              data:
+                value: 40
+
+# =============================================================================
+# EJEMPLO 10: Notificación con estadísticas
+# =============================================================================
+- alias: "Resumen diario de niveles de sonido"
+  description: "Envía un resumen de los niveles de sonido del día"
+  trigger:
+    - platform: time
+      at: "23:00:00"
+  action:
+    - service: notify.mobile_app_tu_telefono
+      data:
+        message: >
+          📊 Resumen de sonido hoy:
+          Máximo: {{ state_attr('sensor.sound_level', 'max_value') }}%
+          Promedio: {{ state_attr('sensor.sound_level', 'mean') }}%
+          Eventos >70%: {{ states('counter.loud_noise_today') }}
+        title: "Estadísticas de Sonido"

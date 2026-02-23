@@ -1,0 +1,207 @@
+# SmartNode1 - Configuración CON Detector de Sonido MAX4466
+# Esta versión usa un módulo analógico MAX4466 en GPIO34 para detectar sonido
+
+esphome:
+  name: smartnode1
+  friendly_name: Smart Node 1
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "uiBug7J/YQ2WEQwAinei45aUGm7L9cf6Sp82nI4GuIU="
+
+ota:
+  - platform: esphome
+    password: "fc6b855770911eb3179ff203b83f5ec8"
+
+wifi:
+  ssid: "sunsetlabs-2.4GHz"
+  password: "bienvenido"
+
+  manual_ip:
+    static_ip: 192.168.1.13
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+
+  fast_connect: true
+  reboot_timeout: 15min
+  power_save_mode: none
+  output_power: 10dB
+
+  ap:
+    ssid: "Test1 Fallback Hotspot"
+    password: "EFM0SoydaFKO"
+
+captive_portal:
+
+
+# I2S Audio para micrófono INMP441
+# (Mantenido para uso futuro con voice_assistant)
+i2s_audio:
+  - id: mic_i2s
+    i2s_lrclk_pin: GPIO25  # WS (Word Select)
+    i2s_bclk_pin: GPIO26   # SCK (Serial Clock)
+
+# Micrófono INMP441
+microphone:
+  - platform: i2s_audio
+    id: smartnode_mic
+    adc_type: external
+    i2s_din_pin: GPIO33    # SD (Serial Data)
+    pdm: false
+
+
+# UART para LD2410
+uart:
+  tx_pin: 17
+  rx_pin: 16
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+
+ld2410:
+
+sensor:
+  # 🎤 SENSOR DE SONIDO - MAX4466 en GPIO34
+  # Conectar: VCC→3.3V, GND→GND, OUT→GPIO34
+  - platform: adc
+    pin: GPIO34
+    name: "Sound Level"
+    id: sound_level
+    update_interval: 0.5s  # Actualización rápida
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    attenuation: 11db
+    filters:
+      # Promedio móvil para suavizar lecturas
+      - sliding_window_moving_average:
+          window_size: 10
+          send_every: 5
+      # Calibración: ajusta estos valores según tu entorno
+      - calibrate_linear:
+          - 0.1 -> 0.0   # Ruido de fondo/silencio
+          - 2.5 -> 100.0  # Sonido muy fuerte
+      # Limitar entre 0-100%
+      - clamp:
+          min_value: 0
+          max_value: 100
+    icon: "mdi:microphone"
+
+  # LDR - Sensor de Luz
+  - platform: adc
+    pin: 32
+    name: "Room Brightness"
+    update_interval: 30s
+    accuracy_decimals: 0
+    unit_of_measurement: "%"
+    attenuation: 12db
+    samples: 3
+    filters:
+      - calibrate_linear:
+          - 0.0 -> 100.0
+          - 3.3 -> 0.0
+      - lambda: 'return round(x);'
+
+  - platform: dht
+    pin: 4
+    model: DHT11
+    temperature:
+      name: "Room Temperature"
+    humidity:
+      name: "Room Humidity"
+    update_interval: 60s
+
+  # Voltaje de Batería
+  - platform: adc
+    pin: 35
+    name: "Battery Voltage"
+    id: battery_voltage
+    update_interval: 60s
+    accuracy_decimals: 2
+    unit_of_measurement: "V"
+    attenuation: 12db
+    filters:
+      - multiply: 2.0
+      - lambda: |-
+          if (x < 0.5) return 0.0;
+          return x;
+    device_class: voltage
+    state_class: measurement
+
+  # Porcentaje de Batería
+  - platform: template
+    name: "Battery Level"
+    id: battery_level
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 60s
+    icon: "mdi:battery"
+    device_class: battery
+    lambda: |-
+      float voltage = id(battery_voltage).state;
+      if (voltage >= 4.2) return 100.0;
+      if (voltage <= 3.0) return 0.0;
+      return ((voltage - 3.0) / 1.2) * 100.0;
+
+  - platform: ld2410
+    moving_distance:
+      name: Moving Distance
+      filters:
+        - delta: 0.1
+    still_distance:
+      name: Still Distance
+      filters:
+        - delta: 0.1
+    moving_energy:
+      name: Move Energy
+      filters:
+        - throttle: 5s
+    still_energy:
+      name: Still Energy
+      filters:
+        - throttle: 5s
+    detection_distance:
+      name: Detection Distance
+      filters:
+        - delta: 0.2
+        - throttle: 500ms
+
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: Presence
+    has_moving_target:
+      name: Moving Target
+    has_still_target:
+      name: Still Target
+  
+  # 🔔 DETECTOR DE RUIDO FUERTE
+  # Se activa cuando el nivel de sonido supera 70%
+  - platform: template
+    name: "Loud Noise Detected"
+    id: loud_noise
+    device_class: sound
+    lambda: |-
+      return id(sound_level).state > 70.0;
+
+# EJEMPLO DE AUTOMATIZACIÓN EN HOME ASSISTANT:
+# 
+# automation:
+#   - alias: "Alertar ruido fuerte en dormitorio"
+#     trigger:
+#       - platform: state
+#         entity_id: binary_sensor.loud_noise_detected
+#         to: 'on'
+#     action:
+#       - service: notify.mobile_app
+#         data:
+#           message: "¡Ruido fuerte detectado en dormitorio!"

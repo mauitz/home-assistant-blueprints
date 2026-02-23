@@ -1,3 +1,6 @@
+# SmartNode1 - Configuración CON Voice Assistant
+# Esta versión usa el INMP441 para comandos de voz y detección de sonido
+
 esphome:
   name: smartnode1
   friendly_name: Smart Node 1
@@ -5,7 +8,7 @@ esphome:
 esp32:
   board: esp32dev
   framework:
-    type: arduino
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -23,20 +26,17 @@ wifi:
   ssid: "sunsetlabs-2.4GHz"
   password: "bienvenido"
 
-  # IP estática configurada
   manual_ip:
     static_ip: 192.168.1.13
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
 
-  # Optimización para respuesta rápida (conectado a corriente)
   fast_connect: true
   reboot_timeout: 15min
-  power_save_mode: none   # Sin ahorro WiFi - respuesta rápida (80-120ms)
-  output_power: 10dB      # Potencia moderada para balance estabilidad/consumo
+  power_save_mode: none
+  output_power: 10dB
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Test1 Fallback Hotspot"
     password: "EFM0SoydaFKO"
@@ -58,24 +58,32 @@ microphone:
     i2s_din_pin: GPIO33    # SD (Serial Data)
     pdm: false
 
-# Voice Assistant - Asistente de Voz
+# 🎤 VOICE ASSISTANT - Detección de audio y comandos de voz
 voice_assistant:
   microphone: smartnode_mic
-  # No hay speaker en este SmartNode
+  # NO hay speaker en este SmartNode
   noise_suppression_level: 2
   auto_gain: 31dBFS
   volume_multiplier: 2.0
-
+  
   on_listening:
     - logger.log: "🎤 Escuchando comando de voz..."
-
+    
   on_stt_end:
-    - logger.log:
+    - logger.log: 
         format: "📝 Texto reconocido: %s"
         args: ['x.c_str()']
-
+    
   on_end:
-    - logger.log: "✅ Comando procesado"
+    - logger.log: "✅ Comando de voz procesado"
+    
+  on_error:
+    - logger.log: "❌ Error en voice assistant"
+
+# ESTO CREA AUTOMÁTICAMENTE:
+# - binary_sensor.smartnode1_voice_assistant (activo cuando escucha)
+# - Integración con Home Assistant Assist
+
 
 # UART para LD2410
 uart:
@@ -86,112 +94,87 @@ uart:
   stop_bits: 1
 
 ld2410:
-  # Configuración optimizada para respuesta rápida
 
-# Parámetros avanzados para el LD2410
 sensor:
-  # LDR - Sensor de Luz (CORREGIDO - Invertido)
+  # LDR - Sensor de Luz
   - platform: adc
     pin: 32
     name: "Room Brightness"
-    update_interval: 30s  # Optimizado: la luz no cambia tan rápido
+    update_interval: 30s
     accuracy_decimals: 0
     unit_of_measurement: "%"
-    attenuation: 12db  # Rango completo 0-3.3V
+    attenuation: 12db
     samples: 3
     filters:
-      # Invertir: El circuito da bajo voltaje con mucha luz
       - calibrate_linear:
-          - 0.0 -> 100.0  # Voltaje bajo = Mucha luz = 100%
-          - 3.3 -> 0.0    # Voltaje alto = Oscuridad = 0%
+          - 0.0 -> 100.0
+          - 3.3 -> 0.0
       - lambda: 'return round(x);'
 
   - platform: dht
-    pin: 4  # Cambiado de GPIO5 a GPIO4 (más seguro, evita strapping pin)
-    model: DHT11  # Especificar modelo (DHT11 o DHT22)
+    pin: 4
+    model: DHT11
     temperature:
       name: "Room Temperature"
     humidity:
       name: "Room Humidity"
     update_interval: 60s
 
-  # Voltaje de Batería (TP4056 → VIN)
+  # Voltaje de Batería
   - platform: adc
-    pin: 35  # GPIO35 (ADC disponible)
+    pin: 35
     name: "Battery Voltage"
     id: battery_voltage
-    update_interval: 60s  # Optimizado: no necesita actualización tan frecuente
+    update_interval: 60s
     accuracy_decimals: 2
     unit_of_measurement: "V"
     attenuation: 12db
     filters:
-      # Divisor de voltaje 1:1 (dos resistencias iguales)
-      # Multiplica por 2 para obtener voltaje real de batería
       - multiply: 2.0
       - lambda: |-
-          // Proteger lectura: si es muy baja, reportar valor real medido
-          if (x < 0.5) return 0.0;  // Lectura inválida
+          if (x < 0.5) return 0.0;
           return x;
     device_class: voltage
     state_class: measurement
 
-  # Porcentaje de Batería (calculado desde voltaje)
+  # Porcentaje de Batería
   - platform: template
     name: "Battery Level"
     id: battery_level
     unit_of_measurement: "%"
     accuracy_decimals: 0
-    update_interval: 60s  # Sincronizado con Battery Voltage
+    update_interval: 60s
     icon: "mdi:battery"
     device_class: battery
     lambda: |-
-      // Batería Li-Ion: 4.2V = 100%, 3.0V = 0%
       float voltage = id(battery_voltage).state;
       if (voltage >= 4.2) return 100.0;
       if (voltage <= 3.0) return 0.0;
       return ((voltage - 3.0) / 1.2) * 100.0;
 
-  # Nivel de sonido desde micrófono INMP441
-  # NOTA: ESPHome no procesa audio en tiempo real fácilmente
-  # Este sensor requiere implementación avanzada con lambda
-  - platform: template
-    name: "Sound Level"
-    id: sound_level
-    unit_of_measurement: "dB"
-    accuracy_decimals: 1
-    update_interval: 30s  # Optimizado: sensor no implementado aún
-    icon: "mdi:microphone"
-    lambda: |-
-      // TODO: Implementar procesamiento de audio desde INMP441
-      // Requiere buffer de audio y cálculo RMS
-      return 0.0;  // Placeholder
-
   - platform: ld2410
     moving_distance:
       name: Moving Distance
       filters:
-        - delta: 0.1  # Solo reportar si cambia ±10cm
+        - delta: 0.1
     still_distance:
       name: Still Distance
       filters:
-        - delta: 0.1  # Solo reportar si cambia ±10cm
+        - delta: 0.1
     moving_energy:
       name: Move Energy
       filters:
-        - throttle: 5s  # Máximo 1 reporte cada 5s
+        - throttle: 5s
     still_energy:
       name: Still Energy
       filters:
-        - throttle: 5s  # Máximo 1 reporte cada 5s
+        - throttle: 5s
     detection_distance:
       name: Detection Distance
       filters:
-        - delta: 0.2      # Solo reportar si cambia ±20cm
-        - throttle: 500ms # Máximo 2 reportes por segundo
-    # Sensores g0-g8 eliminados para reducir tráfico WiFi
-    # Solo se mantienen los 5 sensores esenciales con filtros optimizados
+        - delta: 0.2
+        - throttle: 500ms
 
-# Parámetros principales para el LD2410
 binary_sensor:
   - platform: ld2410
     has_target:
@@ -200,4 +183,3 @@ binary_sensor:
       name: Moving Target
     has_still_target:
       name: Still Target
-
