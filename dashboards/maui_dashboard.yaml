@@ -494,13 +494,13 @@ views:
             }
 
       # ═══════════════════════════════════════════════════════════════════
-      # CONTROL PRINCIPAL - Badge Animado + Botones
+      # CONTROL PRINCIPAL - Barra de Estado + Switch + Botones
       # ═══════════════════════════════════════════════════════════════════
       - type: vertical-stack
         view_layout:
           grid-column: 1 / -1
         cards:
-          # Badge de Estado Animado
+          # Barra de Estado con Switch tipo iOS
           - type: custom:button-card
             entity: input_boolean.presence_simulation_running
             name: |
@@ -521,17 +521,48 @@ views:
                 }
               ]]]
             show_state: false
+            show_icon: false
+            tap_action:
+              action: none
+            custom_fields:
+              switch: |
+                [[[
+                  const isOn = states['input_boolean.presence_simulation']?.state === 'on';
+                  return `
+                    <ha-switch
+                      ${isOn ? 'checked' : ''}
+                      style="
+                        --switch-checked-button-color: #10B981;
+                        --switch-checked-track-color: rgba(16, 185, 129, 0.5);
+                        --switch-unchecked-button-color: #666666;
+                        --switch-unchecked-track-color: rgba(100, 100, 100, 0.3);
+                        transform: scale(0.8);
+                      "
+                    ></ha-switch>
+                  `;
+                ]]]
             styles:
               card:
-                - height: 80px
+                - height: 48px
                 - border-radius: 12px
-                - font-size: 15px
+                - font-size: 13px
                 - font-weight: 600
                 - letter-spacing: 0.5px
                 - border: none
+                - padding: 0 16px
+                - display: grid
+                - grid-template-columns: 1fr auto
+                - align-items: center
+                - gap: 16px
               name:
-                - justify-self: center
-                - align-self: center
+                - justify-self: start
+                - text-align: left
+                - padding: 0
+                - margin: 0
+              custom_fields:
+                switch:
+                  - justify-self: end
+                  - align-self: center
             state:
               - value: 'on'
                 styles:
@@ -573,6 +604,14 @@ views:
                   0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
                   50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); }
                 }
+                ha-switch {
+                  cursor: pointer;
+                }
+            hold_action:
+              action: call-service
+              service: input_boolean.toggle
+              service_data:
+                entity_id: input_boolean.presence_simulation
 
           # Botones de Control START/PAUSE/RESUME/STOP
           - type: horizontal-stack
@@ -884,14 +923,13 @@ views:
 
           ### ⚙️ Parámetros de Automatización
 
-          | Parámetro | Valor |
-          |-----------|-------|
-          | 🔢 **Max luces simultáneas** | 2 |
-          | ⏱️ **Tiempo encendido** | 2-3 min |
-          | ⏲️ **Delay entre luces** | 5-10 seg |
-          | 🔄 **Loops totales** | 2 |
-          | 💤 **Delay entre loops** | 1-2 min |
-          | 💡 **Dispositivos** | 6 switches |
+          > ⚠️ **Nota:** Los parámetros de configuración se gestionan directamente desde la automatización en *Ajustes > Automatizaciones*.
+
+          **Resumen de funcionamiento:**
+          1. **Rotación:** Enciende luces secuencialmente.
+          2. **Espera:** Mantiene las luces encendidas.
+          3. **Reinicio:** Apaga y comienza nuevo ciclo.
+
 
           ---
 
